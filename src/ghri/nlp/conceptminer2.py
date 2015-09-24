@@ -1,21 +1,21 @@
-'''
+"""
 ghri.wildcat.conceptminer2.py
     created: 2013-04-18
-    
+
 Purpose:
     Mine concepts from the text. Essentially do what cTAKES does,
     but do it better AND simpler.
-    
+
 Author:
     Cronkite, David (GHRI)
-    
+
 Edits:
 2013-11-05    added possible tags
 2013-11-26    replaced by conceptminer2 for additional assertion annotation
 -- conceptminer2 --
 2013-12-12    added
 
-'''
+"""
 import copy
 import numbers
 import string
@@ -51,7 +51,7 @@ class ConceptMiner(object):
         self._unpack_concepts(id_term_cat_val_rxVar_wdOrder)
 
     def _unpack_concepts(self, id_term_cat_val_rxVar_wdOrder):
-        '''
+        """
         Organizes input from database
         Parameters:
             id_term_cat_val_rxVar_wdOrder - list of (id, term, category, valence,
@@ -59,7 +59,7 @@ class ConceptMiner(object):
                 * id - number
                 * term - ctakes dictionary "text" field
                 * category - like s21 for sumres21 (DCIS)
-                * valence - 0 if term contains a negation/uncertainty term   
+                * valence - 0 if term contains a negation/uncertainty term
                 * word_order- 0: free word order
                             1: enforce first word constraint
                             2: require precise word order
@@ -67,8 +67,8 @@ class ConceptMiner(object):
                             0: no variation; words must be exact
                             1: minimal variation
                             2: moderate variation
-                            3: flexible     
-        '''
+                            3: flexible
+        """
         self.wordlist = []
         for cid, term, cat, val, rxVar, wdOrder in id_term_cat_val_rxVar_wdOrder:
             # update references of ConceptID (think "CUI")
@@ -89,23 +89,23 @@ class ConceptMiner(object):
                     self.cid_to_tids[cid].append(self.wordID)
                 self.wordID += 1
 
-    def getWordlist(self, id_term_cat_val_rxVar_wdOrder=None):
+    def get_wordlist(self, id_term_cat_val_rxVar_wdOrder=None):
         if id_term_cat_val_rxVar_wdOrder:
             self._unpack_concepts(id_term_cat_val_rxVar_wdOrder)
         return self.wordlist
 
-    def addConversion(self, newTid_to_oldTids):
-        '''
-        Adds new one-to-many relations between 
+    def add_conversion(self, newTid_to_oldTids):
+        """
+        Adds new one-to-many relations between
         term_ids. Each term-id may only appear
         either on the RHS or the LHS of the dict
         (a.k.a., either keys or values, but not both)
-        
+
         Parameters:
             newTid_to_oldTids -
                 dictionary {newTid : set( [oldTid,oldTid,etc.])}
                 where set(newTids) & set(oldTids) == set()
-        '''
+        """
 
         if not self.tid_to_tid:  # no extant conversions
             self.tid_to_tid = copy.deepcopy(newTid_to_oldTids)
@@ -303,8 +303,8 @@ class ConceptMiner(object):
 
 class MinerCask(object):
     def __init__(self, id_term_cat_val_rxVar_wdOrder, negation_tuples, rxVar=0, max_intervening_terms=2):
-        '''
-        
+        """
+
         Parameters
         ------------
         id_term_cat_val_rxVar_wdOrder - list of (id, term, category, valence, rxVar, wdOrder)
@@ -315,11 +315,11 @@ class MinerCask(object):
             valence: 1 (positive mention), 0 (negative mention)
         negation_tuples - negations as list of (negation_word, type)
             where type is 4 letter code from NegEx
-        '''
+        """
         # prepare concept miner
         self.miner = ConceptMiner(id_term_cat_val_rxVar_wdOrder)
-        self.rx_id, newTids_to_origTids = convert.convertToRegex(self.miner.getWordlist())
-        self.miner.addConversion(newTids_to_origTids)
+        self.rx_id, newTids_to_origTids = convert.convert_to_regex(self.miner.get_wordlist())
+        self.miner.add_conversion(newTids_to_origTids)
         self.table = string.maketrans("", "")
 
         # prepare negation tagger

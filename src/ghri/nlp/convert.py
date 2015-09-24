@@ -12,20 +12,20 @@ Purpose:
 import regex as re
 
 
-def getAffixMorphs():
+def get_affix_morphs():
     """
     list of tuple(regex, replacement string, count) for modifying 
         the front of a term
     count represents the number of letters which are becoming
         optional (not _new_ optional ones)
     """
-    return [(re.compile(r'\bintra(\S{3,})'), r'(intra)?\g<1>', 5, 8),  #intra
-             # assumes intra is optional (intraductal carc)
-            (re.compile(r'\bun(\S{3,})'), r'(non|un|in)\g<1>', 2, 11),  #un
-            (re.compile(r'\bnon(\S{3,})'), r'(non|un|in)\g<1>', 3, 11)]  #non
+    return [(re.compile(r'\bintra(\S{3,})'), r'(intra)?\g<1>', 5, 8),  # intra
+            # assumes intra is optional (intraductal carc)
+            (re.compile(r'\bun(\S{3,})'), r'(non|un|in)\g<1>', 2, 11),  # un
+            (re.compile(r'\bnon(\S{3,})'), r'(non|un|in)\g<1>', 3, 11)]  # non
 
 
-def getMedialMorphs():
+def get_medial_morphs():
     """
     list of tuple(regex, replacement string, count) for modifying 
         the middle of a term
@@ -35,7 +35,7 @@ def getMedialMorphs():
     return [(re.compile(r'\b(\S+)-(\S+)\b'), r'\g<1>(-| )?\g<2>', 1)]  # hyphen
 
 
-def getSuffixMorphs():
+def get_suffix_morphs():
     """
     list of tuple(regex, replacement string, count) for modifying 
         the end of a term
@@ -55,7 +55,7 @@ def getSuffixMorphs():
             (re.compile(r'(\S{3,})(s|t)ive\b'), r'\g<1>\g<2>(ive|ion)?', 3)]  # -sive
 
 
-def getFinalMorphs():
+def get_final_morphs():
     """
     DEPRECATED -- if-elif-else expression more effective
         since difficult to sub at the end (after non-letters)
@@ -71,9 +71,9 @@ def getFinalMorphs():
             (re.compile(r'\b(\S+)(\W*)\b'), r'\g<1>\g<2>s?', 0)]  # pl='s'
 
 
-def convertTextToRegex(strings_ids, convertAll=False,
-                       affixmorphs=None, suffixmorphs=None,
-                       medialmorphs=None, finalmorphs=None):
+def convert_text_to_regex(strings_ids, convertall=False,
+                          affixmorphs=None, suffixmorphs=None,
+                          medialmorphs=None, finalmorphs=None):
     """
     Takes a list of string-id tuples which are the words which
         need to be converted to regular expressions.
@@ -89,23 +89,23 @@ def convertTextToRegex(strings_ids, convertAll=False,
             converted to regexes in list order, and
             any following strings which are matched
             by the previous regexes will not be included
-        convertAll=False: if true, all strings will be
+        convertall=False: if true, all strings will be
             converted to regexes regardless of a previous
             regex matching it
     """
     if not affixmorphs:
-        affixmorphs = getAffixMorphs()
+        affixmorphs = get_affix_morphs()
     if not medialmorphs:
-        medialmorphs = getMedialMorphs()
+        medialmorphs = get_medial_morphs()
     if not suffixmorphs:
-        suffixmorphs = getSuffixMorphs()
+        suffixmorphs = get_suffix_morphs()
     if not finalmorphs:
-        finalmorphs = getFinalMorphs()
+        finalmorphs = get_final_morphs()
 
     regexes = []  # [(regex, id), ...]
     updated_ids = {}  # new_id -> old_id
     for string, id in strings_ids:
-        if not convertAll:
+        if not convertall:
             # see if string is matched by previously-
             #    created RegEx
             found = False
@@ -113,7 +113,7 @@ def convertTextToRegex(strings_ids, convertAll=False,
                 if rx.match(string):
                     found = True
                     if rx_id not in updated_ids:
-                        updated_ids[rx_id] = set([rx_id])
+                        updated_ids[rx_id] = {rx_id}
                     updated_ids[rx_id].add(id)
                     break
             if found:
@@ -175,7 +175,7 @@ def convertTextToRegex(strings_ids, convertAll=False,
     return regexes, updated_ids
 
 
-def convertToRegex(strings_ids_rxVar, convertAll=True,
+def convert_to_regex(strings_ids_rxvar, convert_all=True,
                    affixmorphs=None, suffixmorphs=None,
                    medialmorphs=None, finalmorphs=None):
     """
@@ -199,36 +199,34 @@ def convertToRegex(strings_ids_rxVar, convertAll=True,
                     1: minimal variation
                     2: moderate variation
                     3: flexible
-        convertAll=True: if false, all strings will be
+        convert_all=True: if false, all strings will be
             converted to regexes regardless of a previous
             regex matching it
     """
     if not affixmorphs:
-        affixmorphs = getAffixMorphs()
+        affixmorphs = get_affix_morphs()
     if not medialmorphs:
-        medialmorphs = getMedialMorphs()
+        medialmorphs = get_medial_morphs()
     if not suffixmorphs:
-        suffixmorphs = getSuffixMorphs()
-    if not finalmorphs:
-        finalmorphs = getFinalMorphs()
+        suffixmorphs = get_suffix_morphs()
 
     regexes = []  # [(regex, id), ...]
     updated_ids = {}  # new_id -> old_id
-    for string, id, regex_variation in strings_ids_rxVar:
+    for string, id, regex_variation in strings_ids_rxvar:
         if regex_variation == -1:
             regexes.append((re.compile(r'\b{}\b'.format(string), re.I), id))
             continue
 
-        if not convertAll:
+        if not convert_all:
             # see if string is matched by previously-
             #    created RegEx
             found = False
             for rx, rx_id in regexes:
                 if rx.match(string):
-                    #print string,'duplicate of',rx,rx_id
+                    # print string,'duplicate of',rx,rx_id
                     found = True
                     if rx_id not in updated_ids:
-                        updated_ids[rx_id] = set([rx_id])
+                        updated_ids[rx_id] = {rx_id}
                     updated_ids[rx_id].add(id)
                     break
             if found:
