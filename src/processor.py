@@ -85,6 +85,7 @@ def get_terms(dbi, term_table, valence=None, regex_variation=None, word_order=No
     Function checks to see if optional columns are present,
     otherwise uses cTAKES defaults.
     """
+    logging.info('Getting Terms and Negation.')
     columns = dbi.execute_fetchall('''
         SELECT column_name
         FROM INFORMATION_SCHEMA.COLUMNS
@@ -181,6 +182,24 @@ def insert_into2(dbi, destination_table, feat, text, labels, meta):
     dbi.execute_commit(sql)
 
 
+def insert_into3(dbi, destination_table, feat, labels, meta):
+    """
+    Insert ngram features into database.
+    :param dbi:
+    :param destination_table:
+    :param feat:
+    :param labels:
+    :param meta:
+    :return:
+    """
+    sql = "INSERT INTO %s (" % destination_table
+    sql += ','.join(labels) + ') VALUES ('
+    sql += '\'' + "','".join([str(x) for x in meta]) + '\','
+    sql += " {}, '{}', '{}'".format(feat.id(), feat.feature(), feat.category())
+    sql += ')'
+    dbi.execute_commit(sql)
+
+
 def get_index(length, value):
     if value < 0:
         return 0
@@ -209,16 +228,21 @@ def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_la
         for section in sb.ssplit(doc.get_text()):
             sentences += section.split('\n')
 
-        sections = mc.mine(sentences, max_intervening_terms=max_intervening_terms,
-                           max_length_of_search=max_length_of_search)
+        if concept_miner_v == 1 or concept_miner_v == 2:
+            sections = mc.mine(sentences, max_intervening_terms=max_intervening_terms,
+                               max_length_of_search=max_length_of_search)
+        elif concept_miner_v == 3:
+            sections = []
         for sect_num, sect in enumerate(sections):
-            if not sect: continue
-            text = mc.prepare(sentences[sect_num])
+            if not sect:
+                continue
             for feat in sect:
                 if concept_miner_v == 1:
-                    insert_into(dbi, destination_table, feat, text, all_labels, doc.get_metalist())
+                    insert_into(dbi, destination_table, feat, mc.prepare(sentences[sect_num]), all_labels, doc.get_metalist())
                 elif concept_miner_v == 2:
-                    insert_into2(dbi, destination_table, feat, text, all_labels, doc.get_metalist())
+                    insert_into2(dbi, destination_table, feat, mc.prepare(sentences[sect_num]), all_labels, doc.get_metalist())
+                elif concept_miner_v == 3:
+                    insert_into3(dbi, destination_table, feat, all_labels, doc.get_metalist())
                 else:
                     raise ValueError('Concept Miner v.%d is not defined.' % concept_miner_v)
 
@@ -230,26 +254,34 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
 
     """
     dbi = dbInterface('SQL Server', server, database)
-    logging.info('Getting Terms and Negation.')
-    concept_entries = get_terms(dbi, term_table, valence=valence, regex_variation=regex_variation, word_order=word_order)
+
+    all_types = ['varchar(255)'] * len(meta_labels)
+    all_labels = meta_labels
 
     if concept_miner_v == 1:
         negation_tuples = get_negex(dbi, neg_table)
+        concept_entries = get_terms(dbi, term_table, valence=valence, regex_variation=regex_variation,
+                                    word_order=word_order)
         mc = miner.MinerCask(concept_entries, negation_tuples, neg_var)
-        all_labels = meta_labels + ['id', 'captured', 'context', 'polarity', 'certainty']
-        all_types = ['varchar(255)'] * len(meta_labels) + ['int', 'varchar(255)', 'varchar(255)', 'int', 'int']
+        all_labels += ['id', 'captured', 'context', 'polarity', 'certainty']
+        all_types += ['int', 'varchar(255)', 'varchar(255)', 'int', 'int']
 
     elif concept_miner_v == 2:
         negation_tuples = get_context(dbi, neg_table)
+        concept_entries = get_terms(dbi, term_table, valence=valence, regex_variation=regex_variation,
+                                    word_order=word_order)
         mc = miner2.MinerCask(concept_entries, negation_tuples, neg_var)
-        all_labels = meta_labels + ['dictid', 'captured', 'context', 'text', 'certainty', 'hypothetical', 'historical',
-                                    'otherSubject', '"start"', '"finish"', 'start_idx', 'end_idx']
-        all_types = ['varchar(255)'] * len(meta_labels) + ['int', 'varchar(255)', 'varchar(255)', 'varchar(max)', 'int',
-                                                           'int', 'int', 'int', 'int', 'int', 'int', 'int']
+        all_labels += ['dictid', 'captured', 'context', 'text', 'certainty', 'hypothetical', 'historical',
+                       'otherSubject', '"start"', '"finish"', 'start_idx', 'end_idx']
+        all_types += ['int', 'varchar(255)', 'varchar(255)', 'varchar(max)', 'int',
+                      'int', 'int', 'int', 'int', 'int', 'int', 'int']
+
+    elif concept_miner_v == 3:
+        all_labels += ['featid', 'feature', 'category']
+        all_types += ['bigint', 'varchar(max)', 'varchar(50)']
+
     else:
         raise ValueError('Invalid version for ConceptMiner: %d.' % concept_miner_v)
-
-    sb = SentenceBoundary(dbi)
 
     # if batch mode, select all ids, and split into batches
     if batch_mode:
@@ -286,7 +318,8 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
             where_clause = ' WHERE %s > %d ' % (batch_mode, batch)
         else:
             where_clause = ''
-        process(dbi, mc, sb, destination_table, document_table, meta_labels, text_labels, concept_miner_v, all_labels,
+        process(dbi, mc, SentenceBoundary(dbi), destination_table, document_table, meta_labels, text_labels,
+                concept_miner_v, all_labels,
                 where_clause, order_by, batch_size, max_intervening_terms, max_length_of_search)
         logging.info('Finished batch #%d of %d.' % (num + 1, batch_length))
 
