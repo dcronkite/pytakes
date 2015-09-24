@@ -31,26 +31,26 @@ class Document(object):
             text = [text]
         else:
             text = [t for t in text if t]
-        self.text_ = self.fixText(text[0])
+        self.text_ = self.fix_text(text[0])
         for txt in text[1:]:
-            self.addText(txt)  # split added 20131224
+            self.add_text(txt)  # split added 20131224
 
-    def addText(self, text):
-        self.text_ += '\n' + self.fixText(text)
+    def add_text(self, text):
+        self.text_ += '\n' + self.fix_text(text)
 
-    def getText(self):
+    def get_text(self):
         return self.text_
 
-    def getMetaList(self):
+    def get_metalist(self):
         return self.meta_
 
-    def fixText(self, text):
+    def fix_text(self, text):
         text = ' '.join(text.split('\n'))
         text.replace('don?t', "don't")  # otherwise the '?' will start a new sentence
         return text
 
 
-def getDocumentIds(dbi, document_table, table_id, order_by):
+def get_document_ids(dbi, document_table, table_id, order_by):
     """
     Retrieve documents from table (for batch mode)
     """
@@ -60,7 +60,7 @@ def getDocumentIds(dbi, document_table, table_id, order_by):
     return [x[0] for x in document_ids]  # remove lists
 
 
-def getDocuments(dbi, document_table, meta_labels, text_labels, where_clause, order_by, batch_size):
+def get_documents(dbi, document_table, meta_labels, text_labels, where_clause, order_by, batch_size):
     """
     Retrieve documents from table
     """
@@ -79,7 +79,7 @@ def getDocuments(dbi, document_table, meta_labels, text_labels, where_clause, or
     return result_list
 
 
-def getTerms(dbi, term_table, valence=None, regexVariation=None, wordOrder=None):
+def get_terms(dbi, term_table, valence=None, regex_variation=None, word_order=None):
     """
     Retrieve terms from table.
     Function checks to see if optional columns are present,
@@ -92,21 +92,21 @@ def getTerms(dbi, term_table, valence=None, regexVariation=None, wordOrder=None)
         ''' % term_table.split('.')[-1])  # if [dbo] or [MASTER\...] prefaced to tablename
     columns = [x[0].lower() for x in columns]
     valence = valence if valence else '' if 'valence' in columns else '1 as'
-    regexVariation = regexVariation if regexVariation else '' if 'regexvariation' in columns else '3 as'
-    wordOrder = wordOrder if wordOrder else '' if 'wordorder' in columns else '1 as'
+    regex_variation = regex_variation if regex_variation else '' if 'regexvariation' in columns else '3 as'
+    word_order = word_order if word_order else '' if 'wordorder' in columns else '1 as'
 
     return dbi.execute_fetchall('''
         SELECT id
              , text
              , cui
              , %s valence
-             , %s regexVariation
-             , %s wordOrder
+             , %s regex_variation
+             , %s word_order
         FROM %s
-    ''' % (valence, regexVariation, wordOrder, term_table))
+    ''' % (valence, regex_variation, word_order, term_table))
 
 
-def getNegex(dbi, neg_table):
+def get_negex(dbi, neg_table):
     """
     Retrieve negation triggers from table
     """
@@ -117,7 +117,7 @@ def getNegex(dbi, neg_table):
     ''' % neg_table)
 
 
-def getContext(dbi, neg_table):
+def get_context(dbi, neg_table):
     """
     Retrieve negation triggers from table.
     """
@@ -129,7 +129,7 @@ def getContext(dbi, neg_table):
     ''' % neg_table)
 
 
-def createTable(dbi, destination_table, labels, types):
+def create_table(dbi, destination_table, labels, types):
     """
 
     """
@@ -140,7 +140,7 @@ def createTable(dbi, destination_table, labels, types):
     dbi.execute_commit(sql)
 
 
-def insertInto(dbi, destination_table, feat, text, labels, meta):
+def insert_into(dbi, destination_table, feat, text, labels, meta):
     """
 
     """
@@ -150,14 +150,14 @@ def insertInto(dbi, destination_table, feat, text, labels, meta):
     sql += (" %d, '%s', '%s', %d, %d)" %
             (feat.id(),
              text[feat.begin():feat.end()].strip(),
-             text[getIndex(len(text), feat.begin() - 75):
-             getIndex(len(text), feat.end() + 75)],
+             text[get_index(len(text), feat.begin() - 75):
+             get_index(len(text), feat.end() + 75)],
              0 if feat.isNegated() else 1,
              0 if feat.isPossible() else 1))
     dbi.execute_commit(sql)
 
 
-def insertInto2(dbi, destination_table, feat, text, labels, meta):
+def insert_into2(dbi, destination_table, feat, text, labels, meta):
     """
 
     """
@@ -167,8 +167,8 @@ def insertInto2(dbi, destination_table, feat, text, labels, meta):
     sql += (" %d, '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d)" %
             (feat.id(),
              text[feat.begin():feat.end()].strip(),
-             text[getIndex(len(text), feat.begin() - 75):
-             getIndex(len(text), feat.end() + 75)],
+             text[get_index(len(text), feat.begin() - 75):
+             get_index(len(text), feat.end() + 75)],
              text,
              feat.getCertainty(),
              1 if feat.isHypothetical() else 0,
@@ -181,13 +181,10 @@ def insertInto2(dbi, destination_table, feat, text, labels, meta):
     dbi.execute_commit(sql)
 
 
-def getIndex(length, value):
+def get_index(length, value):
     if value < 0:
         return 0
-    elif value > length:
-        return length
-    else:
-        return value
+    return min(value, length)
 
 
 def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_labels, concept_miner_v, all_labels,
@@ -196,20 +193,20 @@ def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_la
 
     """
     logging.info('Retrieving notes.')
-    documents = getDocuments(dbi, document_table, meta_labels, text_labels, where_clause, order_by, batch_size)
-    LENGTH = len(documents)
-    logging.info('Retrieved %d notes.' % LENGTH)
+    documents = get_documents(dbi, document_table, meta_labels, text_labels, where_clause, order_by, batch_size)
+    length = len(documents)
+    logging.info('Retrieved %d notes.' % length)
 
     pct = 5
 
     for num, doc in enumerate(documents):
-        if 100 * (float(num) / LENGTH) > pct:
+        if 100 * (float(num) / length) > pct:
             logging.info('Completed %d%%.' % int(pct))
             pct += 5
 
         # adding sentence splitting (2013-11-08)
         sentences = []
-        for section in sb.ssplit(doc.getText()):
+        for section in sb.ssplit(doc.get_text()):
             sentences += section.split('\n')
 
         sections = mc.mine(sentences, max_intervening_terms=max_intervening_terms,
@@ -219,9 +216,9 @@ def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_la
             text = mc.prepare(sentences[sect_num])
             for feat in sect:
                 if concept_miner_v == 1:
-                    insertInto(dbi, destination_table, feat, text, all_labels, doc.getMetaList())
+                    insert_into(dbi, destination_table, feat, text, all_labels, doc.get_metalist())
                 elif concept_miner_v == 2:
-                    insertInto2(dbi, destination_table, feat, text, all_labels, doc.getMetaList())
+                    insert_into2(dbi, destination_table, feat, text, all_labels, doc.get_metalist())
                 else:
                     raise ValueError('Concept Miner v.%d is not defined.' % concept_miner_v)
 
@@ -234,16 +231,16 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
     """
     dbi = dbInterface('SQL Server', server, database)
     logging.info('Getting Terms and Negation.')
-    concept_entries = getTerms(dbi, term_table, valence=valence, regexVariation=regex_variation, wordOrder=word_order)
+    concept_entries = get_terms(dbi, term_table, valence=valence, regex_variation=regex_variation, word_order=word_order)
 
     if concept_miner_v == 1:
-        negation_tuples = getNegex(dbi, neg_table)
+        negation_tuples = get_negex(dbi, neg_table)
         mc = miner.MinerCask(concept_entries, negation_tuples, neg_var)
         all_labels = meta_labels + ['id', 'captured', 'context', 'polarity', 'certainty']
         all_types = ['varchar(255)'] * len(meta_labels) + ['int', 'varchar(255)', 'varchar(255)', 'int', 'int']
 
     elif concept_miner_v == 2:
-        negation_tuples = getContext(dbi, neg_table)
+        negation_tuples = get_context(dbi, neg_table)
         mc = miner2.MinerCask(concept_entries, negation_tuples, neg_var)
         all_labels = meta_labels + ['dictid', 'captured', 'context', 'text', 'certainty', 'hypothetical', 'historical',
                                     'otherSubject', '"start"', '"finish"', 'start_idx', 'end_idx']
@@ -257,7 +254,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
     # if batch mode, select all ids, and split into batches
     if batch_mode:
         order_by = ' ORDER BY %s ' % batch_mode
-        doc_ids = getDocumentIds(dbi, document_table, batch_mode, order_by)
+        doc_ids = get_document_ids(dbi, document_table, batch_mode, order_by)
         # get minimum value of each batch size
         batches = [doc_ids[x * batch_size]
                    for x in range(int(math.ceil(float(len(doc_ids)) / batch_size)))]
@@ -267,7 +264,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
 
     # create table
     try:
-        createTable(dbi, destination_table, all_labels, all_types)
+        create_table(dbi, destination_table, all_labels, all_types)
         logging.info('Table created: %s.' % destination_table)
     except pyodbc.ProgrammingError as pe:
         logging.warning('Table already exists: Using existing table.')
@@ -276,8 +273,8 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
         logging.error('Failed to create table.')
         raise e
 
-    BATCH_LENGTH = len(batches)
-    logging.info('Prepared %d batch(es).' % BATCH_LENGTH)
+    batch_length = len(batches)
+    logging.info('Prepared %d batch(es).' % batch_length)
     for num, batch in enumerate(batches):
         curr_batch = num + 1
         if batch_mode and batch_number and curr_batch not in batch_number:
@@ -291,7 +288,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
             where_clause = ''
         process(dbi, mc, sb, destination_table, document_table, meta_labels, text_labels, concept_miner_v, all_labels,
                 where_clause, order_by, batch_size, max_intervening_terms, max_length_of_search)
-        logging.info('Finished batch #%d of %d.' % (num + 1, BATCH_LENGTH))
+        logging.info('Finished batch #%d of %d.' % (num + 1, batch_length))
 
 
 if __name__ == '__main__':
