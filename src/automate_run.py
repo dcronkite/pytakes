@@ -101,7 +101,7 @@ echo Failed.
 )
 pause''' % (number, number, number, number, batch_start))
 
-    options = '\n'.join(resolve_formatting(x, y) for x, y in cm_options)
+    options = '\n'.join(resolve_formatting(x, y) for x, y in cm_options if y)
 
     with open(os.path.join(output_dir, 'ctakes-batch' + str(number) + '.conf'), 'w') as out:
         out.write(
