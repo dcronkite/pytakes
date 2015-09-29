@@ -197,8 +197,9 @@ def main(dbi,
     create_email_file(output_dir, numberOfFiles, destination_table, recipients)
 
     postprocess_dir = os.path.join(output_dir, 'post')
-    mkdir_p(postprocess_dir)
+
     if concept_miner == 2:
+        mkdir_p(postprocess_dir)
         create_post_process_batch(postprocess_dir, destination_table, negation_table, negation_variation,
                                   driver, server, database)
     logging.info('Completed.')
@@ -257,14 +258,16 @@ if __name__ == '__main__':
             ('max-length-of-search', args.max_length_of_search),
             ('valence', args.valence),
             ('regex-variation', args.regex_variation),
-            ('word-order', args.word_order)
+            ('word-order', args.word_order),
+            ('destination-table', '{}_pre'.format(args.destination_table))
         ]
     elif args.concept_miner == 3:
         cm_options = [
             ('concept-miner', 3),
             ('stopwords', args.stopwords),
             ('number-normalization', args.number_normalization),
-            ('stopword-tables', args.stopword_tables)
+            ('stopword-tables', args.stopword_tables),
+            ('destination-table', args.destination_table)
         ]
     else:
         raise ValueError('Invalid argument for concept miner.')
