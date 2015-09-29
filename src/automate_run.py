@@ -29,7 +29,7 @@ from ghri.unix import mkdir_p
 from ghri.utils import get_valid_args
 
 
-def getDocumentCount(dbi, table):
+def get_document_count(dbi, table):
     sql = '''
         SELECT COUNT(*)
         FROM %s
@@ -37,7 +37,7 @@ def getDocumentCount(dbi, table):
     return dbi.execute_fetchone(sql)[0]
 
 
-def getInteger(s):
+def get_integer(s):
     num = None
     while True:
         num = raw_input(s)
@@ -49,31 +49,43 @@ def getInteger(s):
     return num
 
 
-def isThisOkay():
+def is_this_okay():
     response = raw_input('Is this okay? ')
     return 'y' in response.lower()
 
 
-def getSizeOfBatches(count):
+def get_batch_size(count):
     while True:
-        batchSize = getInteger('Size of batches: ')
+        batchSize = get_integer('Size of batches: ')
         batches = int(math.ceil(float(count) / batchSize))
         print "This will result in %d batches." % batches
-        if isThisOkay():
+        if is_this_okay():
             return batchSize, batches
 
 
-def getNumberOfFiles(batches):
+def get_number_of_files(batches):
     while True:
-        numberOfFiles = getInteger('Number of batch files: ')
+        numberOfFiles = get_integer('Number of batch files: ')
         batchesPerFile = int(math.ceil(float(batches) / numberOfFiles))
         print 'This will result in %d batches per file.' % batchesPerFile
-        if isThisOkay():
+        if is_this_okay():
             return numberOfFiles, batchesPerFile
 
 
-def createBatchFile(output_dir, number, document_table, destination_table,
-                    batch_size, batch_start, batch_end, driver, server, database, meta_labels, cm_options):
+def resolve_formatting(label, value):
+    if value:
+        if isinstance(value, bool):
+            return '--{}'.format(label)
+        elif isinstance(value, list):
+            return '--{}\n{}'.format(label, '\n'.join(value))
+        else:
+            return '--{}={}'.format(label, value)
+    else:
+        return ''
+
+
+def create_batch_file(output_dir, number, document_table, destination_table,
+                      batch_size, batch_start, batch_end, driver, server, database, meta_labels, cm_options):
     meta_labels = '\n'.join(meta_labels) if meta_labels else '\n'.join(('ft_id', 'chsid'))
     with open(os.path.join(output_dir, 'ctakes-batch' + str(number) + '.bat'), 'w') as out:
         out.write(
@@ -89,7 +101,7 @@ echo Failed.
 )
 pause''' % (number, number, number, number, batch_start))
 
-    options = '\n'.join(['--{}={}'.format(x, y) for x, y in cm_options if y])
+    options = '\n'.join(resolve_formatting(x, y) for x, y in cm_options)
 
     with open(os.path.join(output_dir, 'ctakes-batch' + str(number) + '.conf'), 'w') as out:
         out.write(
@@ -111,7 +123,7 @@ pause''' % (number, number, number, number, batch_start))
     return
 
 
-def createEmailFile(output_dir, numberOfFiles, destination_table, recipients):
+def create_email_file(output_dir, numberOfFiles, destination_table, recipients):
     email = '\n'.join(list('\n'.join(['--recipients', rec]) for rec in recipients))
     with open(os.path.join(output_dir, 'email.conf'), 'w') as out:
         out.write(
@@ -131,8 +143,8 @@ The log file is included for debugging.
 ''' % (email, numberOfFiles, destination_table))
 
 
-def createPostProcessBatch(pp_dir, destination_table, negation_table, negation_variation, driver,
-                           server, database):
+def create_post_process_batch(pp_dir, destination_table, negation_table, negation_variation, driver,
+                              server, database):
     with open(os.path.join(pp_dir, 'postprocess.bat'), 'w') as out:
         out.write(
             r'''python G:\CTRHS\NLP_Projects\Code\Source\pyTAKES\src\postprocessor.py "@.\postprocess.conf"
@@ -163,11 +175,10 @@ def main(dbi,
          meta_labels,
          recipients,
          negation_table, negation_variation):
-
-    count = getDocumentCount(dbi, document_table)
+    count = get_document_count(dbi, document_table)
     print 'Found %d documents in %s.' % (count, document_table)
-    batchSize, batchCount = getSizeOfBatches(count)
-    numberOfFiles, batchesPerFile = getNumberOfFiles(batchCount)
+    batchSize, batchCount = get_batch_size(count)
+    numberOfFiles, batchesPerFile = get_number_of_files(batchCount)
 
     logging.info('Number of batches: %d' % batchCount)
     logging.info('Batch size: %d' % batchSize)
@@ -178,18 +189,18 @@ def main(dbi,
     batch_start = 1
     for i in range(1, numberOfFiles + 1):
         batch_end = batch_start + batchesPerFile
-        createBatchFile(output_dir, i, document_table, destination_table,
-                        batchSize, batch_start, batch_end, server, database, meta_labels,
-                        cm_options)
+        create_batch_file(output_dir, i, document_table, destination_table,
+                          batchSize, batch_start, batch_end, driver, server, database, meta_labels,
+                          cm_options)
         batch_start = batch_end
 
-    createEmailFile(output_dir, numberOfFiles, destination_table, recipients)
+    create_email_file(output_dir, numberOfFiles, destination_table, recipients)
 
     postprocess_dir = os.path.join(output_dir, 'post')
     mkdir_p(postprocess_dir)
     if concept_miner == 2:
-        createPostProcessBatch(postprocess_dir, destination_table, negation_table, negation_variation,
-                               driver, server, database)
+        create_post_process_batch(postprocess_dir, destination_table, negation_table, negation_variation,
+                                  driver, server, database)
     logging.info('Completed.')
 
 
