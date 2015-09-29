@@ -19,6 +19,7 @@ from ghri.nlp import conceptminer as miner
 from ghri.nlp import conceptminer2 as miner2
 from ghri.nlp.sentence_boundary import SentenceBoundary
 from ghri import mylogger
+from ghri.nlp.ngrams import FeatureMiner
 
 
 class Document(object):
@@ -207,7 +208,7 @@ def get_index(length, value):
 
 
 def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_labels, concept_miner_v, all_labels,
-            where_clause, order_by, batch_size, max_intervening_terms, max_length_of_search):
+            where_clause, order_by, batch_size, mine_options):
     """
 
     """
@@ -229,18 +230,22 @@ def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_la
             sentences += section.split('\n')
 
         if concept_miner_v == 1 or concept_miner_v == 2:
-            sections = mc.mine(sentences, max_intervening_terms=max_intervening_terms,
-                               max_length_of_search=max_length_of_search)
+            sections = mc.mine(sentences, **mine_options)
         elif concept_miner_v == 3:
-            sections = []
+            sections = mc.mine(sentences)  # mine_options passed to ctor
+        else:
+            raise ValueError('Concept Miner v.%d is not defined.' % concept_miner_v)
+
         for sect_num, sect in enumerate(sections):
             if not sect:
                 continue
             for feat in sect:
                 if concept_miner_v == 1:
-                    insert_into(dbi, destination_table, feat, mc.prepare(sentences[sect_num]), all_labels, doc.get_metalist())
+                    insert_into(dbi, destination_table, feat, mc.prepare(sentences[sect_num]), all_labels,
+                                doc.get_metalist())
                 elif concept_miner_v == 2:
-                    insert_into2(dbi, destination_table, feat, mc.prepare(sentences[sect_num]), all_labels, doc.get_metalist())
+                    insert_into2(dbi, destination_table, feat, mc.prepare(sentences[sect_num]), all_labels,
+                                 doc.get_metalist())
                 elif concept_miner_v == 3:
                     insert_into3(dbi, destination_table, feat, all_labels, doc.get_metalist())
                 else:
@@ -248,28 +253,25 @@ def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_la
 
 
 def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_labels, concept_miner_v,
-            destination_table, batch_mode, batch_size, batch_number, server, database, max_intervening_terms,
-            max_length_of_search, valence, regex_variation, word_order):
+            destination_table, batch_mode, batch_size, batch_number, db_options, mine_options, terms_options):
     """
 
     """
-    dbi = dbInterface('SQL Server', server, database)
+    dbi = dbInterface(**db_options)
 
     all_types = ['varchar(255)'] * len(meta_labels)
     all_labels = meta_labels
 
     if concept_miner_v == 1:
         negation_tuples = get_negex(dbi, neg_table)
-        concept_entries = get_terms(dbi, term_table, valence=valence, regex_variation=regex_variation,
-                                    word_order=word_order)
+        concept_entries = get_terms(dbi, term_table, **terms_options)
         mc = miner.MinerCask(concept_entries, negation_tuples, neg_var)
         all_labels += ['id', 'captured', 'context', 'polarity', 'certainty']
         all_types += ['int', 'varchar(255)', 'varchar(255)', 'int', 'int']
 
     elif concept_miner_v == 2:
         negation_tuples = get_context(dbi, neg_table)
-        concept_entries = get_terms(dbi, term_table, valence=valence, regex_variation=regex_variation,
-                                    word_order=word_order)
+        concept_entries = get_terms(dbi, term_table, **terms_options)
         mc = miner2.MinerCask(concept_entries, negation_tuples, neg_var)
         all_labels += ['dictid', 'captured', 'context', 'text', 'certainty', 'hypothetical', 'historical',
                        'otherSubject', '"start"', '"finish"', 'start_idx', 'end_idx']
@@ -279,6 +281,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
     elif concept_miner_v == 3:
         all_labels += ['featid', 'feature', 'category']
         all_types += ['bigint', 'varchar(max)', 'varchar(50)']
+        mc = FeatureMiner(**mine_options)
 
     else:
         raise ValueError('Invalid version for ConceptMiner: %d.' % concept_miner_v)
@@ -320,7 +323,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
             where_clause = ''
         process(dbi, mc, SentenceBoundary(dbi), destination_table, document_table, meta_labels, text_labels,
                 concept_miner_v, all_labels,
-                where_clause, order_by, batch_size, max_intervening_terms, max_length_of_search)
+                where_clause, order_by, batch_size, mine_options)
         logging.info('Finished batch #%d of %d.' % (num + 1, batch_length))
 
 
@@ -344,6 +347,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--verbosity', type=int, default=2, help='Verbosity of log output.')
 
+    parser.add_argument('--driver', required=False, default='SQL Server')
     parser.add_argument('--server', required=False, default='ghrinlp')
     parser.add_argument('--database', required=False, default='nlpdev')
     parser.add_argument('--max-intervening-terms', required=False, default=1, type=int)
@@ -351,6 +355,15 @@ if __name__ == '__main__':
     parser.add_argument('--valence', required=False, default=None, type=int)
     parser.add_argument('--regex-variation', required=False, default=None, type=int)
     parser.add_argument('--word-order', required=False, default=None, type=int)
+
+    # for concept miner version 3
+    parser.add_argument('--stopwords', required=False, default=None, nargs='+',
+                        help='List of words to skip over when collecting features. Does not support regexes.')
+    parser.add_argument('--exclusion-patterns', required=False, default=None, nargs='+',
+                        help='List of regex patterns which eliminate features matching the regex.')
+    parser.add_argument('--number-nomalization', required=False, default=True, type=bool,
+                        help='Normalize all numbers to a standard feature regardless of their value.')
+
     args = parser.parse_args()
 
     term_table = args.term_table  # 'COT_Dict_Clin_Lab_Abuse_09Aug2013'
@@ -359,7 +372,8 @@ if __name__ == '__main__':
     document_table = args.document_table  # 'vCOT_Clinabuse_data'
     meta_labels = args.meta_labels  # ['ft_id', 'chsid']
     text_labels = args.text_labels if args.text_labels else [args.text_label]  # 'note_text'
-    if not args.text_labels: print 'WARNING: Using deprecated option, --text-label; change to --text-labels.'
+    if not args.text_labels:
+        logging.warning('WARNING: Using deprecated option, --text-label; change to --text-labels.')
     concept_miner_v = args.concept_miner
     destination_table = args.destination_table  # 'COT_LOCAL_Clinabuse_out_20131020'
     batch_mode = args.batch_mode
@@ -377,10 +391,25 @@ if __name__ == '__main__':
         logging.config.dictConfig(mylogger.setup('ctakes-processor', loglevel=loglevel))
 
     try:
+        terms_options = {'valence': args.valence,
+                         'regex_variation': args.regex_variation,
+                         'word_order': args.word_order}
+        db_options = {'driver': args.driver,
+                      'server': args.server,
+                      'database': args.database}
+        if concept_miner_v == 1 or concept_miner_v == 2:
+            mine_options = {'max_length_of_search': args.max_length_of_search,
+                            'max_intervening_terms': args.max_intervening_terms}
+        elif concept_miner_v == 3:
+            mine_options = {'stopwords': args.stopwords,
+                            'patterns': args.patterns,
+                            'number_norm': args.number_normalization}
+        else:
+            raise ValueError('Concept Miner v.%d is not defined.' % concept_miner_v)
+
         prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_labels, concept_miner_v,
-                destination_table, batch_mode, batch_size, batch_number, args.server, args.database,
-                args.max_intervening_terms, args.max_length_of_search, args.valence, args.regex_variation,
-                args.word_order)
+                destination_table, batch_mode, batch_size, batch_number, db_options,
+                mine_options, terms_options)
     except Exception as e:
         import traceback
 

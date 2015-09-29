@@ -7,6 +7,7 @@ Description:
 
 import re
 
+
 def ssplit(texts):
     """ 
     Basic sentence splitting module which will also replace
@@ -19,16 +20,17 @@ def ssplit(texts):
         if not text: continue
         text = text.strip() + '\n'
         if text == '' or text == '\n': continue
-        line = text.replace('\n','\n ').replace('~~','\n ')
-        line = line.replace('~',' ').replace('     ',' ')
-        line = line.replace('  ',' ').replace('  ',' ')
-        result = re.findall(ssplitP,line)
+        line = text.replace('\n', '\n ').replace('~~', '\n ')
+        line = line.replace('~', ' ').replace('     ', ' ')
+        line = line.replace('  ', ' ').replace('  ', ' ')
+        result = re.findall(ssplitP, line)
         if result:
             sections += [res.strip() for res in result]
         else:
             sections += [line.strip()]
     return sections
-    
+
+
 def psplit(texts):
     """
     Phrase splitting.
@@ -41,16 +43,27 @@ def psplit(texts):
         if not text: continue
         text = text.strip() + '\n'
         if text == '' or text == '\n': continue
-        line = text.replace('\n','\n ').replace('~~','\n ')
-        line = line.replace('~',' ').replace('     ',' ')
-        line = line.replace('  ',' ').replace('  ',' ')
-        result = re.findall(ssplitP,line)
+        line = text.replace('\n', '\n ').replace('~~', '\n ')
+        line = line.replace('~', ' ').replace('     ', ' ')
+        line = line.replace('  ', ' ').replace('  ', ' ')
+        result = re.findall(ssplitP, line)
         if result:
             sections += [res.strip() for res in result]
         else:
             sections += [line.strip()]
     return sections
-    
+
+
 def replace_punctuation(text):
     import string
-    return text.translate(string.maketrans('',''), string.punctuation)
+
+    return text.translate(string.maketrans('', ''), string.punctuation)
+
+
+def is_number(s):
+    try:
+        float(s)
+    except ValueError:
+        return False
+    return True
+
