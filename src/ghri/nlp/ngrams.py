@@ -24,13 +24,13 @@ class Feature(object):
         self.ID_COUNTER += 1
         return self.ID_COUNTER
 
-    def feature(self):
+    def get_feature(self):
         return self.feature
 
-    def category(self):
+    def get_category(self):
         return self.category
 
-    def id(self):
+    def get_id(self):
         return self.id
 
 
@@ -57,8 +57,8 @@ class Excluder:
             for pat in self.patterns:
                 for feat in feature.split(joiner) + [feature]:
                     if pat.match(feat):
-                        return False
-        return True
+                        return True
+        return False
 
 
 class FeatureMiner(object):
@@ -80,20 +80,19 @@ class FeatureMiner(object):
         number_norm: whether to normalize numbers or not
         excluder: instance of feature.Excluder
         """
-        features = []
-        for phrase in sentences:
+        all_features = []
+        for sentence in sentences:
             pppw = None
             ppw = None
             pw = None
             us = JOINER
-            for word in phrase:
+            features = []
+            for word in replace_punctuation(sentence).split():
                 word = word.lower()
                 if self.excluder.excluding and word in self.excluder:
                     continue  # ignore word
                 elif self.number_norm and is_number(word):
                     word = NUMBER
-                else:
-                    word = replace_punctuation(word)
                 self._add_feature(features, word, _1GRAM)  # unigram
                 if pw:
                     self._add_feature(features, us.join((pw, word)), _2GRAM)  # bigram
@@ -109,4 +108,5 @@ class FeatureMiner(object):
                 pppw = ppw
                 ppw = pw
                 pw = word
-        return features
+            all_features.append(features)
+        return all_features

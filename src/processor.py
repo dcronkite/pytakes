@@ -196,7 +196,7 @@ def insert_into3(dbi, destination_table, feat, labels, meta):
     sql = "INSERT INTO %s (" % destination_table
     sql += ','.join(labels) + ') VALUES ('
     sql += '\'' + "','".join([str(x) for x in meta]) + '\','
-    sql += " {}, '{}', '{}'".format(feat.id(), feat.feature(), feat.category())
+    sql += " {}, '{}', '{}'".format(feat.get_id(), feat.get_feature(), feat.get_category())
     sql += ')'
     dbi.execute_commit(sql)
 
@@ -260,7 +260,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
     dbi = dbInterface(**db_options)
 
     all_types = ['varchar(255)'] * len(meta_labels)
-    all_labels = meta_labels
+    all_labels = list(meta_labels)
 
     if concept_miner_v == 1:
         negation_tuples = get_negex(dbi, neg_table)
@@ -357,11 +357,11 @@ if __name__ == '__main__':
     parser.add_argument('--word-order', required=False, default=None, type=int)
 
     # for concept miner version 3
-    parser.add_argument('--stopwords', required=False, default=None, nargs='+',
+    parser.add_argument('--stopwords', required=False, default=[], nargs='+',
                         help='List of words to skip over when collecting features. Does not support regexes.')
-    parser.add_argument('--exclusion-patterns', required=False, default=None, nargs='+',
+    parser.add_argument('--exclusion-patterns', required=False, default=[], nargs='+',
                         help='List of regex patterns which eliminate features matching the regex.')
-    parser.add_argument('--number-nomalization', required=False, default=True, type=bool,
+    parser.add_argument('--number-normalization', required=False, default=False, action='store_true',
                         help='Normalize all numbers to a standard feature regardless of their value.')
 
     args = parser.parse_args()
@@ -371,9 +371,14 @@ if __name__ == '__main__':
     neg_var = args.negation_variation
     document_table = args.document_table  # 'vCOT_Clinabuse_data'
     meta_labels = args.meta_labels  # ['ft_id', 'chsid']
-    text_labels = args.text_labels if args.text_labels else [args.text_label]  # 'note_text'
-    if not args.text_labels:
+    if args.text_labels:
+        text_labels = args.text_labels
+    elif args.text_label:
+        text_labels = [args.text_label]
         logging.warning('WARNING: Using deprecated option, --text-label; change to --text-labels.')
+    else:
+        raise ValueError('No text labels provided.')
+
     concept_miner_v = args.concept_miner
     destination_table = args.destination_table  # 'COT_LOCAL_Clinabuse_out_20131020'
     batch_mode = args.batch_mode
@@ -402,11 +407,10 @@ if __name__ == '__main__':
                             'max_intervening_terms': args.max_intervening_terms}
         elif concept_miner_v == 3:
             mine_options = {'stopwords': args.stopwords,
-                            'patterns': args.patterns,
+                            'patterns': args.exclusion_patterns,
                             'number_norm': args.number_normalization}
         else:
             raise ValueError('Concept Miner v.%d is not defined.' % concept_miner_v)
-
         prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_labels, concept_miner_v,
                 destination_table, batch_mode, batch_size, batch_number, db_options,
                 mine_options, terms_options)
