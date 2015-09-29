@@ -123,12 +123,12 @@ This notification is to inform you that another batch (%d total) has been comple
     with open(os.path.join(output_dir, 'bad_email.conf'), 'w') as out:
         out.write(
             r'''--recipients
-David Cronkite,cronkite.d@ghc.org
+%s
 --text
 This notification is to inform you that a batch (%d total) has failed for table %s.
 
 The log file is included for debugging.
-''' % (numberOfFiles, destination_table))
+''' % (email, numberOfFiles, destination_table))
 
 
 def createPostProcessBatch(pp_dir, destination_table, negation_table, negation_variation, driver,
