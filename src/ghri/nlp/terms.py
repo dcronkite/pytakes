@@ -103,8 +103,8 @@ class Word(object):
         in the sentence. First term < last term. '''
         
     def __gt__(self,other):
-        return self.begin_ > other.begin_ #and self.end_ > other.end_
-        
+        return self.begin_ > other.begin_ and self.end_ > other.end_  # must account for eq implementation
+
     def __eq__(self,other):
         ''' equal if any overlap in indices '''
         return (self.begin_ == other.begin_ or

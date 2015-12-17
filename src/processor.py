@@ -28,11 +28,16 @@ class Document(object):
 
     def __init__(self, meta_list, text):
         self.meta_ = meta_list
+        #print text
+        #print type(text)
         if isinstance(text, basestring):
             text = [text]
         else:
             text = [t for t in text if t]
-        self.text_ = self.fix_text(text[0])
+        try:
+            self.text_ = self.fix_text(text[0])
+        except IndexError as e:
+            self.text_ = ""
         for txt in text[1:]:
             self.add_text(txt)  # split added 20131224
 
@@ -95,7 +100,7 @@ def get_terms(dbi, term_table, valence=None, regex_variation=None, word_order=No
     columns = [x[0].lower() for x in columns]
     valence = valence if valence else '' if 'valence' in columns else '1 as'
     regex_variation = regex_variation if regex_variation else '' if 'regexvariation' in columns else '3 as'
-    word_order = word_order if word_order else '' if 'wordorder' in columns else '1 as'
+    word_order = word_order if word_order else '' if 'WordOrder' in columns else '1 as' #changed wordorder to WordOrder
 
     return dbi.execute_fetchall('''
         SELECT id
