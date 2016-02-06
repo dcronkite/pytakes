@@ -18,13 +18,12 @@ Edits:
 """
 import copy
 import numbers
-import string
 
 import regex as re
 
 from ghri.nlp import convert
 from ghri.nlp.terms import *
-from ghri.nlp.negex import myStatusTagger, sortRulesForStatus
+from ghri.nlp.negex import MyStatusTagger, sort_rules_for_status
 
 
 def remove_punct(text):
@@ -32,7 +31,7 @@ def remove_punct(text):
 
 
 class ConceptMiner(object):
-    def __init__(self, id_term_cat_val_rxVar_wdOrder):
+    def __init__(self, id_term_cat_val_rxvar_wdorder):
         self.cid_to_cat = {}  # ConceptID -> category
         self.cid_to_tids = {}  # ConceptID to TermIDs
         self.wordID = 0
@@ -48,9 +47,9 @@ class ConceptMiner(object):
         self.cid_word_order = {}  # word order constraints
         self.wordlist = []
 
-        self._unpack_concepts(id_term_cat_val_rxVar_wdOrder)
+        self._unpack_concepts(id_term_cat_val_rxvar_wdorder)
 
-    def _unpack_concepts(self, id_term_cat_val_rxVar_wdOrder):
+    def _unpack_concepts(self, id_term_cat_val_rxvar_wdorder):
         """
         Organizes input from database
         Parameters:
@@ -70,7 +69,7 @@ class ConceptMiner(object):
                             3: flexible
         """
         self.wordlist = []
-        for cid, term, cat, val, rxVar, wdOrder in id_term_cat_val_rxVar_wdOrder:
+        for cid, term, cat, val, rxVar, wdOrder in id_term_cat_val_rxvar_wdorder:
             # update references of ConceptID (think "CUI")
             self.cid_to_cat[cid] = cat
             self.cid_to_val[cid] = val
@@ -89,12 +88,12 @@ class ConceptMiner(object):
                     self.cid_to_tids[cid].append(self.wordID)
                 self.wordID += 1
 
-    def get_wordlist(self, id_term_cat_val_rxVar_wdOrder=None):
-        if id_term_cat_val_rxVar_wdOrder:
-            self._unpack_concepts(id_term_cat_val_rxVar_wdOrder)
+    def get_wordlist(self, id_term_cat_val_rxvar_wdorder=None):
+        if id_term_cat_val_rxvar_wdorder:
+            self._unpack_concepts(id_term_cat_val_rxvar_wdorder)
         return self.wordlist
 
-    def add_conversion(self, newTid_to_oldTids):
+    def add_conversion(self, newtid_to_oldtids):
         """
         Adds new one-to-many relations between
         term_ids. Each term-id may only appear
@@ -108,19 +107,19 @@ class ConceptMiner(object):
         """
 
         if not self.tid_to_tid:  # no extant conversions
-            self.tid_to_tid = copy.deepcopy(newTid_to_oldTids)
+            self.tid_to_tid = copy.deepcopy(newtid_to_oldtids)
         else:
-            for newTid in newTid_to_oldTids:
-                destinationTids = set()
-                for oldTid in newTid_to_oldTids[newTid]:
-                    destinationTids.add(newTid)
+            for newTid in newtid_to_oldtids:
+                dest_tids = set()
+                for oldTid in newtid_to_oldtids[newTid]:
+                    dest_tids.add(newTid)
                     if oldTid in self.tid_to_tid:
-                        destinationTids |= self.tid_to_tid[oldTid]
+                        dest_tids |= self.tid_to_tid[oldTid]
                         del self.tid_to_tid[oldTid]
                 if newTid in self.tid_to_tid:
-                    self.tid_to_tid[newTid] |= destinationTids
+                    self.tid_to_tid[newTid] |= dest_tids
                 else:
-                    self.tid_to_tid[newTid] = destinationTids
+                    self.tid_to_tid[newTid] = dest_tids
 
     def get_original_term_id(self, term_ids):
         """
@@ -138,7 +137,7 @@ class ConceptMiner(object):
                 result |= self.tid_to_tid[term_id]
         return result
 
-    def _checkValence(self, cid, judgment):
+    def _check_valence(self, cid, judgment):
         """
         Checks the value of the term's valence. 
         If valence==0, then the term must be negated in order to be positive.
@@ -219,10 +218,10 @@ class ConceptMiner(object):
                     if remain_set:  # concept has additional terms (> 1 word)
                         concept = self._aggregate(words[i:],
                                                   remain_set,
-                                                  cword.getCertainty(),
-                                                  cword.isHypothetical(),
-                                                  cword.isHistorical(),
-                                                  cword.isNotPatient(),
+                                                  cword.get_certainty(),
+                                                  cword.is_hypothetical(),
+                                                  cword.is_historical(),
+                                                  cword.is_not_patient(),
                                                   cword.begin(),
                                                   cid,
                                                   max_length_of_search,
@@ -234,10 +233,10 @@ class ConceptMiner(object):
                                           cword.end(),
                                           cid,
                                           self.cid_to_cat[cid],
-                                          self._checkValence(cid, cword.getCertainty()),
-                                          cword.isHypothetical(),
-                                          cword.isHistorical(),
-                                          cword.isNotPatient())
+                                          self._check_valence(cid, cword.get_certainty()),
+                                          cword.is_hypothetical(),
+                                          cword.is_historical(),
+                                          cword.is_not_patient())
                     if concept:  # function might return "False"
                         concepts.append(concept)
             else:  # current word is not a Term
@@ -279,10 +278,10 @@ class ConceptMiner(object):
                     else:  # term in concept
                         words_to_look_at += words_to_look_at_incr
                         # update negex status with more egregious form
-                        certainty = min(certainty, nword.getCertainty())
-                        hypothetical = max(hypothetical, nword.isHypothetical())
-                        historical = max(historical, nword.isHistorical())
-                        not_patient = max(not_patient, nword.isNotPatient())
+                        certainty = min(certainty, nword.get_certainty())
+                        hypothetical = max(hypothetical, nword.is_hypothetical())
+                        historical = max(historical, nword.is_historical())
+                        not_patient = max(not_patient, nword.is_not_patient())
                         if temp_remain_set:  # more terms to find
                             remain_set = temp_remain_set
                         else:  # empty list or set (cannot be None)
@@ -291,7 +290,7 @@ class ConceptMiner(object):
                                            words[j].end(),
                                            cid,
                                            self.cid_to_cat[cid],
-                                           self._checkValence(cid, certainty),
+                                           self._check_valence(cid, certainty),
                                            hypothetical,
                                            historical,
                                            not_patient)
@@ -302,7 +301,7 @@ class ConceptMiner(object):
 
 
 class MinerCask(object):
-    def __init__(self, id_term_cat_val_rxVar_wdOrder, negation_tuples, rxVar=0, max_intervening_terms=2):
+    def __init__(self, id_term_cat_val_rxvar_wdorder, negation_tuples, rxvar=0, max_intervening_terms=2):
         """
 
         Parameters
@@ -317,13 +316,13 @@ class MinerCask(object):
             where type is 4 letter code from NegEx
         """
         # prepare concept miner
-        self.miner = ConceptMiner(id_term_cat_val_rxVar_wdOrder)
+        self.miner = ConceptMiner(id_term_cat_val_rxvar_wdorder)
         self.rx_id, newTids_to_origTids = convert.convert_to_regex(self.miner.get_wordlist())
         self.miner.add_conversion(newTids_to_origTids)
-        self.table = string.maketrans("", "")
+        self.table = str.maketrans("", "")
 
         # prepare negation tagger
-        self.tagger = myStatusTagger(sortRulesForStatus(negation_tuples), rxVar=rxVar)
+        self.tagger = MyStatusTagger(sort_rules_for_status(negation_tuples))
         if max_intervening_terms:
             self.max_intervening_terms = max_intervening_terms
         else:
@@ -334,24 +333,24 @@ class MinerCask(object):
             max_intervening_terms = self.max_intervening_terms
         if isinstance(sentences, str):
             sentences = [sentences]
-        resultConcepts = []
+        resultconcepts = []
         offset = 0  # length of all previous sentences (for Concept location)
         for orig_sentence in sentences:
             sentence = self.prepare(orig_sentence)
             # print sentence
             # offset added 20131212, but this number isn't exact becuase of
             # the removal of punctuation
-            termList = clean_terms(find_terms(self.rx_id, sentence, offset=offset))
-            termList += self.tagger.findNegation(sentence)
-            termList += add_words(termList, sentence)
-            termList.sort()
-            sentence = self.tagger.analyzeSentence(termList)
-            resultConcepts.append(self.miner.aggregate(sentence, max_length_of_search=max_length_of_search,
+            termlist = clean_terms(find_terms(self.rx_id, sentence, offset=offset))
+            termlist += self.tagger.find_negation(sentence)
+            termlist += add_words(termlist, sentence)
+            termlist.sort()
+            sentence = self.tagger.analyze_sentence(termlist)
+            resultconcepts.append(self.miner.aggregate(sentence, max_length_of_search=max_length_of_search,
                                                        max_intervening_terms=max_intervening_terms))
             # change orig_sentence to sentence to get an offset
             # that is true after the "prepare" statement below
             offset += len(orig_sentence)
-        return resultConcepts
+        return resultconcepts
 
     def prepare(self, sentence):
         try:
@@ -374,33 +373,3 @@ def assert_words(lst):
     for t in types:
         print(t, ':', types[t])
     print('-' * 20)
-
-
-if __name__ == '__main__':
-
-    from processor import *
-    from .sentence_boundary import SentenceBoundary
-    
-
-    dbi = dbInterface()
-    terms = getTerms(dbi, 'COT_Dict_Clin_Lab_Abuse_08Nov2013')
-    negation_tuples = getContext(dbi, 'RES_statusTriggers1_4') + [('article', '[OTHR]', 3), ("dont", '[NEGN]', 2),
-                                                                  ('used to be', '[HIST]', 2)]
-    mc = miner2.MinerCask(terms, negation_tuples, 1)
-    sb = SentenceBoundary(dbi)
-
-    text = '''
- He does NOT have any history of opiate abuse or addictions nor is that at all suspected. 
-'''
-
-    sentences = []
-    for section in sb.ssplit(' '.join(text.split('\n'))):
-        sentences += section.split('\n')
-    sections = mc.mine(sentences)
-    for num, (sect, sent) in enumerate(zip(sections, sentences)):
-        if not sect: continue
-        print("Sentence", num)
-        print(sent)
-        for feat in sect:
-            print('>', feat.word(), feat.type(), feat.getCertainty(), feat.isHypothetical(), feat.isHistorical(), feat.isNotPatient())
-        print('')

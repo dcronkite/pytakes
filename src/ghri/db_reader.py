@@ -5,8 +5,6 @@ TODO: Make into sql_alchemy.
 
 import pyodbc
 import time
-from datetime import datetime
-from ghri import mylogger
 import logging
 
 
@@ -20,7 +18,7 @@ def connection_continue(func):
     return wrapper
 
 
-class dbInterface(object):
+class DbInterface(object):
     def __init__(self, driver='', server='', database='', loglevel=None):
         """
         open connection
@@ -93,11 +91,8 @@ class dbInterface(object):
         self.execute(text, debug)
         return self.fetchall()
 
-    def convertDatetimeToPython(self, datestring):
-        return datetime.strptime(datestring, '%Y-%m-%d %H:%M:%S.%f')
-
-    def getTableColumns(self, table_name):
-        '''returns columns of specified table '''
+    def get_table_columns(self, table_name):
+        """returns columns of specified table """
         cols = self.execute_fetchall('''
             SELECT column_name
             FROM INFORMATION_SCHEMA.COLUMNS
@@ -136,12 +131,12 @@ class dbInterface(object):
                 continue
 
 
-class NLPdevWrapper(dbInterface):
+class NLPdevWrapper(DbInterface):
     def __init__(self, host='ghriNLP', user='',
                  password='', database='NLPdev', loglevel=30):
         super(NLPdevWrapper, self).__init__(host, database, loglevel)
 
-    def getNegex(self):
+    def get_negex(self):
         """
         @return: list of (negex, typeOfNegex)
         """
@@ -154,19 +149,18 @@ class NLPdevWrapper(dbInterface):
                      """)
 
 
-class ClarityDB(dbInterface):
+class ClarityDb(DbInterface):
     def __init__(self, host='EpClarity_RPT:1433', user='',
                  password='', database='Clarity'):
-        super(ClarityDB, self).__init__(host, user, password, database)
+        super(ClarityDb, self).__init__(host, user, password, database)
 
 
-def parseDatabaseArgs(args):
+def parse_dbargs(args):
     import argparse
 
     db_parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
 
     db_parser.add_argument('--password', metavar='pwd', required=True, help='SQL Server password.')
     db_parser.add_argument('--user', metavar='u', default='GHCMASTER\crondj1', help='SQL Server username.')
-    db_args, _ = db_parser.parse_known_args()
+    db_args, _ = db_parser.parse_known_args(args)
     return db_args
-    

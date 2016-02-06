@@ -11,7 +11,8 @@ import os
 
 from .unix import mkdir_p
 
-def setup(name=__name__,logdir='log',console=True,text=True,loglevel='DEBUG',logfile=None):
+
+def setup(name=__name__, logdir='log', console=True, text=True, loglevel='DEBUG', logfile=None):
     """
     function:
         prepares a logger that can print to both the console and a logfile
@@ -24,55 +25,63 @@ def setup(name=__name__,logdir='log',console=True,text=True,loglevel='DEBUG',log
         logfile - name of logfile (default=name + '.log')
     use:
         logging.config.dictConfig( mylogger.setup(name, etc.) )
+        :param console:
+        :param text:
+        :param loglevel:
+        :param logfile:
+        :param logdir:
+        :param name:
     """
     logdir = os.path.abspath(logdir)
     mkdir_p(logdir)
     if not logfile:
         logfile = name + '.log'
-        
+
     handler_list = []
-    if console: handler_list.append('console')
-    if text: handler_list.append('text')
-    
-    configDict = {'version' : 1,
-                  'disable_existing_loggers' : False,
-                  'formatters' : { 
-                                'standard' : {
-                                            'format' : '%(asctime)s - %(levelname)s: %(message)s',
-                                             },
-                                   },
-                  'handlers' : {
-                            'text' : {
-                                            'level' : loglevel,
-                                            'class' :'logging.handlers.RotatingFileHandler',
-                                            'backupCount' : 5,
-                                            'filename' : os.path.join(logdir, logfile),
-                                            'formatter' : 'standard'
-                                            },
-                            'console' : {
-                                        'class' : 'logging.StreamHandler',
-                                        'level' : loglevel,
-                                        'formatter' : 'standard',
-                                        'stream' : 'ext://sys.stdout'
-                                        }
-                                  },
-                  'loggers' : {
-                            name : {
-                                'level' : loglevel,
-                                'handlers' : handler_list
-                                    }
-                              },
-                  'root' : {
-                            'level' : loglevel,
-                            'handlers' : handler_list}
-                
-                      }
+    if console:
+        handler_list.append('console')
+    if text:
+        handler_list.append('text')
 
-    return configDict
+    config_dict = {'version': 1,
+                   'disable_existing_loggers': False,
+                   'formatters': {
+                       'standard': {
+                           'format': '%(asctime)s - %(levelname)s: %(message)s',
+                       },
+                   },
+                   'handlers': {
+                       'text': {
+                           'level': loglevel,
+                           'class': 'logging.handlers.RotatingFileHandler',
+                           'backupCount': 5,
+                           'filename': os.path.join(logdir, logfile),
+                           'formatter': 'standard'
+                       },
+                       'console': {
+                           'class': 'logging.StreamHandler',
+                           'level': loglevel,
+                           'formatter': 'standard',
+                           'stream': 'ext://sys.stdout'
+                       }
+                   },
+                   'loggers': {
+                       name: {
+                           'level': loglevel,
+                           'handlers': handler_list
+                       }
+                   },
+                   'root': {
+                       'level': loglevel,
+                       'handlers': handler_list}
 
-    
-def setup_local(name=__name__,logdir='log',console=True,text=True,loglevel=logging.DEBUG,logfile=None):
-        """
+                   }
+
+    return config_dict
+
+
+def setup_local(name=__name__, logdir='log', console=True, text=True, loglevel=logging.DEBUG, logfile=None):
+    """
         function:
                 prepares a logger that can print to both the console and a logfile
         parameters:
@@ -85,45 +94,57 @@ def setup_local(name=__name__,logdir='log',console=True,text=True,loglevel=loggi
         use:
                 mylogger.setup(name, etc.)
                 logger = mylogger.getLogger(name)
+                :param name:
+                :param logdir:
+                :param console:
+                :param text:
+                :param loglevel:
+                :param logfile:
         """
-        logdir = os.path.abspath(logdir)
-        mkdir_p(logdir)
-        logger = logging.getLogger(name)
-        logger.setLevel(loglevel)
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
-        
-        if not logfile:
-                logfile = name + '.log'
-        
-        if text:
-                txt_handler = RotatingFileHandler(os.path.join(logdir,logfile), backupCount=5)
-                txt_handler.doRollover()
-                txt_handler.setFormatter(formatter)
-                logger.addHandler(txt_handler)
-        
-        if console:
-                scrn_handler = logging.StreamHandler()
-                scrn_handler.setFormatter(formatter)
-                logger.addHandler(scrn_handler)
-                
-        return logging.getLogger(name)
-    
-def getLogger(name=__name__):
+    logdir = os.path.abspath(logdir)
+    mkdir_p(logdir)
+    logger = logging.getLogger(name)
+    logger.setLevel(loglevel)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
+
+    if not logfile:
+        logfile = name + '.log'
+
+    if text:
+        txt_handler = RotatingFileHandler(os.path.join(logdir, logfile), backupCount=5)
+        txt_handler.doRollover()
+        txt_handler.setFormatter(formatter)
+        logger.addHandler(txt_handler)
+
+    if console:
+        scrn_handler = logging.StreamHandler()
+        scrn_handler.setFormatter(formatter)
+        logger.addHandler(scrn_handler)
+
     return logging.getLogger(name)
-        
-    
-def resolveVerbosity(verbosity_level):
-    '''
+
+
+def get_logger(name=__name__):
+    return logging.getLogger(name)
+
+
+def resolve_verbosity(verbosity_level):
+    """
     Resolves verbosity based on the assumption that:
     3=Debug
     2=info
     1=warning
     0=error
-    
+
     Returns logging.[LOGLEVEL]
-    '''
-    if verbosity_level <= 0: loglevel=logging.ERROR
-    elif verbosity_level == 1: loglevel=logging.WARNING
-    elif verbosity_level == 2: loglevel=logging.INFO
-    else: loglevel=logging.DEBUG    
+    :param verbosity_level:
+    """
+    if verbosity_level <= 0:
+        loglevel = logging.ERROR
+    elif verbosity_level == 1:
+        loglevel = logging.WARNING
+    elif verbosity_level == 2:
+        loglevel = logging.INFO
+    else:
+        loglevel = logging.DEBUG
     return loglevel

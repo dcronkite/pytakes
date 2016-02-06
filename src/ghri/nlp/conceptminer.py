@@ -15,9 +15,7 @@ Edits:
 
 """
 import copy
-import string
 import numbers
-
 from . import convert
 from .negex import *
 
@@ -27,7 +25,7 @@ def remove_punct(text):
 
 
 class ConceptMiner(object):
-    def __init__(self, id_term_cat_val_rxVar_wdOrder, rxVar=0):
+    def __init__(self, id_term_cat_val_rxvar_wdorder, rx_var=0):
         self.cid_to_cat = {}  # ConceptID -> category
         self.cid_to_tids = {}  # ConceptID to TermIDs
         self.wordID = 0
@@ -36,9 +34,9 @@ class ConceptMiner(object):
         self.cid_word_order = {}  # word order constraints
         self.wordlist = []
 
-        self._unpack_concepts(id_term_cat_val_rxVar_wdOrder, rxVar=rxVar)
+        self._unpack_concepts(id_term_cat_val_rxvar_wdorder)
 
-    def _unpack_concepts(self, id_term_cat_val_rxVar_wdOrder):
+    def _unpack_concepts(self, id_term_cat_val_rxvar_wdorder):
         """
         Organizes input from database
         Parameters:
@@ -58,7 +56,7 @@ class ConceptMiner(object):
                             3: flexible
         """
         self.wordlist = []
-        for cid, term, cat, val, rxVar, wdOrder in id_term_cat_val_rxVar_wdOrder:
+        for cid, term, cat, val, rxVar, wdOrder in id_term_cat_val_rxvar_wdorder:
             self.cid_to_cat[cid] = cat
             self.cid_to_val[cid] = val
             self.cid_word_order[cid] = wdOrder
@@ -75,12 +73,12 @@ class ConceptMiner(object):
                     self.cid_to_tids[cid].append(self.wordID)
                 self.wordID += 1
 
-    def get_wordlist(self, id_term_cat_val_rxVar_wdOrder=None):
-        if id_term_cat_val_rxVar_wdOrder:
-            self._unpack_concepts(id_term_cat_val_rxVar_wdOrder)
+    def get_wordlist(self, id_term_cat_val_rxvar_wdorder=None):
+        if id_term_cat_val_rxvar_wdorder:
+            self._unpack_concepts(id_term_cat_val_rxvar_wdorder)
         return self.wordlist
 
-    def add_conversion(self, newTid_to_oldTids):
+    def add_conversion(self, newtid_to_oldtids):
         """
         Adds new one-to-many relations between
         term_ids. Each term-id may only appear
@@ -94,19 +92,19 @@ class ConceptMiner(object):
         """
 
         if not self.tid_to_tid:  # no extant conversions
-            self.tid_to_tid = copy.deepcopy(newTid_to_oldTids)
+            self.tid_to_tid = copy.deepcopy(newtid_to_oldtids)
         else:
-            for newTid in newTid_to_oldTids:
-                destinationTids = set()
-                for oldTid in newTid_to_oldTids[newTid]:
-                    destinationTids.add(newTid)
+            for newTid in newtid_to_oldtids:
+                destinationtids = set()
+                for oldTid in newtid_to_oldtids[newTid]:
+                    destinationtids.add(newTid)
                     if oldTid in self.tid_to_tid:
-                        destinationTids |= self.tid_to_tid[oldTid]
+                        destinationtids |= self.tid_to_tid[oldTid]
                         del self.tid_to_tid[oldTid]
                 if newTid in self.tid_to_tid:
-                    self.tid_to_tid[newTid] |= destinationTids
+                    self.tid_to_tid[newTid] |= destinationtids
                 else:
-                    self.tid_to_tid[newTid] = destinationTids
+                    self.tid_to_tid[newTid] = destinationtids
 
     def get_original_term_id(self, term_ids):
         if isinstance(term_ids, numbers.Real):
@@ -176,8 +174,7 @@ class ConceptMiner(object):
         Parameters:
             words-list of word-derived objects including
                 negation, words, and terms
-                only Terms will be considered in determining
-                concepts
+                only Terms will be considered in determining concepts
             max_length_of_search- maximum number of words to look at; increments
             max_num_intervening_terms- maximum allowed number of intervening words
                 between words in concept
@@ -199,8 +196,8 @@ class ConceptMiner(object):
                     if remain_set:
                         concept = self._aggregate(words[i + 1:],
                                                   remain_set,
-                                                  cword.isNegated(),
-                                                  cword.isPossible(),  # added 2013-11-05
+                                                  cword.is_negated(),
+                                                  cword.is_possible(),  # added 2013-11-05
                                                   cword.begin(),
                                                   cid,
                                                   max_length_of_search,
@@ -212,8 +209,8 @@ class ConceptMiner(object):
                                           cword.end(),
                                           cid,
                                           self.cid_to_cat[cid],
-                                          self._check_valence(cid, cword.isNegated()),
-                                          cword.isPossible())  # added 2013-11-05
+                                          self._check_valence(cid, cword.is_negated()),
+                                          cword.is_possible())  # added 2013-11-05
 
                     if concept:  # function might return "False"
                         concepts.append(concept)
@@ -241,8 +238,8 @@ class ConceptMiner(object):
                     else:
                         words_to_find += 2
                         if temp_remain_set:  # more terms to find
-                            negated = (negated or nword.isNegated())
-                            possible = (possible or nword.isPossible())  # added 2013-11-05
+                            negated = (negated or nword.is_negated())
+                            possible = (possible or nword.is_possible())  # added 2013-11-05
                             remain_set = temp_remain_set
                         else:  # empty list or set (not None)
                             return Concept('',
@@ -250,16 +247,17 @@ class ConceptMiner(object):
                                            words[j].end(),
                                            cid,
                                            self.cid_to_cat[cid],
-                                           self._check_valence(cid, negated or nword.isNegated()),
-                                           possible or nword.isPossible())  # added 2013-11-05
+                                           self._check_valence(cid, negated or nword.is_negated()),
+                                           possible or nword.is_possible())  # added 2013-11-05
 
             else:
                 break
         return False
 
 
+# noinspection PyUnresolvedReferences
 class MinerCask(object):
-    def __init__(self, id_term_cat_val_rxVar_wdOrder, negation_tuples, max_intervening_terms=2):
+    def __init__(self, id_term_cat_val_rxvar_wdorder, negation_tuples, max_intervening_terms=2):
         """
 
         Parameters
@@ -273,13 +271,13 @@ class MinerCask(object):
             where type is 4 letter code from NegEx
         """
         # prepare concept miner
-        self.miner = ConceptMiner(id_term_cat_val_rxVar_wdOrder)
+        self.miner = ConceptMiner(id_term_cat_val_rxvar_wdorder)
         self.rx_id, new_tids_to_orig_tids = convert.convert_to_regex(self.miner.get_wordlist())
         self.miner.add_conversion(new_tids_to_orig_tids)
-        self.table = string.maketrans("", "")
+        self.table = str.maketrans("", "")
 
         # prepare negation tagger
-        self.tagger = myNegTagger(sortRulesFromTuple(negation_tuples))
+        self.tagger = MyNegTagger(sort_rules_from_tuple(negation_tuples))
         if max_intervening_terms:
             self.max_intervening_terms = max_intervening_terms
         else:
@@ -297,10 +295,10 @@ class MinerCask(object):
             # print sentence
             termlist = clean_terms(
                 find_terms(self.rx_id, sentence, offset=offset))  # added 20131212, meant to add to conceptminer2
-            termlist += self.tagger.findNegation(sentence)
+            termlist += self.tagger.find_negation(sentence)
             termlist += add_words(termlist, sentence)
             termlist.sort()
-            sentence = self.tagger.negateSentence(termlist)
+            sentence = self.tagger.negate_sentence(termlist)
 
             result_concepts.append(self.miner.aggregate(sentence, max_length_of_search=max_length_of_search,
                                                         max_num_intervening_terms=max_intervening_terms))
@@ -343,10 +341,10 @@ def mine(id_term_cat, negation_tuples, textlist):
         textlist = [textlist]
 
     miner = ConceptMiner(id_term_cat)
-    rx_id, newTids_to_origTids = convert.convert_text_to_regex(miner.get_wordlist())
-    miner.add_conversion(newTids_to_origTids)
+    rx_id, newtids_to_origtids = convert.convert_text_to_regex(miner.get_wordlist())
+    miner.add_conversion(newtids_to_origtids)
 
-    tagger = myNegTagger(sortRulesFromTuple(negation_tuples))
+    tagger = MyNegTagger(sort_rules_from_tuple(negation_tuples))
 
     result_texts = []
     for text in textlist:
@@ -354,10 +352,10 @@ def mine(id_term_cat, negation_tuples, textlist):
 
         termlist = clean_terms(find_terms(rx_id, text))
 
-        termlist += tagger.findNegation(text)
+        termlist += tagger.find_negation(text)
         termlist += add_words(termlist, text)
         termlist.sort()
-        sentence = tagger.negateSentence(termlist)
+        sentence = tagger.negate_sentence(termlist)
         result_texts.append(miner.aggregate(sentence))
 
     return result_texts

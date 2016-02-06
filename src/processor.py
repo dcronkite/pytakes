@@ -14,7 +14,7 @@ import math
 import pyodbc
 import sys
 
-from ghri.db_reader import dbInterface
+from ghri.db_reader import DbInterface
 from ghri.nlp import conceptminer as miner
 from ghri.nlp import conceptminer2 as miner2
 from ghri.nlp.sentence_boundary import SentenceBoundary
@@ -28,8 +28,6 @@ class Document(object):
 
     def __init__(self, meta_list, text):
         self.meta_ = meta_list
-        #print text
-        #print type(text)
         if isinstance(text, str):
             text = [text]
         else:
@@ -159,8 +157,8 @@ def insert_into(dbi, destination_table, feat, text, labels, meta):
              text[feat.begin():feat.end()].strip(),
              text[get_index(len(text), feat.begin() - 75):
              get_index(len(text), feat.end() + 75)],
-             0 if feat.isNegated() else 1,
-             0 if feat.isPossible() else 1))
+             0 if feat.is_negated() else 1,
+             0 if feat.is_possible() else 1))
     dbi.execute_commit(sql)
 
 
@@ -177,14 +175,14 @@ def insert_into2(dbi, destination_table, feat, text, labels, meta):
              text[get_index(len(text), feat.begin() - 75):
              get_index(len(text), feat.end() + 75)],
              text,
-             feat.getCertainty(),
-             1 if feat.isHypothetical() else 0,
-             1 if feat.isHistorical() else 0,
-             1 if feat.isNotPatient() else 0,
+             feat.get_certainty(),
+             1 if feat.is_hypothetical() else 0,
+             1 if feat.is_historical() else 0,
+             1 if feat.is_not_patient() else 0,
              feat.begin(),
              feat.end(),
-             feat.getAbsoluteBegin(),
-             feat.getAbsoluteEnd()))
+             feat.get_absolute_begin(),
+             feat.get_absolute_end()))
     dbi.execute_commit(sql)
 
 
@@ -262,7 +260,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
     """
 
     """
-    dbi = dbInterface(**db_options)
+    dbi = DbInterface(**db_options)
 
     all_types = ['varchar(255)'] * len(meta_labels)
     all_labels = list(meta_labels)
@@ -390,7 +388,7 @@ if __name__ == '__main__':
     batch_size = args.batch_size
     batch_number = args.batch_number
 
-    loglevel = mylogger.resolveVerbosity(args.verbosity)
+    loglevel = mylogger.resolve_verbosity(args.verbosity)
 
     if batch_mode and batch_number and len(batch_number) > 1:
         batch_number.sort()

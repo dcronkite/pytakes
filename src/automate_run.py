@@ -23,7 +23,7 @@ import logging.config
 import math
 import os
 
-from ghri.db_reader import dbInterface
+from ghri.db_reader import DbInterface
 from ghri import mylogger
 from ghri.unix import mkdir_p
 from ghri.utils import get_valid_args
@@ -56,20 +56,20 @@ def is_this_okay():
 
 def get_batch_size(count):
     while True:
-        batchSize = get_integer('Size of batches: ')
-        batches = int(math.ceil(float(count) / batchSize))
+        batchsize = get_integer('Size of batches: ')
+        batches = int(math.ceil(float(count) / batchsize))
         print("This will result in %d batches." % batches)
         if is_this_okay():
-            return batchSize, batches
+            return batchsize, batches
 
 
 def get_number_of_files(batches):
     while True:
-        numberOfFiles = get_integer('Number of batch files: ')
-        batchesPerFile = int(math.ceil(float(batches) / numberOfFiles))
-        print('This will result in %d batches per file.' % batchesPerFile)
+        filecount = get_integer('Number of batch files: ')
+        filebatchcount = int(math.ceil(float(batches) / filecount))
+        print('This will result in %d batches per file.' % filebatchcount)
         if is_this_okay():
-            return numberOfFiles, batchesPerFile
+            return filecount, filebatchcount
 
 
 def resolve_formatting(label, value):
@@ -123,14 +123,14 @@ pause''' % (number, number, number, number, batch_start))
     return
 
 
-def create_email_file(output_dir, numberOfFiles, destination_table, recipients):
+def create_email_file(output_dir, filecount, destination_table, recipients):
     email = '\n'.join(list('\n'.join(['--recipients', rec]) for rec in recipients))
     with open(os.path.join(output_dir, 'email.conf'), 'w') as out:
         out.write(
             r'''%s
 --text
 This notification is to inform you that another batch (%d total) has been completed for table %s.
-''' % (email, numberOfFiles, destination_table))
+''' % (email, filecount, destination_table))
 
     with open(os.path.join(output_dir, 'bad_email.conf'), 'w') as out:
         out.write(
@@ -140,7 +140,7 @@ This notification is to inform you that another batch (%d total) has been comple
 This notification is to inform you that a batch (%d total) has failed for table %s.
 
 The log file is included for debugging.
-''' % (email, numberOfFiles, destination_table))
+''' % (email, filecount, destination_table))
 
 
 def create_post_process_batch(pp_dir, destination_table, negation_table, negation_variation, driver,
@@ -177,24 +177,24 @@ def main(dbi,
          negation_table, negation_variation):
     count = get_document_count(dbi, document_table)
     print('Found %d documents in %s.' % (count, document_table))
-    batchSize, batchCount = get_batch_size(count)
-    numberOfFiles, batchesPerFile = get_number_of_files(batchCount)
+    batchsize, batchcount = get_batch_size(count)
+    filecount, batchesperfile = get_number_of_files(batchcount)
 
-    logging.info('Number of batches: %d' % batchCount)
-    logging.info('Batch size: %d' % batchSize)
-    logging.info('Number of files: %d' % numberOfFiles)
-    logging.info('Batches per file: %d' % batchesPerFile)
+    logging.info('Number of batches: %d' % batchcount)
+    logging.info('Batch size: %d' % batchsize)
+    logging.info('Number of files: %d' % filecount)
+    logging.info('Batches per file: %d' % batchesperfile)
 
     mkdir_p(output_dir)
     batch_start = 1
-    for i in range(1, numberOfFiles + 1):
-        batch_end = batch_start + batchesPerFile
+    for i in range(1, filecount + 1):
+        batch_end = batch_start + batchesperfile
         create_batch_file(output_dir, i, document_table, destination_table,
-                          batchSize, batch_start, batch_end, driver, server, database, meta_labels,
+                          batchsize, batch_start, batch_end, driver, server, database, meta_labels,
                           cm_options)
         batch_start = batch_end
 
-    create_email_file(output_dir, numberOfFiles, destination_table, recipients)
+    create_email_file(output_dir, filecount, destination_table, recipients)
 
     postprocess_dir = os.path.join(output_dir, 'post')
 
@@ -243,10 +243,10 @@ if __name__ == '__main__':
                         help='In format of "name,email@address"')
     args = parser.parse_args()
 
-    loglevel = mylogger.resolveVerbosity(args.verbosity)
+    loglevel = mylogger.resolve_verbosity(args.verbosity)
     logging.config.dictConfig(mylogger.setup(name='automate_run', loglevel=loglevel))
 
-    dbi = dbInterface(driver=args.driver, server=args.server, database=args.database, loglevel=loglevel)
+    dbi = DbInterface(driver=args.driver, server=args.server, database=args.database, loglevel=loglevel)
 
     if args.concept_miner == 2:
         cm_options = [

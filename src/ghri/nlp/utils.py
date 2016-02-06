@@ -5,7 +5,8 @@ Description:
     Utility functions for repeated NLP use.
 """
 
-import re
+import regex as re
+from datetime import datetime
 
 
 def ssplit(texts):
@@ -14,7 +15,7 @@ def ssplit(texts):
     stray '~~' and '~' assumed as input for some pathology
     data.
     """
-    ssplitP = re.compile(r'(\S.+?[.!?\n])(?=\s+|$)')
+    ssplit_p = re.compile(r'(\S.+?[.!?\n])(?=\s+|$)')
     sections = []
     for text in texts:
         if not text: continue
@@ -23,7 +24,7 @@ def ssplit(texts):
         line = text.replace('\n', '\n ').replace('~~', '\n ')
         line = line.replace('~', ' ').replace('     ', ' ')
         line = line.replace('  ', ' ').replace('  ', ' ')
-        result = re.findall(ssplitP, line)
+        result = re.findall(ssplit_p, line)
         if result:
             sections += [res.strip() for res in result]
         else:
@@ -37,7 +38,7 @@ def psplit(texts):
     """
     if isinstance(texts, str):
         texts = [texts]
-    ssplitP = re.compile(r'(\S.+?[.!?\n;:])(?=\s+|$)')
+    ssplit_p = re.compile(r'(\S.+?[.!?\n;:])(?=\s+|$)')
     sections = []
     for text in texts:
         if not text: continue
@@ -46,7 +47,7 @@ def psplit(texts):
         line = text.replace('\n', '\n ').replace('~~', '\n ')
         line = line.replace('~', ' ').replace('     ', ' ')
         line = line.replace('  ', ' ').replace('  ', ' ')
-        result = re.findall(ssplitP, line)
+        result = re.findall(ssplit_p, line)
         if result:
             sections += [res.strip() for res in result]
         else:
@@ -55,9 +56,7 @@ def psplit(texts):
 
 
 def replace_punctuation(text):
-    import string
-
-    return text.translate(string.maketrans('', ''), string.punctuation)
+    return re.sub(r"\p{P}+", "", text)
 
 
 def is_number(s):
@@ -67,3 +66,6 @@ def is_number(s):
         return False
     return True
 
+
+def convert_sql_datetime_to_python(datestring):
+    return datetime.strptime(datestring, '%Y-%m-%d %H:%M:%S.%f')

@@ -92,6 +92,12 @@ def convert_text_to_regex(strings_ids, convertall=False,
         convertall=False: if true, all strings will be
             converted to regexes regardless of a previous
             regex matching it
+            :param strings_ids:
+            :param convertall:
+            :param affixmorphs:
+            :param suffixmorphs:
+            :param medialmorphs:
+            :param finalmorphs:
     """
     if not affixmorphs:
         affixmorphs = get_affix_morphs()
@@ -104,7 +110,7 @@ def convert_text_to_regex(strings_ids, convertall=False,
 
     regexes = []  # [(regex, id), ...]
     updated_ids = {}  # new_id -> old_id
-    for string, id in strings_ids:
+    for string, id_ in strings_ids:
         if not convertall:
             # see if string is matched by previously-
             #    created RegEx
@@ -114,7 +120,7 @@ def convert_text_to_regex(strings_ids, convertall=False,
                     found = True
                     if rx_id not in updated_ids:
                         updated_ids[rx_id] = {rx_id}
-                    updated_ids[rx_id].add(id)
+                    updated_ids[rx_id].add(id_)
                     break
             if found:
                 continue  # Duplicate RegEx was found
@@ -123,7 +129,7 @@ def convert_text_to_regex(strings_ids, convertall=False,
         start_idx = 0  # ensure first letter is unable to change
         orig_string = string
 
-        ## 1) convert string to regex
+        # 1) convert string to regex
         # a) convert any prefix
         for morph, repl, L, rLen in affixmorphs:
             if morph.match(string):
@@ -152,7 +158,7 @@ def convert_text_to_regex(strings_ids, convertall=False,
             else:
                 string += r's?'
 
-        ## 2) add Error permissions
+        # 2) add Error permissions
         length -= 1  # removing the first term
         if length in [4, 5, 6]:
             string = (string[:start_idx + 1] + '(' + string[start_idx + 1:] + '){i<2,d<2}')
@@ -161,23 +167,23 @@ def convert_text_to_regex(strings_ids, convertall=False,
         elif length >= 10:
             string = (string[:start_idx + 1] + '(' + string[start_idx + 1:] + '){e<4}')
 
-        ## 3) add word boundary
+        # 3) add word boundary
         string = r'\b' + string + r'\b'
 
-        ## 4) compile string to regex
+        # 4) compile string to regex
         rx = re.compile(string, re.V1 | re.I)
         try:
             assert rx.match(orig_string)
         except AssertionError:
             raise ValueError(r'Regex {} failed to match original string "{}".'.format(rx, orig_string))
-        regexes.append((rx, id))
+        regexes.append((rx, id_))
 
     return regexes, updated_ids
 
 
 def convert_to_regex(strings_ids_rxvar, convert_all=True,
-                   affixmorphs=None, suffixmorphs=None,
-                   medialmorphs=None, finalmorphs=None):
+                     affixmorphs=None, suffixmorphs=None,
+                     medialmorphs=None, finalmorphs=None):
     """
     Takes a list of string-id tuples which are the words which
         need to be converted to regular expressions.
@@ -202,6 +208,12 @@ def convert_to_regex(strings_ids_rxvar, convert_all=True,
         convert_all=True: if false, all strings will be
             converted to regexes regardless of a previous
             regex matching it
+            :param strings_ids_rxvar:
+            :param convert_all:
+            :param affixmorphs:
+            :param suffixmorphs:
+            :param medialmorphs:
+            :param finalmorphs:
     """
     if not affixmorphs:
         affixmorphs = get_affix_morphs()
@@ -212,9 +224,9 @@ def convert_to_regex(strings_ids_rxvar, convert_all=True,
 
     regexes = []  # [(regex, id), ...]
     updated_ids = {}  # new_id -> old_id
-    for string, id, regex_variation in strings_ids_rxvar:
+    for string, id_, regex_variation in strings_ids_rxvar:
         if regex_variation == -1:
-            regexes.append((re.compile(r'\b{}\b'.format(string), re.I), id))
+            regexes.append((re.compile(r'\b{}\b'.format(string), re.I), id_))
             continue
 
         if not convert_all:
@@ -227,7 +239,7 @@ def convert_to_regex(strings_ids_rxvar, convert_all=True,
                     found = True
                     if rx_id not in updated_ids:
                         updated_ids[rx_id] = {rx_id}
-                    updated_ids[rx_id].add(id)
+                    updated_ids[rx_id].add(id_)
                     break
             if found:
                 continue  # Duplicate RegEx was found
@@ -236,7 +248,7 @@ def convert_to_regex(strings_ids_rxvar, convert_all=True,
         start_idx = 0  # ensure first letter is unable to change
         orig_string = string
 
-        ## 1) convert string to regex
+        # 1) convert string to regex
         # a) convert any prefix
         for morph, repl, L, rLen in affixmorphs:
             if morph.match(string):
@@ -265,7 +277,7 @@ def convert_to_regex(strings_ids_rxvar, convert_all=True,
             else:
                 string += r's?'
 
-        ## 2) add Error permissions
+        # 2) add Error permissions
         length -= 1  # removing the first term
         # FLEXIBLE
         if regex_variation == 3:
@@ -295,15 +307,15 @@ def convert_to_regex(strings_ids_rxvar, convert_all=True,
         elif regex_variation == 0:
             pass
 
-        ## 3) add word boundary
+        # 3) add word boundary
         string = r'\b' + string + r'\b'
 
-        ## 4) compile string to regex
+        # 4) compile string to regex
         rx = re.compile(string, re.V1 | re.I)
         try:
             assert rx.match(orig_string)
         except AssertionError:
             raise ValueError(r'Regex {} failed to match original string "{}".'.format(rx, orig_string))
-        regexes.append((rx, id))
+        regexes.append((rx, id_))
 
     return regexes, updated_ids
