@@ -6,7 +6,7 @@ negation list, and a negation equivalences file.
 
 import argparse
 import copy
-from itertools import izip
+
 import logging
 import logging.config
 import pyodbc
@@ -45,7 +45,7 @@ def writeTermlistToFile(termlist, outfile, columns):
 
 def writeTermlistToDB(termlist, dbi, table_name, columns):
     sqltypes = ['varchar(255)', 'varchar(10)', 'int']
-    create_query= ','.join( [col + ' ' + st for col,st in izip(columns, sqltypes)] )
+    create_query= ','.join( [col + ' ' + st for col,st in zip(columns, sqltypes)] )
     try:
         dbi.execute_commit('''
             CREATE TABLE %s
@@ -59,12 +59,12 @@ def writeTermlistToDB(termlist, dbi, table_name, columns):
     insert_query = ','.join( columns )
     try:
         for result in termlist:
-            values_query=','.join([x if c=='int' else "'"+x+"'" for x,c in izip(result, columns) if c])
+            values_query=','.join([x if c=='int' else "'"+x+"'" for x,c in zip(result, columns) if c])
             dbi.execute_commit('''
                 INSERT INTO %s (%s)
                 VALUES (%s)
             ''' % (table_name, insert_query, values_query))
-    except Exception, e:
+    except Exception as e:
         logging.exception(e)
         logging.error('Unable to insert values: "%s".' % values_query)
         

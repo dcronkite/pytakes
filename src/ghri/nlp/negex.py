@@ -16,7 +16,7 @@ Edits:
 """
 
 import regex as re
-from terms import *
+from .terms import *
 
 
 def getNegex(dbi, neg_table):

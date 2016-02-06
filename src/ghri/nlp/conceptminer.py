@@ -18,12 +18,12 @@ import copy
 import string
 import numbers
 
-import convert
-from negex import *
+from . import convert
+from .negex import *
 
 
 def remove_punct(text):
-    return re.sub(ur'\p{P}+', '', text)
+    return re.sub(r'\p{P}+', '', text)
 
 
 class ConceptMiner(object):
@@ -185,7 +185,7 @@ class ConceptMiner(object):
         """
         concepts = []
         words.sort()
-        for i in xrange(len(words)):
+        for i in range(len(words)):
             cword = words[i]
             if isinstance(cword, Term):
                 c_all_tids = set(self.get_original_term_id(cword.id()))
@@ -227,7 +227,7 @@ class ConceptMiner(object):
         # couple terms
         words_to_find = max_length_of_search
         terms_to_find = max_num_intervening_terms
-        for j in xrange(len(words)):
+        for j in range(len(words)):
             #             print "    ",words[j], j, words_to_find, terms_to_find
             if j < words_to_find and terms_to_find >= 0:
                 nword = words[j]
@@ -288,7 +288,7 @@ class MinerCask(object):
     def mine(self, sentences, max_intervening_terms=None, max_length_of_search=3):
         if max_intervening_terms is None:
             max_intervening_terms = self.max_intervening_terms
-        if isinstance(sentences, basestring):
+        if isinstance(sentences, str):
             sentences = [sentences]
         result_concepts = []
         offset = 0  # length of all previous sentences (for Concept location)
@@ -313,8 +313,8 @@ class MinerCask(object):
         try:
             sentence = remove_punct(sentence)
         except Exception as e:
-            print "Failed:", sentence
-            print type(sentence)
+            print("Failed:", sentence)
+            print(type(sentence))
             raise e
         return ' '.join(sentence.split())
 
@@ -328,8 +328,8 @@ def assert_words(lst):
         else:
             types[t] = 1
     for t in types:
-        print t, ':', types[t]
-    print '-' * 20
+        print(t, ':', types[t])
+    print('-' * 20)
 
 
 def mine(id_term_cat, negation_tuples, textlist):

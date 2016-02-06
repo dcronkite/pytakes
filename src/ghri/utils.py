@@ -77,5 +77,5 @@ def _recursive_dict_to_string(d, padding, curr_pad=''):
 	
 def get_valid_args(func, dct):
 	argnames = func.__code__.co_varnames[:func.__code__.co_argcount]
-	args = dict((key, val) for key,val in dct.items() if key in argnames)
+	args = dict((key, val) for key,val in list(dct.items()) if key in argnames)
 	return args

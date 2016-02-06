@@ -10,7 +10,7 @@ import copy
 import logging
 import logging.config
 import pyodbc
-from itertools import izip
+
 
 from ghri.db_reader import dbInterface
 from ghri import mylogger
@@ -19,7 +19,7 @@ from ghri.utils import get_valid_args
 
 
 def listsAreEqual(lst1, lst2):
-    for el1, el2 in izip(lst1, lst2):
+    for el1, el2 in zip(lst1, lst2):
         if el1 != el2:
             return False
     return True
@@ -29,7 +29,7 @@ def insertInto(dbi, table, cols, row):
     '''
     
     '''
-    sql = u'''
+    sql = '''
         INSERT INTO %s ( "%s" )
         VALUES (
     ''' % (table, '", "'.join(cols[1:]))

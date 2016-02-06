@@ -7,7 +7,7 @@ Edit:
 """
 
 import argparse
-from itertools import izip
+
 import logging
 import logging.config
 import math
@@ -30,7 +30,7 @@ class Document(object):
         self.meta_ = meta_list
         #print text
         #print type(text)
-        if isinstance(text, basestring):
+        if isinstance(text, str):
             text = [text]
         else:
             text = [t for t in text if t]
@@ -141,7 +141,7 @@ def create_table(dbi, destination_table, labels, types):
 
     """
     sql = "CREATE TABLE %s ( rowid int IDENTITY(1,1) PRIMARY KEY, " % destination_table
-    sql += ','.join([x + ' ' + y for x, y in izip(labels, types)])
+    sql += ','.join([x + ' ' + y for x, y in zip(labels, types)])
     sql += ")"
     logging.debug(sql)
     dbi.execute_commit(sql)
@@ -394,7 +394,7 @@ if __name__ == '__main__':
 
     if batch_mode and batch_number and len(batch_number) > 1:
         batch_number.sort()
-        batch_number = range(batch_number[0], batch_number[-1])
+        batch_number = list(range(batch_number[0], batch_number[-1]))
 
         logging.config.dictConfig(mylogger.setup('ctakes-processor' + str(batch_number[0]), loglevel=loglevel))
     else:

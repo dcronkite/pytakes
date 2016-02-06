@@ -28,7 +28,7 @@ from ghri.nlp.negex import myStatusTagger, sortRulesForStatus
 
 
 def remove_punct(text):
-    return re.sub(ur'\p{P}+', '', text)
+    return re.sub(r'\p{P}+', '', text)
 
 
 class ConceptMiner(object):
@@ -205,7 +205,7 @@ class ConceptMiner(object):
         """
         concepts = []
         words.sort()
-        for i in xrange(len(words)):
+        for i in range(len(words)):
             cword = words[i]
             if isinstance(cword, Term):
                 c_all_tids = set(self.get_original_term_id(cword.id()))
@@ -266,7 +266,7 @@ class ConceptMiner(object):
         orig_words = words
         words = words[1:]
         # see if matching terms are available in the next couple terms
-        for j in xrange(len(words)):
+        for j in range(len(words)):
             if j < words_to_look_at and max_intervening_words >= 0:
                 nword = words[j]
                 if isinstance(nword, Term):
@@ -332,7 +332,7 @@ class MinerCask(object):
     def mine(self, sentences, max_length_of_search=3, max_intervening_terms=None):
         if max_intervening_terms is None:
             max_intervening_terms = self.max_intervening_terms
-        if isinstance(sentences, basestring):
+        if isinstance(sentences, str):
             sentences = [sentences]
         resultConcepts = []
         offset = 0  # length of all previous sentences (for Concept location)
@@ -357,8 +357,8 @@ class MinerCask(object):
         try:
             sentence = remove_punct(sentence)
         except Exception as e:
-            print "Failed:", sentence
-            print type(sentence)
+            print("Failed:", sentence)
+            print(type(sentence))
             raise e
         return ' '.join(sentence.split())
 
@@ -372,15 +372,15 @@ def assert_words(lst):
         else:
             types[t] = 1
     for t in types:
-        print t, ':', types[t]
-    print '-' * 20
+        print(t, ':', types[t])
+    print('-' * 20)
 
 
 if __name__ == '__main__':
 
     from processor import *
-    from sentence_boundary import SentenceBoundary
-    from itertools import izip
+    from .sentence_boundary import SentenceBoundary
+    
 
     dbi = dbInterface()
     terms = getTerms(dbi, 'COT_Dict_Clin_Lab_Abuse_08Nov2013')
@@ -397,10 +397,10 @@ if __name__ == '__main__':
     for section in sb.ssplit(' '.join(text.split('\n'))):
         sentences += section.split('\n')
     sections = mc.mine(sentences)
-    for num, (sect, sent) in enumerate(izip(sections, sentences)):
+    for num, (sect, sent) in enumerate(zip(sections, sentences)):
         if not sect: continue
-        print "Sentence", num
-        print sent
+        print("Sentence", num)
+        print(sent)
         for feat in sect:
-            print '>', feat.word(), feat.type(), feat.getCertainty(), feat.isHypothetical(), feat.isHistorical(), feat.isNotPatient()
-        print ''
+            print('>', feat.word(), feat.type(), feat.getCertainty(), feat.isHypothetical(), feat.isHistorical(), feat.isNotPatient())
+        print('')

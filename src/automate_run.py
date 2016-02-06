@@ -40,17 +40,17 @@ def get_document_count(dbi, table):
 def get_integer(s):
     num = None
     while True:
-        num = raw_input(s)
+        num = input(s)
         try:
             num = int(num)
             break
         except ValueError as e:
-            print "Not a valid number."
+            print("Not a valid number.")
     return num
 
 
 def is_this_okay():
-    response = raw_input('Is this okay? ')
+    response = input('Is this okay? ')
     return 'y' in response.lower()
 
 
@@ -58,7 +58,7 @@ def get_batch_size(count):
     while True:
         batchSize = get_integer('Size of batches: ')
         batches = int(math.ceil(float(count) / batchSize))
-        print "This will result in %d batches." % batches
+        print("This will result in %d batches." % batches)
         if is_this_okay():
             return batchSize, batches
 
@@ -67,7 +67,7 @@ def get_number_of_files(batches):
     while True:
         numberOfFiles = get_integer('Number of batch files: ')
         batchesPerFile = int(math.ceil(float(batches) / numberOfFiles))
-        print 'This will result in %d batches per file.' % batchesPerFile
+        print('This will result in %d batches per file.' % batchesPerFile)
         if is_this_okay():
             return numberOfFiles, batchesPerFile
 
@@ -176,7 +176,7 @@ def main(dbi,
          recipients,
          negation_table, negation_variation):
     count = get_document_count(dbi, document_table)
-    print 'Found %d documents in %s.' % (count, document_table)
+    print('Found %d documents in %s.' % (count, document_table))
     batchSize, batchCount = get_batch_size(count)
     numberOfFiles, batchesPerFile = get_number_of_files(batchCount)
 

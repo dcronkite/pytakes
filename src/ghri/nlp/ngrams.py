@@ -1,5 +1,5 @@
 import regex as re
-from utils import replace_punctuation, is_number
+from .utils import replace_punctuation, is_number
 
 _1GRAM = '1gram'
 _2GRAM = '2gram'

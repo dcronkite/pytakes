@@ -114,10 +114,10 @@ class Word(object):
                 )
             
     def __unicode__(self):
-        return unicode(self.word_)
+        return str(self.word_)
         
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return str(self).encode('utf-8')
     
     def __repr__(self):
         return ('<' + str(self.word_) + ',' + str(self.begin_) + ':'

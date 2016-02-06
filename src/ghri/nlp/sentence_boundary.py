@@ -53,8 +53,8 @@ class SentenceBoundary(object):
         i = 0
         text = self.prepare_text(text)
         while i <  len(text):
-            if DEBUG: print 'line: ', i
-            if DEBUG: print 'current line: ', text[i]
+            if DEBUG: print('line: ', i)
+            if DEBUG: print('current line: ', text[i])
             
             words = text[i].split(' ')
             tmp = ''
@@ -62,7 +62,7 @@ class SentenceBoundary(object):
             while j < len(words):
                 word = words[j]
                 pos = self.has_dot(word)
-                if DEBUG: print "\t\tWORD:",word
+                if DEBUG: print("\t\tWORD:",word)
                 if pos >= 0:
                     dot_num = self.num_dot(word)
                     if dot_num == 1:
@@ -71,7 +71,7 @@ class SentenceBoundary(object):
                         elif pos == 0: #'.' on the begining, keep it original,  do not change
                             tmp = tmp + word + ' ' 
                         elif pos == len(word) - 1: # on the end of word
-                            if DEBUG: print 'j: ', j, 'dot end: ', word
+                            if DEBUG: print('j: ', j, 'dot end: ', word)
                             
                             #print is_num_list(word)
                             #print not (is_num_list(word) and j == 0)
@@ -89,14 +89,14 @@ class SentenceBoundary(object):
                             elif word[:-1].lower() not in self.abbr_dic and word.lower() not in self.abbr_dic:
                                 tmp = tmp + word[:-1] + ' ' + '.\n'
                             else: #abbreviations
-                                if DEBUG: print 'abbr: ', word
+                                if DEBUG: print('abbr: ', word)
                                 if j + 1 < len(words):
                                     next_word = words[j + 1]
                                 else:
                                     next_word = ''
                                 #elevation MI. The patient was
                                 if len(next_word) > 0 and next_word[0].isupper() and next_word.lower() in self.sentence_word:
-                                    if DEBUG: print 'abbr add enter'
+                                    if DEBUG: print('abbr add enter')
                                     tmp = tmp + word + '\n'
                                 else:
                                     tmp = tmp + word + ' ' 
@@ -111,7 +111,7 @@ class SentenceBoundary(object):
                                 tmp = tmp + words_center[0] + '.\n' + right_word + ' '
                             else: 
                                 tmp = tmp + word + ' '
-                            if DEBUG: print 'tmp: ', tmp
+                            if DEBUG: print('tmp: ', tmp)
                     else: # for the dot_num > 1, almost all of them are abbreviations.
                         #Handle:  CK-MB of 9.1. His post
                         if word[-1] == '.':
@@ -119,14 +119,14 @@ class SentenceBoundary(object):
                                 tmp = tmp + word[:-1] + ' ' + '.\n'
                             else:
                                 #Handle: condition without the need for O.T. or P.T.  He is being
-                                if DEBUG: print 'multi dot: ', word
+                                if DEBUG: print('multi dot: ', word)
                                 if j + 1 < len(words):
                                     next_word = words[j + 1]
                                 else:
                                     next_word = ''
 
                                 if len(next_word) > 0 and next_word[0].isupper() and next_word.lower() in self.sentence_word:
-                                    if DEBUG: print 'multi dot add enter'
+                                    if DEBUG: print('multi dot add enter')
                                     tmp = tmp + word + '\n'
                                 else:
                                     tmp = tmp + word + ' '
@@ -148,7 +148,7 @@ class SentenceBoundary(object):
                 words = tmp.split(' ')
                 last_word = words[-1]
 
-                if DEBUG: print 'next word: ', next_word
+                if DEBUG: print('next word: ', next_word)
                 #print len(text[i]) > ave_len
                 #print not is_num_list(next_word)
                 #
@@ -169,7 +169,7 @@ class SentenceBoundary(object):
                     text[i] = tmp.strip() + '\n'
                 elif tmp[-1] == '.':
                     if DEBUG: 
-                        print 'end with dot, the dot is part of abbreviation: e.g.,  Dr.'
+                        print('end with dot, the dot is part of abbreviation: e.g.,  Dr.')
                     if len(tmp) >= 2 and tmp[-2] !=  ' ' and ( not next_word == '-')\
                        and (not self.is_num_list(next_word)) and ( not next_word[0].isupper()):
                         text[i] = tmp.strip() + ' '
@@ -187,7 +187,7 @@ class SentenceBoundary(object):
                         text[i] = tmp.strip() + '\n'
 
                 else:
-                    if DEBUG: print 'add enter'
+                    if DEBUG: print('add enter')
                     text[i] = tmp.strip() + '\n'
             i = i + 1
         return text
@@ -202,13 +202,13 @@ class SentenceBoundary(object):
         while i+1 < len(text):
             i += 1
             txt = text[i]
-            if DEBUG: print 'LINE %d:'%i,txt
+            if DEBUG: print('LINE %d:'%i,txt)
             
             words = txt.split()
             tmp = ''
             for j, word in enumerate(words):
                 pos = self.has_dot(word)
-                if DEBUG: print "\t\tWORD:",word
+                if DEBUG: print("\t\tWORD:",word)
                 if pos >= 0:
                     dot_num = self.num_dot(word)
                     if dot_num == 1:
@@ -219,7 +219,7 @@ class SentenceBoundary(object):
                             tmp += word + ' '
                         # end of word
                         elif pos == len(word)-1:
-                            if DEBUG: print '  %d, dot end: %s' % (j,word)
+                            if DEBUG: print('  %d, dot end: %s' % (j,word))
                             if self.is_num_list(word):
                                 if j == 0: #1. Percocet 5/325 one p.o.
                                     tmp += word + ' '
@@ -283,7 +283,7 @@ class SentenceBoundary(object):
                     tmp += word + ' '
             
             # end for j, word
-            if DEBUG: print "TempVar:",tmp
+            if DEBUG: print("TempVar:",tmp)
             tmp = tmp.strip()
             if i+1 < len(text):
                 words = text[i+1].split()

@@ -9,7 +9,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 
-from unix import mkdir_p
+from .unix import mkdir_p
 
 def setup(name=__name__,logdir='log',console=True,text=True,loglevel='DEBUG',logfile=None):
     """

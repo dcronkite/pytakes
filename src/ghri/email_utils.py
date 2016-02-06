@@ -93,7 +93,7 @@ def main(subject='',
     Output: none
     Functionality: Sets up e-mail message and sends
     '''
-    if not isinstance(text, basestring):
+    if not isinstance(text, str):
         text = '\n'.join(text)
     
     if recipients:

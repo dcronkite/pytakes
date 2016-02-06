@@ -35,7 +35,7 @@ def psplit(texts):
     """
     Phrase splitting.
     """
-    if isinstance(texts, basestring):
+    if isinstance(texts, str):
         texts = [texts]
     ssplitP = re.compile(r'(\S.+?[.!?\n;:])(?=\s+|$)')
     sections = []
