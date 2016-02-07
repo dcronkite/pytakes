@@ -145,6 +145,18 @@ def create_table(dbi, destination_table, labels, types):
     dbi.execute_commit(sql)
 
 
+def delete_table_rows(dbi, destination_table):
+    """Drop all rows from destination table.
+
+    :param dbi:
+    :param destination_table:
+    :return:
+    """
+    sql = "TRUNCATE TABLE {}".format(destination_table)
+    logging.debug(sql)
+    dbi.execute_commit(sql)
+
+
 def insert_into(dbi, destination_table, feat, text, labels, meta):
     """
 
@@ -256,7 +268,7 @@ def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_la
 
 
 def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_labels, concept_miner_v,
-            destination_table, batch_mode, batch_size, batch_number, db_options, mine_options, terms_options):
+            destination_table, batch_mode, batch_size, batch_number, db_options, mine_options, terms_options, force):
     """
 
     """
@@ -312,7 +324,13 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
             create_table(dbi, dest_table, all_labels, all_types)
             logging.info('Table created: %s.' % dest_table)
         except pyodbc.ProgrammingError as pe:
-            logging.warning('Table already exists: Using existing table.')
+            logging.warning('Table already exists.')
+            if args.force:
+                logging.warning('Force deletng rows from table {}.'.format(destination_table))
+                delete_table_rows(dbi, destination_table)
+            else:
+                logging.error('Add option "force" to delete rows from table.')
+                sys.exit(1)
         except Exception as e:
             logging.exception(e)
             logging.error('Failed to create table.')
@@ -357,6 +375,9 @@ if __name__ == '__main__':
     parser.add_argument('--valence', required=False, default=None, type=int)
     parser.add_argument('--regex-variation', required=False, default=None, type=int)
     parser.add_argument('--word-order', required=False, default=None, type=int)
+
+    parser.add_argument('--force', action='store_true', default=False,
+                        help='Force delete rows in table.')
 
     # for concept miner version 3
     parser.add_argument('--stopwords', required=False, default=[], nargs='+',
@@ -415,7 +436,7 @@ if __name__ == '__main__':
             raise ValueError('Concept Miner v.%d is not defined.' % concept_miner_v)
         prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_labels, concept_miner_v,
                 destination_table, batch_mode, batch_size, batch_number, db_options,
-                mine_options, terms_options)
+                mine_options, terms_options, args.force)
     except Exception as e:
         import traceback
 
