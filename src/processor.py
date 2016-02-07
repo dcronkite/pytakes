@@ -300,22 +300,23 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
         batches = [None]
         order_by = ''
 
-    # create table
-    try:
-        create_table(dbi, destination_table, all_labels, all_types)
-        logging.info('Table created: %s.' % destination_table)
-    except pyodbc.ProgrammingError as pe:
-        logging.warning('Table already exists: Using existing table.')
-    except Exception as e:
-        logging.exception(e)
-        logging.error('Failed to create table.')
-        raise e
-
     batch_length = len(batches)
     logging.info('Prepared %d batch(es).' % batch_length)
     for curr_batch, batch in enumerate(batches, 1):
         if batch_mode and batch_number and curr_batch not in batch_number:
             continue
+
+        # create table
+        dest_table = '{}_{}'.format(destination_table, curr_batch)
+        try:
+            create_table(dbi, dest_table, all_labels, all_types)
+            logging.info('Table created: %s.' % dest_table)
+        except pyodbc.ProgrammingError as pe:
+            logging.warning('Table already exists: Using existing table.')
+        except Exception as e:
+            logging.exception(e)
+            logging.error('Failed to create table.')
+            raise e
 
         logging.info('Started batch #%d (ending at %d).' % (curr_batch, batch_number[-1] if batch_number else 1))
 
@@ -323,9 +324,8 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
             where_clause = ' WHERE %s > %d ' % (batch_mode, batch)
         else:
             where_clause = ''
-        process(dbi, mc, SentenceBoundary(dbi), destination_table, document_table, meta_labels, text_labels,
-                concept_miner_v, all_labels,
-                where_clause, order_by, batch_size, mine_options)
+        process(dbi, mc, SentenceBoundary(dbi), dest_table, document_table, meta_labels, text_labels,
+                concept_miner_v, all_labels, where_clause, order_by, batch_size, mine_options)
         logging.info('Finished batch #%d of %d.' % (curr_batch, batch_length))
 
 

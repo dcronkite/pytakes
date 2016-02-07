@@ -144,7 +144,7 @@ The log file is included for debugging.
 
 
 def create_post_process_batch(pp_dir, destination_table, negation_table, negation_variation, driver,
-                              server, database):
+                              server, database, batch_count):
     with open(os.path.join(pp_dir, 'postprocess.bat'), 'w') as out:
         out.write(
             r'''python G:\CTRHS\NLP_Projects\Code\Source\pyTAKES\src\postprocessor.py "@.\postprocess.conf"
@@ -160,7 +160,9 @@ pause
 --negation-table=%s
 --negation-variation=%s
 --input-column=captured
-''' % (driver, server, database, destination_table, destination_table, negation_table, negation_variation))
+--batch-count=%d
+''' % (driver, server, database, destination_table, destination_table,
+       negation_table, negation_variation, batch_count))
 
 
 def main(dbi,
@@ -201,7 +203,7 @@ def main(dbi,
     if concept_miner == 2:
         mkdir_p(postprocess_dir)
         create_post_process_batch(postprocess_dir, destination_table, negation_table, negation_variation,
-                                  driver, server, database)
+                                  driver, server, database, filecount+1)
     logging.info('Completed.')
 
 

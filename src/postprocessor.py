@@ -65,18 +65,21 @@ def create_destination_table(dbi, input_table, output_table):
     """
     try:
         dbi.execute_commit('''
-            SELECT * INTO %s FROM %s
+            SELECT * INTO %s FROM %s_1
             WHERE 1 = 2
         ''' % (output_table, input_table))
     except pyodbc.ProgrammingError:
         logging.warning('Table "%s" already exists.' % output_table)
         return
 
+
+def prepare_previous_tables(dbi, output_table, batch_count):
     # add new column to show where changes happened
-    dbi.execute_commit('''
-        ALTER TABLE %s
-        ADD updated int
-    ''' % output_table)
+    for batch_counter in range(1, batch_count + 1):
+        dbi.execute_commit('''
+            ALTER TABLE {}_{}
+            ADD updated int
+        '''.format(output_table, batch_counter))
 
 
 def add_rowid(dbi, output_table):
@@ -104,8 +107,10 @@ def main(dbi,
          negation_variation,
          input_table,
          input_column,
-         output_table):
+         output_table,
+         batch_count):
     """
+    :param batch_count:
     :param dbi:
     :param negation_table:
     :param negation_variation:
@@ -116,55 +121,59 @@ def main(dbi,
     """
     tagger = MyStatusTagger(sort_rules_for_status(get_context(dbi, negation_table)))
     columns = dbi.get_table_columns(input_table)
+    columns.append('updated')
+    create_destination_table(dbi, input_table, output_table)
     if input_column in columns:
         col_idx = columns.index(input_column)
     else:
         raise ValueError('Unrecognized column "%s" in table %s.' % (input_column, input_table))
-    data = get_input_data(dbi, input_table, columns)
 
-    create_destination_table(dbi, input_table, output_table)
-    columns.append('updated')
-    for row in data:
-        new_row = []
-        for el in row:
-            if isinstance(el, int):
-                new_row.append(el)
+    for i in range(1, batch_count):
+        curr_input_table = '{}_{}'.format(input_table, i)
+        data = get_input_data(dbi, curr_input_table, columns)
+        prepare_previous_tables(dbi, output_table, batch_count)
+        for row in data:
+            new_row = []
+            for el in row:
+                if isinstance(el, int):
+                    new_row.append(el)
+                else:
+                    new_row.append(el.decode('utf-8', 'ignore'))
+            row = new_row
+            text = row[col_idx]
+            orig_row = copy.copy(row)
+            for negConcept in tagger.find_negation(text):
+                _type = negConcept.type().lower()
+                if _type == 'negn':
+                    row[columns.index('certainty')] = 0
+                elif _type == 'impr':
+                    row[columns.index('certainty')] = 1
+                elif _type == 'poss':
+                    row[columns.index('certainty')] = 2
+                elif _type == 'prob':
+                    row[columns.index('certainty')] = 3
+                if _type == 'hypo':
+                    row[columns.index('hypothetical')] = 1
+                if _type == 'futp':
+                    row[columns.index('hypothetical')] = 1
+                if _type == 'hist':
+                    row[columns.index('historical')] = 1
+                if _type == 'othr':
+                    row[columns.index('otherSubject')] = 1
+
+            if lists_are_equal(orig_row, row):
+                row.append(0)
             else:
-                new_row.append(el.decode('utf-8', 'ignore'))
-        row = new_row
-        text = row[col_idx]
-        orig_row = copy.copy(row)
-        for negConcept in tagger.find_negation(text):
-            _type = negConcept.type().lower()
-            if _type == 'negn':
-                row[columns.index('certainty')] = 0
-            elif _type == 'impr':
-                row[columns.index('certainty')] = 1
-            elif _type == 'poss':
-                row[columns.index('certainty')] = 2
-            elif _type == 'prob':
-                row[columns.index('certainty')] = 3
-            if _type == 'hypo':
-                row[columns.index('hypothetical')] = 1
-            if _type == 'futp':
-                row[columns.index('hypothetical')] = 1
-            if _type == 'hist':
-                row[columns.index('historical')] = 1
-            if _type == 'othr':
-                row[columns.index('otherSubject')] = 1
+                row.append(1)
 
-        if lists_are_equal(orig_row, row):
-            row.append(0)
-        else:
-            row.append(1)
-
-        insert_into(dbi, output_table, columns, row)
+            insert_into(dbi, output_table, columns, row)
 
     return True
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
+    parser.add_argument('--driver', required=False, default='SQL Server')
     parser.add_argument('-s', '--server', default='ghrinlp', help='Database server to use.')
     parser.add_argument('-d', '--database', default='nlpdev', help='Database to use.')
     parser.add_argument('--negation-table', help='Table of negation triggers, along with role.')
@@ -173,6 +182,7 @@ if __name__ == '__main__':
     parser.add_argument('--input-table', help='Table that has a column which needs to be evaluated by negex.')
     parser.add_argument('--input-column', help='Column name which needs to be modified.')
     parser.add_argument('--output-table', help='Output table.')
+    parser.add_argument('--batch-count', help='Batch count.')
 
     parser.add_argument('--verbosity', type=int, default=2, help='Verbosity of log output.')
     args = parser.parse_args()
@@ -180,7 +190,7 @@ if __name__ == '__main__':
     loglevel = mylogger.resolve_verbosity(args.verbosity)
     logging.config.dictConfig(mylogger.setup(name='postprocessor', loglevel=loglevel))
 
-    dbi = DbInterface('SQL Server', args.server, args.database, loglevel)
+    dbi = DbInterface(args.driver, args.server, args.database, loglevel)
 
     try:
         main(dbi, **get_valid_args(main, vars(args)))
