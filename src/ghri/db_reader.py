@@ -34,6 +34,8 @@ class DbInterface(object):
         self.cur = self.conn.cursor()
         # default loglevel is 30 (i.e., logger.WARNING)
         self.logger = logging.getLogger(__name__)
+        if loglevel:
+            self.logger.setLevel(loglevel)
 
     def close(self):
         self.__del__()
@@ -93,12 +95,15 @@ class DbInterface(object):
 
     def get_table_columns(self, table_name):
         """returns columns of specified table """
-        cols = self.execute_fetchall('''
-            SELECT column_name
-            FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE table_name = '%s'
-        ''' % table_name)
-        return [x[0] for x in cols]
+        if 'sql server' in self._cs.lower():
+            cols = self.execute_fetchall('''
+                SELECT column_name
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE table_name = '%s'
+            ''' % table_name)
+            return [x[0] for x in cols]
+        else:
+            raise ValueError('Unsupported database connection.')
 
     def wait_for_connection_resume(self, waittime, err):
         while True:
@@ -131,36 +136,12 @@ class DbInterface(object):
                 continue
 
 
-class NLPdevWrapper(DbInterface):
-    def __init__(self, host='ghriNLP', user='',
-                 password='', database='NLPdev', loglevel=30):
-        super(NLPdevWrapper, self).__init__(host, database, loglevel)
-
-    def get_negex(self):
-        """
-        @return: list of (negex, typeOfNegex)
-        """
-        return self.execute_return("""
-                    SELECT negex
-                          ,type
-                       /*FROM W_res_negexTriggers*/
-                       , direction
-                       FROM RES_statusTriggers1_5
-                     """)
-
-
-class ClarityDb(DbInterface):
-    def __init__(self, host='EpClarity_RPT:1433', user='',
-                 password='', database='Clarity'):
-        super(ClarityDb, self).__init__(host, user, password, database)
-
-
 def parse_dbargs(args):
     import argparse
 
     db_parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
 
     db_parser.add_argument('--password', metavar='pwd', required=True, help='SQL Server password.')
-    db_parser.add_argument('--user', metavar='u', default='GHCMASTER\crondj1', help='SQL Server username.')
+    db_parser.add_argument('--user', metavar='u', default=None, help='SQL Server username.')
     db_args, _ = db_parser.parse_known_args(args)
     return db_args
