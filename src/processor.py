@@ -313,8 +313,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
 
     batch_length = len(batches)
     logging.info('Prepared %d batch(es).' % batch_length)
-    for num, batch in enumerate(batches):
-        curr_batch = num + 1
+    for curr_batch, batch in enumerate(batches, 1):
         if batch_mode and batch_number and curr_batch not in batch_number:
             continue
 
@@ -327,7 +326,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
         process(dbi, mc, SentenceBoundary(dbi), destination_table, document_table, meta_labels, text_labels,
                 concept_miner_v, all_labels,
                 where_clause, order_by, batch_size, mine_options)
-        logging.info('Finished batch #%d of %d.' % (num + 1, batch_length))
+        logging.info('Finished batch #%d of %d.' % (curr_batch, batch_length))
 
 
 if __name__ == '__main__':
