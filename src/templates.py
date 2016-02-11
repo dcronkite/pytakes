@@ -6,10 +6,10 @@ RUN_BATCH_FILE = r'''@echo off
 echo Running batch {{ batch_number }}.
 {{ python }} {{ pytakes_path }}processor.py "@.\pytakes-batch{{ batch_number }}.conf"
 if %%errorlevel%% equ 0 (
-{{ python }} {{ pytakes_path }}email_utils.py -s "Batch {{ batch_number }} Completed" "@.\email.conf"
+{{ python }} {{ pytakes_path }}sendmail.py -s "Batch {{ batch_number }} Completed" "@.\email.conf"
 echo Successful.
 ) else (
-{{ python }} {{ pytakes_path }}email_utils.py -s "Batch {{ batch_number }} Failed: Log Included" -f ".\log\pytakes-processor{{ batch_number }}.log" "@.\bad_email.conf"
+{{ python }} {{ pytakes_path }}sendmail.py -s "Batch {{ batch_number }} Failed: Log Included" -f ".\log\pytakes-processor{{ batch_number }}.log" "@.\bad_email.conf"
 echo Failed.
 )
 pause
@@ -38,6 +38,9 @@ RUN_CONF_FILE = r'''--driver={{ driver }}
 EMAIL_CONF_FILE = r'''{%- for recipient in recipients %}--recipient
 {{ recipient }}
 {%- endfor %}
+--server-address={{ mail_server_address }}
+--sender
+{{ sender }}
 --text
 This notification is to inform you that another batch ({{ filecount }} total) has been completed for table {{ destination_table }}.
 '''
@@ -45,6 +48,9 @@ This notification is to inform you that another batch ({{ filecount }} total) ha
 BAD_EMAIL_CONF_FILE = r'''{%- for recipient in recipients %}--recipient
 {{ recipient }}
 {%- endfor %}
+--server-address={{ mail_server_address }}
+--sender
+{{ sender }}
 --text
 This notification is to inform you that a batch ({{ filecount }} total) has failed for table {{ destination_table }}.
 

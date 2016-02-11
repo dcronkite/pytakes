@@ -105,19 +105,20 @@ def create_batch_file(output_dir, batch_label, document_table, destination_table
             ))
 
 
-def create_email_file(output_dir, filecount, destination_table, recipients, python, pytakes_path):
+def create_email_file(output_dir, filecount, destination_table,
+                      recipients, sender, mail_server_address, python, pytakes_path):
     with open(os.path.join(output_dir, 'email.conf'), 'w') as out:
         out.write(
             Template(templates.EMAIL_CONF_FILE).render(
                 recipients=recipients, filecount=filecount, destination_table=destination_table,
-                python=python, pytakes_path=pytakes_path
+                python=python, pytakes_path=pytakes_path, sender=sender, mail_server_address=mail_server_address
             ))
 
     with open(os.path.join(output_dir, 'bad_email.conf'), 'w') as out:
         out.write(
             Template(templates.BAD_EMAIL_CONF_FILE).render(
                 recipients=recipients, filecount=filecount, destination_table=destination_table,
-                python=python, pytakes_path=pytakes_path
+                python=python, pytakes_path=pytakes_path, sender=sender, mail_server_address=mail_server_address
             ))
 
 
@@ -137,7 +138,7 @@ def main(dbi, cm_options, concept_miner, document_table,
          output_dir, destination_table,
          driver, server, database,
          meta_labels, primary_key,
-         recipients, negation_table, negation_variation,
+         recipients, sender, mail_server_address, negation_table, negation_variation,
          python, pytakes_path):
     count = get_document_count(dbi, document_table)
     logging.info('Found %d documents in %s.' % (count, document_table))
@@ -166,7 +167,8 @@ def main(dbi, cm_options, concept_miner, document_table,
                           primary_key, options, python, pytakes_path)
         batch_start = batch_end
 
-    create_email_file(output_dir, filecount, destination_table, recipients, python, pytakes_path)
+    create_email_file(output_dir, filecount, destination_table,
+                      recipients, sender, mail_server_address, python, pytakes_path)
 
     postprocess_dir = os.path.join(output_dir, 'post')
 
@@ -221,8 +223,15 @@ if __name__ == '__main__':
                              ' Default assumes that you have installed this file in scripts.')
 
     parser.add_argument('-v', '--verbosity', type=int, default=2, help='Verbosity of log output.')
+
+    # email
     parser.add_argument('--recipients', required=True, default=None, nargs='+',
                         help='In format of "name,email@address"')
+    parser.add_argument('--sender', required=True, default=None,
+                        help='In format of "name,email@address"')
+    parser.add_argument('--mail-server-address', required=True,
+                        help='Mail server address.')
+
     args = parser.parse_args()
 
     loglevel = mylogger.resolve_verbosity(args.verbosity)

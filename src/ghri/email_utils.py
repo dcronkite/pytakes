@@ -24,7 +24,7 @@ TODO:
 NOTES:
     - Just copied from email_delining_log.py to create
 """
-# from std_import import *
+import logging
 import smtplib
 import email.utils
 from email.mime.text import MIMEText
@@ -75,32 +75,39 @@ def resolve_recipients(recipients):
     return resaddr, ';'.join(resrecipients)
 
 
-def main(subject='',
-         filename=None,
-         text=[],
-         recipients=[]):
+def main(subject='', filename=None, text='',
+         recipients=None, sender=None, server_address=None):
     """
-    Function: main
-    Input: none
-    Output: none
     Functionality: Sets up e-mail message and sends
+
     :param subject:
     :param filename:
-    :param recipients:
+    :param recipients: list of string of "name,email@address"
     :param text:
+    :param sender: string of "name,email@address"
+    :param server_address: string
     """
-    global TO, TOADDYS
+    global TO, TOADDYS, FROM, SERVER
+
     if not isinstance(text, str):
         text = '\n'.join(text)
 
     if recipients:
         TOADDYS, TO = resolve_recipients(recipients)
+    else:
+        logging.warning('Using default recipients.')
+
+    if sender:
+        FROM = resolve_recipients([sender])
+
+    if server_address:
+        SERVER = server_address
 
     if filename:
         try:
             ftext = get_text_from_file(filename)
-        except:
-            ftext = 'Failed to retrieve text from file "%s".' % filename
+        except Exception as e:
+            ftext = 'Failed to retrieve text from file "{}". {}'.format(filename, e)
     else:
         ftext = ''
 
@@ -128,5 +135,7 @@ if __name__ == '__main__':  # if run from cmd line, not if imported
     parser.add_argument('-f', '--filename', default=None, help='Name of file to send.')
     parser.add_argument('-t', '--text', default=[], nargs='+', help='Text for email content.')
     parser.add_argument('-r', '--recipients', nargs='+', default=[], help='Recipients\' name,address.')
+    parser.add_argument('--sender', default=None, help='Sender name,address.')
+    parser.add_argument('--server', required=True, help='Mail server path.')
     args = parser.parse_args()
     main(**vars(args))  # set up e-mail message and send
