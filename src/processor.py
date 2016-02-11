@@ -414,9 +414,9 @@ if __name__ == '__main__':
         batch_number.sort()
         batch_number = list(range(batch_number[0], batch_number[-1]))
 
-        logging.config.dictConfig(mylogger.setup('ctakes-processor' + str(batch_number[0]), loglevel=loglevel))
+        logging.config.dictConfig(mylogger.setup('pytakes-processor' + str(batch_number[0]), loglevel=loglevel))
     else:
-        logging.config.dictConfig(mylogger.setup('ctakes-processor', loglevel=loglevel))
+        logging.config.dictConfig(mylogger.setup('pytakes-processor', loglevel=loglevel))
 
     try:
         terms_options = {'valence': args.valence,

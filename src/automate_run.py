@@ -5,7 +5,7 @@ Author: Cronkite, David
 
 PURPOSE
 -----------
-Automate creation of a directory to run Lctakes in batches.
+Automate creation of a directory to run pyctakes in batches.
 
 TODO
 -------
@@ -22,11 +22,13 @@ import logging
 import logging.config
 import math
 import os
+from jinja2 import Template
 
 from ghri.db_reader import DbInterface
 from ghri import mylogger
 from ghri.unix import mkdir_p
 from ghri.utils import get_valid_args
+import templates
 
 
 def get_document_count(dbi, table):
@@ -84,43 +86,20 @@ def resolve_formatting(label, value):
         return ''
 
 
-def create_batch_file(output_dir, number, document_table, destination_table,
-                      batch_size, batch_start, batch_end, driver, server, database, meta_labels, cm_options):
-    meta_labels = '\n'.join(meta_labels) if meta_labels else '\n'.join(('ft_id', 'chsid'))
-    with open(os.path.join(output_dir, 'ctakes-batch' + str(number) + '.bat'), 'w') as out:
-        out.write(
-            r'''@echo off
-echo Running batch %d.
-python G:\CTRHS\NLP_Projects\Code\Source\pyTAKES\src\processor.py "@.\ctakes-batch%d.conf"
-if %%errorlevel%% equ 0 (
-python G:\CTRHS\NLP_Projects\Code\Source\pyTAKES\src\ghri\email_utils.py -s "Batch %d Completed" "@.\email.conf"
-echo Successful.
-) else (
-python G:\CTRHS\NLP_Projects\Code\Source\pyTAKES\src\ghri\email_utils.py -s "Batch %d Failed: Log Included" -f ".\log\ctakes-processor%d.log" "@.\bad_email.conf"
-echo Failed.
-)
-pause''' % (number, number, number, number, batch_start))
+def create_batch_file(output_dir, batch_label, document_table, destination_table,
+                      batch_size, batch_start, batch_end, driver, server, database, meta_labels,
+                      primary_key, options):
+    with open(os.path.join(output_dir, 'pytakes-batch' + str(batch_label) + '.bat'), 'w') as out:
+        out.write(Template(templates.RUN_BATCH_FILE).render(batch_number=batch_label))
 
-    options = '\n'.join(resolve_formatting(x, y) for x, y in cm_options if y)
-
-    with open(os.path.join(output_dir, 'ctakes-batch' + str(number) + '.conf'), 'w') as out:
-        out.write(
-            r'''--driver={}
---server={}
---database={}
---document-table={}
---meta-labels
-{}
---text-labels=note_text
---destination-table={}_pre
-{}
---batch-mode=ft_id
---batch-size={}
---batch-number
-{}
-{}'''.format(driver, server, database, document_table, meta_labels, destination_table,
-             options, batch_size, batch_start, batch_end))
-    return
+    with open(os.path.join(output_dir, 'pytakes-batch' + str(batch_label) + '.conf'), 'w') as out:
+        out.write(Template(templates.RUN_CONF_FILE).render(
+            driver=driver, server=server, database=database, document_table=document_table,
+            destination_table=destination_table,
+            meta_labels=meta_labels, primary_key=primary_key,
+            options=options,
+            batch_size=batch_size, batch_start=batch_start, batch_end=batch_end
+        ))
 
 
 def create_email_file(output_dir, filecount, destination_table, recipients):
@@ -174,10 +153,11 @@ def main(dbi,
          server,
          database,
          meta_labels,
+         primary_key,
          recipients,
          negation_table, negation_variation):
     count = get_document_count(dbi, document_table)
-    print('Found %d documents in %s.' % (count, document_table))
+    logging.info('Found %d documents in %s.' % (count, document_table))
     batchsize, batchcount = get_batch_size(count)
     filecount, batchesperfile = get_number_of_files(batchcount)
 
@@ -186,13 +166,21 @@ def main(dbi,
     logging.info('Number of files: %d' % filecount)
     logging.info('Batches per file: %d' % batchesperfile)
 
+    options = [resolve_formatting(x, y) for x, y in cm_options if y]
+    if not meta_labels:
+        meta_labels = ['ft_id', 'chsid', 'hybrid_date']
+    if primary_key not in meta_labels:
+        ve = ValueError('Primary key must be a value in the meta values list: {}.'.format(', '.join(meta_labels)))
+        logging.error(ve)
+        raise ve
+
     mkdir_p(output_dir)
     batch_start = 1
-    for i in range(1, filecount + 1):
+    for batch_label in range(1, filecount + 1):
         batch_end = batch_start + batchesperfile
-        create_batch_file(output_dir, i, document_table, destination_table,
+        create_batch_file(output_dir, batch_label, document_table, destination_table,
                           batchsize, batch_start, batch_end, driver, server, database, meta_labels,
-                          cm_options)
+                          primary_key, options)
         batch_start = batch_end
 
     create_email_file(output_dir, filecount, destination_table, recipients)
@@ -237,7 +225,11 @@ if __name__ == '__main__':
     parser.add_argument('--stopword-tables', required=False, default=None, nargs='+',
                         help='Tables containing relevant stopwords. NYI')
 
-    parser.add_argument('--meta-labels', nargs='+', help='Extra identifying labels to include in output.')
+    parser.add_argument('--meta-labels', nargs='+',
+                        help='Identifying labels to include in output. Default is ft_id, chsid, hybrid_date.')
+    parser.add_argument('--primary-key', required=False, default='ft_id',
+                        help='Primary key for documents. This will be used in sorting batches. '
+                             'Must be in "meta labels".')
 
     parser.add_argument('-v', '--verbosity', type=int, default=2, help='Verbosity of log output.')
     parser.add_argument('--recipients', required=True, default=None, nargs='+',
