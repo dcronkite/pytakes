@@ -88,9 +88,10 @@ def resolve_formatting(label, value):
 
 def create_batch_file(output_dir, batch_label, document_table, destination_table,
                       batch_size, batch_start, batch_end, driver, server, database, meta_labels,
-                      primary_key, options):
+                      primary_key, options, python, pytakes_path):
     with open(os.path.join(output_dir, 'pytakes-batch' + str(batch_label) + '.bat'), 'w') as out:
-        out.write(Template(templates.RUN_BATCH_FILE).render(batch_number=batch_label))
+        out.write(Template(templates.RUN_BATCH_FILE).render(
+            batch_number=batch_label, python=python, pytakes_path=pytakes_path))
 
     with open(os.path.join(output_dir, 'pytakes-batch' + str(batch_label) + '.conf'), 'w') as out:
         out.write(
@@ -99,40 +100,45 @@ def create_batch_file(output_dir, batch_label, document_table, destination_table
                 destination_table=destination_table,
                 meta_labels=meta_labels, primary_key=primary_key,
                 options=options,
-                batch_size=batch_size, batch_start=batch_start, batch_end=batch_end
+                batch_size=batch_size, batch_start=batch_start, batch_end=batch_end,
+                python=python, pytakes_path=pytakes_path
             ))
 
 
-def create_email_file(output_dir, filecount, destination_table, recipients):
+def create_email_file(output_dir, filecount, destination_table, recipients, python, pytakes_path):
     with open(os.path.join(output_dir, 'email.conf'), 'w') as out:
         out.write(
             Template(templates.EMAIL_CONF_FILE).render(
-                recipients=recipients, filecount=filecount, destination_table=destination_table
+                recipients=recipients, filecount=filecount, destination_table=destination_table,
+                python=python, pytakes_path=pytakes_path
             ))
 
     with open(os.path.join(output_dir, 'bad_email.conf'), 'w') as out:
         out.write(
             Template(templates.BAD_EMAIL_CONF_FILE).render(
-                recipients=recipients, filecount=filecount, destination_table=destination_table
+                recipients=recipients, filecount=filecount, destination_table=destination_table,
+                python=python, pytakes_path=pytakes_path
             ))
 
 
 def create_post_process_batch(pp_dir, destination_table, negation_table, negation_variation, driver,
-                              server, database, batch_count):
+                              server, database, batch_count, python, pytakes_path):
     with open(os.path.join(pp_dir, 'postprocess.bat'), 'w') as out:
         out.write(templates.PP_BATCH_FILE)
     with open(os.path.join(pp_dir, 'postprocess.conf'), 'w') as out:
         out.write(Template(templates.PP_CONF_FILE).render(
             driver=driver, server=server, database=database,
             destination_table=destination_table, negation_table=negation_table,
-            negation_variation=negation_variation, batch_count=batch_count))
+            negation_variation=negation_variation, batch_count=batch_count,
+            python=python, pytakes_path=pytakes_path))
 
 
 def main(dbi, cm_options, concept_miner, document_table,
          output_dir, destination_table,
          driver, server, database,
          meta_labels, primary_key,
-         recipients, negation_table, negation_variation):
+         recipients, negation_table, negation_variation,
+         python, pytakes_path):
     count = get_document_count(dbi, document_table)
     logging.info('Found %d documents in %s.' % (count, document_table))
     batchsize, batchcount = get_batch_size(count)
@@ -157,17 +163,17 @@ def main(dbi, cm_options, concept_miner, document_table,
         batch_end = batch_start + batchesperfile
         create_batch_file(output_dir, batch_label, document_table, destination_table,
                           batchsize, batch_start, batch_end, driver, server, database, meta_labels,
-                          primary_key, options)
+                          primary_key, options, python, pytakes_path)
         batch_start = batch_end
 
-    create_email_file(output_dir, filecount, destination_table, recipients)
+    create_email_file(output_dir, filecount, destination_table, recipients, python, pytakes_path)
 
     postprocess_dir = os.path.join(output_dir, 'post')
 
     if concept_miner == 2:
         mkdir_p(postprocess_dir)
         create_post_process_batch(postprocess_dir, destination_table, negation_table, negation_variation,
-                                  driver, server, database, filecount + 1)
+                                  driver, server, database, filecount + 1, python, pytakes_path)
     logging.info('Completed.')
 
 
@@ -207,6 +213,12 @@ if __name__ == '__main__':
     parser.add_argument('--primary-key', required=False, default='ft_id',
                         help='Primary key for documents. This will be used in sorting batches. '
                              'Must be in "meta labels".')
+
+    # library
+    parser.add_argument('--python', default='python', help='Specify Python version.')
+    parser.add_argument('--pytakes-path', default='',
+                        help='Path to pytakes directory, which should contain the "src" directory.'
+                             ' Default assumes that you have installed this file in scripts.')
 
     parser.add_argument('-v', '--verbosity', type=int, default=2, help='Verbosity of log output.')
     parser.add_argument('--recipients', required=True, default=None, nargs='+',

@@ -4,12 +4,12 @@
 
 RUN_BATCH_FILE = r'''@echo off
 echo Running batch {{ batch_number }}.
-python G:\CTRHS\NLP_Projects\Code\Source\pyTAKES\src\processor.py "@.\pytakes-batch{{ batch_number }}.conf"
+{{ python }} {{ pytakes_path }}processor.py "@.\pytakes-batch{{ batch_number }}.conf"
 if %%errorlevel%% equ 0 (
-python G:\CTRHS\NLP_Projects\Code\Source\pyTAKES\src\ghri\email_utils.py -s "Batch {{ batch_number }} Completed" "@.\email.conf"
+{{ python }} {{ pytakes_path }}email_utils.py -s "Batch {{ batch_number }} Completed" "@.\email.conf"
 echo Successful.
 ) else (
-python G:\CTRHS\NLP_Projects\Code\Source\pyTAKES\src\ghri\email_utils.py -s "Batch {{ batch_number }} Failed: Log Included" -f ".\log\pytakes-processor{{ batch_number }}.log" "@.\bad_email.conf"
+{{ python }} {{ pytakes_path }}email_utils.py -s "Batch {{ batch_number }} Failed: Log Included" -f ".\log\pytakes-processor{{ batch_number }}.log" "@.\bad_email.conf"
 echo Failed.
 )
 pause
@@ -51,7 +51,7 @@ This notification is to inform you that a batch ({{ filecount }} total) has fail
 The log file is attached for debugging.
 '''
 
-PP_BATCH_FILE = r'''python G:\CTRHS\NLP_Projects\Code\Source\pyTAKES\src\postprocessor.py "@.\postprocess.conf"
+PP_BATCH_FILE = r'''{{ python }} {{ pytakes_path }}postprocessor.py "@.\postprocess.conf"
 pause
 '''
 
