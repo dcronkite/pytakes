@@ -31,14 +31,6 @@ from ghri.utils import get_valid_args
 import templates
 
 
-def get_document_count(dbi, table):
-    sql = '''
-        SELECT COUNT(*)
-        FROM %s
-    ''' % table
-    return dbi.execute_fetchone(sql)[0]
-
-
 def get_integer(s):
     num = None
     while True:
@@ -140,7 +132,7 @@ def main(dbi, cm_options, concept_miner, document_table,
          meta_labels, primary_key,
          recipients, sender, mail_server_address, negation_table, negation_variation,
          python, pytakes_path):
-    count = get_document_count(dbi, document_table)
+    count = dbi.fetch_rowcount(document_table)
     logging.info('Found %d documents in %s.' % (count, document_table))
     batchsize, batchcount = get_batch_size(count)
     filecount, batchesperfile = get_number_of_files(batchcount)

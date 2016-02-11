@@ -93,6 +93,14 @@ class DbInterface(object):
         self.execute(text, debug)
         return self.fetchall()
 
+    @connection_continue
+    def fetch_rowcount(self, table, debug=False):
+        sql = '''
+            SELECT COUNT(*)
+            FROM %s
+        ''' % table
+        return self.execute_fetchone(sql, debug)[0]
+
     def get_table_columns(self, table_name):
         """returns columns of specified table """
         if 'sql server' in self._cs.lower():
