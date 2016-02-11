@@ -93,69 +93,46 @@ def create_batch_file(output_dir, batch_label, document_table, destination_table
         out.write(Template(templates.RUN_BATCH_FILE).render(batch_number=batch_label))
 
     with open(os.path.join(output_dir, 'pytakes-batch' + str(batch_label) + '.conf'), 'w') as out:
-        out.write(Template(templates.RUN_CONF_FILE).render(
-            driver=driver, server=server, database=database, document_table=document_table,
-            destination_table=destination_table,
-            meta_labels=meta_labels, primary_key=primary_key,
-            options=options,
-            batch_size=batch_size, batch_start=batch_start, batch_end=batch_end
-        ))
+        out.write(
+            Template(templates.RUN_CONF_FILE).render(
+                driver=driver, server=server, database=database, document_table=document_table,
+                destination_table=destination_table,
+                meta_labels=meta_labels, primary_key=primary_key,
+                options=options,
+                batch_size=batch_size, batch_start=batch_start, batch_end=batch_end
+            ))
 
 
 def create_email_file(output_dir, filecount, destination_table, recipients):
-    email = '\n'.join(list('\n'.join(['--recipients', rec]) for rec in recipients))
     with open(os.path.join(output_dir, 'email.conf'), 'w') as out:
         out.write(
-            r'''%s
---text
-This notification is to inform you that another batch (%d total) has been completed for table %s.
-''' % (email, filecount, destination_table))
+            Template(templates.EMAIL_CONF_FILE).render(
+                recipients=recipients, filecount=filecount, destination_table=destination_table
+            ))
 
     with open(os.path.join(output_dir, 'bad_email.conf'), 'w') as out:
         out.write(
-            r'''%s
---text
-This notification is to inform you that a batch (%d total) has failed for table %s.
-
-The log file is included for debugging.
-''' % (email, filecount, destination_table))
+            Template(templates.BAD_EMAIL_CONF_FILE).render(
+                recipients=recipients, filecount=filecount, destination_table=destination_table
+            ))
 
 
 def create_post_process_batch(pp_dir, destination_table, negation_table, negation_variation, driver,
                               server, database, batch_count):
     with open(os.path.join(pp_dir, 'postprocess.bat'), 'w') as out:
-        out.write(
-            r'''python G:\CTRHS\NLP_Projects\Code\Source\pyTAKES\src\postprocessor.py "@.\postprocess.conf"
-pause
-''')
+        out.write(templates.PP_BATCH_FILE)
     with open(os.path.join(pp_dir, 'postprocess.conf'), 'w') as out:
-        out.write(
-            r'''--driver=%s
---server=%s
---database=%s
---input-table=%s_pre
---output-table=%s
---negation-table=%s
---negation-variation=%s
---input-column=captured
---batch-count=%d
-''' % (driver, server, database, destination_table, destination_table,
-       negation_table, negation_variation, batch_count))
+        out.write(Template(templates.PP_CONF_FILE).render(
+            driver=driver, server=server, database=database,
+            destination_table=destination_table, negation_table=negation_table,
+            negation_variation=negation_variation, batch_count=batch_count))
 
 
-def main(dbi,
-         cm_options,
-         concept_miner,
-         document_table,
-         output_dir,
-         destination_table,
-         driver,
-         server,
-         database,
-         meta_labels,
-         primary_key,
-         recipients,
-         negation_table, negation_variation):
+def main(dbi, cm_options, concept_miner, document_table,
+         output_dir, destination_table,
+         driver, server, database,
+         meta_labels, primary_key,
+         recipients, negation_table, negation_variation):
     count = get_document_count(dbi, document_table)
     logging.info('Found %d documents in %s.' % (count, document_table))
     batchsize, batchcount = get_batch_size(count)
@@ -190,7 +167,7 @@ def main(dbi,
     if concept_miner == 2:
         mkdir_p(postprocess_dir)
         create_post_process_batch(postprocess_dir, destination_table, negation_table, negation_variation,
-                                  driver, server, database, filecount+1)
+                                  driver, server, database, filecount + 1)
     logging.info('Completed.')
 
 
