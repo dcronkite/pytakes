@@ -326,8 +326,8 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
         except pyodbc.ProgrammingError as pe:
             logging.warning('Table already exists.')
             if args.force:
-                logging.warning('Force deletng rows from table {}.'.format(destination_table))
-                delete_table_rows(dbi, destination_table)
+                logging.warning('Force deleting rows from table {}.'.format(dest_table))
+                delete_table_rows(dbi, dest_table)
             else:
                 logging.error('Add option "force" to delete rows from table.')
                 sys.exit(1)
