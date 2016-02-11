@@ -52,7 +52,7 @@ def get_integer(s):
 def is_this_okay():
     response = input('Is this okay? ')
     return 'y' in response.lower()
-x
+
 
 def get_batch_size(count):
     while True:
