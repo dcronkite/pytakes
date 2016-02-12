@@ -7,19 +7,19 @@ Edit:
 """
 
 import argparse
-
 import logging
 import logging.config
 import math
 import pyodbc
 import sys
 
-from ghri.db_reader import DbInterface
-from ghri.nlp import conceptminer as miner
-from ghri.nlp import conceptminer2 as miner2
-from ghri.nlp.sentence_boundary import SentenceBoundary
-from ghri import mylogger
-from ghri.nlp.ngrams import FeatureMiner
+from util import mylogger
+from util.nlp import conceptminer as miner
+from util.nlp.ngrams import FeatureMiner
+from util.nlp.sentence_boundary import SentenceBoundary
+
+from pytakes.nlp import conceptminer2 as miner2
+from pytakes.util.db_reader import DbInterface
 
 
 class Document(object):
@@ -90,11 +90,7 @@ def get_terms(dbi, term_table, valence=None, regex_variation=None, word_order=No
     otherwise uses cTAKES defaults.
     """
     logging.info('Getting Terms and Negation.')
-    columns = dbi.execute_fetchall('''
-        SELECT column_name
-        FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE table_name = '%s'
-        ''' % term_table.split('.')[-1])  # if [dbo] or [MASTER\...] prefaced to tablename
+    columns = dbi.get_table_columns(term_table.split('.')[-1])  # if [dbo] or [MASTER\...] prefaced to tablename
     columns = [x[0].lower() for x in columns]
     valence = valence if valence else '' if 'valence' in columns else '1 as'
     regex_variation = regex_variation if regex_variation else '' if 'regexvariation' in columns else '3 as'
@@ -325,7 +321,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
             logging.info('Table created: %s.' % dest_table)
         except pyodbc.ProgrammingError as pe:
             logging.warning('Table already exists.')
-            if args.force:
+            if force:
                 logging.warning('Force deleting rows from table {}.'.format(dest_table))
                 delete_table_rows(dbi, dest_table)
             else:

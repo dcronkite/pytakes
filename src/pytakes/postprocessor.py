@@ -11,10 +11,11 @@ import logging
 import logging.config
 import pyodbc
 
-from ghri.db_reader import DbInterface
-from ghri import mylogger
-from ghri.nlp.negex import MyStatusTagger, sort_rules_for_status, get_context
-from ghri.utils import get_valid_args
+from util import mylogger
+from util.utils import get_valid_args
+
+from pytakes.nlp import MyStatusTagger, sort_rules_for_status, get_context
+from pytakes.util.db_reader import DbInterface
 
 
 def lists_are_equal(lst1, lst2):

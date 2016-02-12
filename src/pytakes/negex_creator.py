@@ -6,14 +6,14 @@ negation list, and a negation equivalences file.
 
 import argparse
 import copy
-
 import logging
 import logging.config
 import pyodbc
-import regex as re
 
-from ghri.db_reader import DbInterface
-from ghri import mylogger
+import regex as re
+from util import mylogger
+
+from pytakes.util.db_reader import DbInterface
 
 
 def parse_equivalence_file(eqfile, equivs):

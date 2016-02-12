@@ -22,13 +22,14 @@ import logging
 import logging.config
 import math
 import os
-from jinja2 import Template
 
-from ghri.db_reader import DbInterface
-from ghri import mylogger
-from ghri.unix import mkdir_p
-from ghri.utils import get_valid_args
-import templates
+from jinja2 import Template
+from util import mylogger
+from util.unix import mkdir_p
+from util.utils import get_valid_args
+
+from pytakes import templates
+from pytakes.util.db_reader import DbInterface
 
 
 def get_integer(s):
