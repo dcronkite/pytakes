@@ -13,10 +13,10 @@ import math
 import pyodbc
 import sys
 
-from util import mylogger
-from util.nlp import conceptminer as miner
-from util.nlp.ngrams import FeatureMiner
-from util.nlp.sentence_boundary import SentenceBoundary
+from .util import mylogger
+from .nlp import conceptminer as miner
+from .nlp.ngrams import FeatureMiner
+from .nlp.sentence_boundary import SentenceBoundary
 
 from pytakes.nlp import conceptminer2 as miner2
 from pytakes.util.db_reader import DbInterface
@@ -343,8 +343,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
         logging.info('Finished batch #%d of %d.' % (curr_batch, batch_length))
 
 
-if __name__ == '__main__':
-
+def main():
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
     parser.add_argument('--term-table', help='cTAKES Dictionary Lookup table.')
     parser.add_argument('--negation-table', help='Table of negation triggers, along with role.')
@@ -439,4 +438,7 @@ if __name__ == '__main__':
         logging.info(traceback.format_exc())
         logging.error(e)
         sys.exit(1)  # this will signal a batch file
+
+if __name__ == '__main__':
+    main()
     sys.exit(0)

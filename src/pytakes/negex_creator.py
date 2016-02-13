@@ -11,7 +11,7 @@ import logging.config
 import pyodbc
 
 import regex as re
-from util import mylogger
+from .util import mylogger
 
 from pytakes.util.db_reader import DbInterface
 
@@ -74,7 +74,7 @@ def write_termlist_to_db(termlist, dbi, table_name, columns):
     return True
 
 
-def main(negex_files, eqfiles, output_file=None, dbi=None, table_name='test', instances=['negex', 'type', 'direction']):
+def create_negex(negex_files, eqfiles, output_file=None, dbi=None, table_name='test', instances=['negex', 'type', 'direction']):
     length_of_instances = 0
     equivs = parse_equivalence_files(eqfiles)
     final_termlist = []
@@ -120,7 +120,7 @@ def main(negex_files, eqfiles, output_file=None, dbi=None, table_name='test', in
         write_termlist_to_db(final_termlist, dbi, table_name, instances[:length_of_instances])
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
     parser.add_argument('--negex-files', required=True, nargs='+')
     parser.add_argument('--equiv-files', required=True, nargs='+')
@@ -154,4 +154,8 @@ if __name__ == '__main__':
     else:
         dbi = None
 
-    main(args.negex_files, args.equiv_files, args.output_file, dbi, args.output_table)
+    create_negex(args.negex_files, args.equiv_files, args.output_file, dbi, args.output_table)
+
+
+if __name__ == '__main__':
+    main()

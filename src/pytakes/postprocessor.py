@@ -11,11 +11,11 @@ import logging
 import logging.config
 import pyodbc
 
-from util import mylogger
-from util.utils import get_valid_args
+from .util import mylogger
+from .util.utils import get_valid_args
 
-from pytakes.nlp import MyStatusTagger, sort_rules_for_status, get_context
-from pytakes.util.db_reader import DbInterface
+from .nlp.negex import MyStatusTagger, sort_rules_for_status, get_context
+from .util.db_reader import DbInterface
 
 
 def lists_are_equal(lst1, lst2):
@@ -103,13 +103,13 @@ def add_rowid(dbi, output_table):
         # that something needs to be fixed. :)
 
 
-def main(dbi,
-         negation_table,
-         negation_variation,
-         input_table,
-         input_column,
-         output_table,
-         batch_count):
+def postprocess(dbi,
+                negation_table,
+                negation_variation,
+                input_table,
+                input_column,
+                output_table,
+                batch_count):
     """
     :param batch_count:
     :param dbi:
@@ -173,7 +173,7 @@ def main(dbi,
     return True
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
     parser.add_argument('--driver', required=False, default='SQL Server')
     parser.add_argument('-s', '--server', default='ghrinlp', help='Database server to use.')
@@ -195,7 +195,11 @@ if __name__ == '__main__':
     dbi = DbInterface(args.driver, args.server, args.database, loglevel)
 
     try:
-        main(dbi, **get_valid_args(main, vars(args)))
+        postprocess(dbi, **get_valid_args(main, vars(args)))
     except Exception as e:
         logging.exception(e)
         logging.error('Process terminated.')
+
+
+if __name__ == '__main__':
+    main()

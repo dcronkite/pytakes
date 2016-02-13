@@ -24,9 +24,9 @@ import math
 import os
 
 from jinja2 import Template
-from util import mylogger
-from util.unix import mkdir_p
-from util.utils import get_valid_args
+from pytakes.util import mylogger
+from pytakes.util.unix import mkdir_p
+from pytakes.util.utils import get_valid_args
 
 from pytakes import templates
 from pytakes.util.db_reader import DbInterface
@@ -127,12 +127,12 @@ def create_post_process_batch(pp_dir, destination_table, negation_table, negatio
             python=python, pytakes_path=pytakes_path))
 
 
-def main(dbi, cm_options, concept_miner, document_table,
-         output_dir, destination_table,
-         driver, server, database,
-         meta_labels, primary_key,
-         recipients, sender, mail_server_address, negation_table, negation_variation,
-         python, pytakes_path):
+def automate_run(dbi, cm_options, concept_miner, document_table,
+                 output_dir, destination_table,
+                 driver, server, database,
+                 meta_labels, primary_key,
+                 recipients, sender, mail_server_address, negation_table, negation_variation,
+                 python, pytakes_path):
     count = dbi.fetch_rowcount(document_table)
     logging.info('Found %d documents in %s.' % (count, document_table))
     batchsize, batchcount = get_batch_size(count)
@@ -172,7 +172,7 @@ def main(dbi, cm_options, concept_miner, document_table,
     logging.info('Completed.')
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
     parser.add_argument('--driver', default='SQL Server', help='Driver to connect with.')
     parser.add_argument('-s', '--server', default='ghrinlp', help='Database server to use.')
@@ -257,8 +257,12 @@ if __name__ == '__main__':
         raise ValueError('Invalid argument for concept miner.')
 
     try:
-        main(dbi, cm_options, **get_valid_args(main, vars(args)))
+        automate_run(dbi, cm_options, **get_valid_args(automate_run, vars(args)))
     except Exception as e:
         logging.exception(e)
         logging.error('Process terminated with errors.')
     logging.info('Process completed.')
+
+
+if __name__ == '__main__':
+    main()
