@@ -83,8 +83,11 @@ def create_batch_file(output_dir, batch_label, document_table, destination_table
                       batch_size, batch_start, batch_end, driver, server, database, meta_labels,
                       primary_key, options, python, pytakes_path):
     with open(os.path.join(output_dir, 'pytakes-batch' + str(batch_label) + '.bat'), 'w') as out:
-        out.write(Template(templates.RUN_BATCH_FILE).render(
-            batch_number=batch_label, python=python, pytakes_path=pytakes_path))
+        if pytakes_path:
+            out.write(Template(templates.RUN_BATCH_FILE).render(
+                batch_number=batch_label, python=python, pytakes_path=pytakes_path))
+        else:
+            out.write(Template(templates.RUN_COMMAND_BATCH_FILE).render(batch_number=batch_label))
 
     with open(os.path.join(output_dir, 'pytakes-batch' + str(batch_label) + '.conf'), 'w') as out:
         out.write(

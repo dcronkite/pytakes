@@ -15,6 +15,20 @@ echo Failed.
 pause
 '''
 
+RUN_COMMAND_BATCH_FILE = r'''@echo off
+echo Running batch {{ batch_number }}.
+pytakes-processor "@.\pytakes-batch{{ batch_number }}.conf"
+if %%errorlevel%% equ 0 (
+pytakes-sendmail -s "Batch {{ batch_number }} Completed" "@.\email.conf"
+echo Successful.
+) else (
+pytakes-sendmail -s "Batch {{ batch_number }} Failed: Log Included" -f ".\log\pytakes-processor{{ batch_number }}.log" "@.\bad_email.conf"
+echo Failed.
+)
+pause
+'''
+
+
 RUN_CONF_FILE = r'''--driver={{ driver }}
 --server={{ server }}
 --database={{ database }}

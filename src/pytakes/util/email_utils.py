@@ -30,22 +30,6 @@ import email.utils
 from email.mime.text import MIMEText
 import argparse
 
-# smtp server address
-SERVER = 'mailhost.ghc.org'
-
-# header information for sender
-FROM = email.utils.formataddr(('Automated Notification', 'cronkite.d@ghc.org'))
-
-# names of sendees, to be put in header
-TONAMES = ['David']
-
-# addresses of sendees, for header and envelope
-TOADDYS = ['cronkite.d@ghc.org']
-
-# header information for sendees
-TO = email.utils.formataddr((','.join(TONAMES), ','.join(TOADDYS)))
-SUBJECT = 'Automated Notification'  # subject of e-mail message
-
 
 def get_text_from_file(fn):
     """
@@ -87,21 +71,12 @@ def main(subject='', filename=None, text='',
     :param sender: string of "name,email@address"
     :param server_address: string
     """
-    global TO, TOADDYS, FROM, SERVER
-
     if not isinstance(text, str):
         text = '\n'.join(text)
 
-    if recipients:
-        TOADDYS, TO = resolve_recipients(recipients)
-    else:
-        logging.warning('Using default recipients.')
+    toaddys, to_ = resolve_recipients(recipients)
 
-    if sender:
-        FROM = resolve_recipients([sender])
-
-    if server_address:
-        SERVER = server_address
+    _, from_ = resolve_recipients([sender])
 
     if filename:
         try:
@@ -120,11 +95,11 @@ def main(subject='', filename=None, text='',
 
     # create MIME message from message body
     msg = MIMEText(msgstring % (text, ftext))
-    msg['From'] = FROM  # set header from info
-    msg['To'] = TO  # set header to info
+    msg['From'] = from_  # set header from info
+    msg['To'] = to_  # set header to info
     msg['Subject'] = 'Automated Message: %s' % subject  # set header subject
-    server = smtplib.SMTP(SERVER)  # open connection to smtp server
-    server.sendmail(TOADDYS[0], TOADDYS, msg.as_string())  # send the e-mail
+    server = smtplib.SMTP(server_address)  # open connection to smtp server
+    server.sendmail(toaddys[0], toaddys, msg.as_string())  # send the e-mail
 
     return
 
