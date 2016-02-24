@@ -79,7 +79,9 @@ This is the table containing the terms you want to search for (i.e., the entitie
 #### Document Table ####
 This is the table containing the text you are in interesting in searching in.
 
+The text itself must currently be labeled 'note_text'. The option to specify this is currently not implemented. Sorry.
 
+The document table must also include a unique id for each note_text (just make an autoincrementing primary key). Specify this and any other meta information you want to pass along under '--meta-labels' option (ensure that the unique doc_id is specified first).
 
 
 #### Example Config File ####
