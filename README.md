@@ -68,3 +68,29 @@ This is the table containing the text you are in interesting in searching in.
 
 
 #### Example Config File ####
+To get started, create the following file and then run:
+
+    pytakes-automate-run @config.conf
+
+Config.conf:
+
+    --server=MY_SERVER
+    --database=MY_DB
+    --dictionary-table=MY_DICTIONARY_TABLE
+    --negation-table=MY_NEGATION_TABLE
+    --negation-variation=0
+    --document-table=MY_DOCUMENT_TABLE
+    --meta-labels
+    doc_id
+    date
+    note_text
+    --output-dir=main
+    --destination-table=pytakes_out_20150217
+    --max-intervening-terms=2
+    --max-length-of-search=2
+    --regex-variation=-1
+    --mail-server-address=mail.my.org
+    --sender
+    Automated Notification,name.my@my.org
+    --recipients
+    My Name,name.my@my.org
