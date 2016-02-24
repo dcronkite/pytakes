@@ -438,7 +438,7 @@ def main():
         logging.info(traceback.format_exc())
         logging.error(e)
         sys.exit(1)  # this will signal a batch file
+    sys.exit(0)  # required if called from script, otherwise results in 'Failed' message
 
 if __name__ == '__main__':
     main()
-    sys.exit(0)
