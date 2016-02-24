@@ -152,6 +152,7 @@ def automate_run(dbi, cm_options, concept_miner, document_table,
 
     options = [resolve_formatting(x, y) for x, y in cm_options if y]
     if not meta_labels:
+        logging.warning('Using default meta labels is DEPRECATED. Please specify --meta-labels flag.')
         meta_labels = ['ft_id', 'chsid', 'hybrid_date']
     if primary_key not in meta_labels:
         ve = ValueError('Primary key must be a value in the meta values list: {}.'.format(', '.join(meta_labels)))
