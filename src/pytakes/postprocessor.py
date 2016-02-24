@@ -195,7 +195,7 @@ def main():
     dbi = DbInterface(args.driver, args.server, args.database, loglevel)
 
     try:
-        postprocess(dbi, **get_valid_args(main, vars(args)))
+        postprocess(dbi, **get_valid_args(postprocess, vars(args)))
     except Exception as e:
         logging.exception(e)
         logging.error('Process terminated.')

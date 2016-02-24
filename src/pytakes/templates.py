@@ -75,7 +75,7 @@ PP_BATCH_FILE = r'''{{ python }} {{ pytakes_path }}postprocessor.py "@.\postproc
 pause
 '''
 
-PP_COMMAND_BATCH_FILE = r'''postprocessor "@.\postprocess.conf"
+PP_COMMAND_BATCH_FILE = r'''pytakes-postprocessor "@.\postprocess.conf"
 pause
 '''
 
