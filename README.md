@@ -60,11 +60,26 @@ Columns:
 
 
 #### Term Table #### 
-This is the table containing the terms you want to search for (i.e., the entities you wan't extracted.
+This is the table containing the terms you want to search for (i.e., the entities you wan't extracted). I have a script to auto-generate these, and will plan to include this in the file in due course (give me month ;) ). This is comparable to input required by cTAKES (and is derived from that).
 
+    ​Column	​Type	​Description
+    ​ID	​int	​identity column; unique integer for each row
+    ​CUI	​varchar(8)	​category identifier; can be used to "group" different     terms together
+    ​Fword	​varchar(80)	​first word of term
+    ​Text	​varchar(8000)	​term
+    ​Code	​varchar(45)	​unimportant value required by cTAKES (legacy)
+    ​SourceType	​varchar(45)	​unimportant value required by cTAKES (legacy)
+    ​TUI	​varchar(4)	​​unimportant value required by cTAKES (legacy)
+    ​TextLength	​int	​length of term (all characters including spaces)
+    ​RegexVariation	​int	​amount of variation: 0=none; 3=very; 1=default; see #Rules#parameters below; I suggest you just use "0"
+    ​WordOrder	​int	​how accurate must the given word order be; 2=exactly; 1=fword constraint; 0=no word order
+​    Valence	​int	​this should just be "1"; pytakes not designed to work with this correctly
+    
 
 #### Document Table ####
 This is the table containing the text you are in interesting in searching in.
+
+
 
 
 #### Example Config File ####
@@ -81,8 +96,9 @@ Config.conf:
     --negation-variation=0
     --document-table=MY_DOCUMENT_TABLE
     --meta-labels
-    doc_id
+    doc_id   # the first one must be a unique id per document
     date
+    --text-labels   # not yet implemented, where your text goes, defaults to "note_text"
     note_text
     --output-dir=main
     --destination-table=pytakes_out_20150217
