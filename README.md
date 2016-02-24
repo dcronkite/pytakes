@@ -6,14 +6,13 @@
 ## Prerequisites ##
 1. Generate a word list of terms to find using dictionary builder script.
 2. An input data table with the following columns (these can be altered on the automate_run script):
-    * Ft_id - unique for each piece of text
-    * hybrid_date - date
+    * doc_id - unique for each piece of text
     + note_text - text of the notes themselves
 
 ## Doco ##
 
 ### Basics ###
-Until I add more doco, check out the automate_run.py script (should be in your Scripts directory).
+Until I add more doco, check out the pytakes-automate-run script (should be in your Scripts directory).
 
 Right now, you will need to create two additional tables in the specified server/database with these names/columns:
 
