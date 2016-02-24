@@ -363,8 +363,8 @@ def main():
     parser.add_argument('--verbosity', type=int, default=2, help='Verbosity of log output.')
 
     parser.add_argument('--driver', required=False, default='SQL Server')
-    parser.add_argument('--server', required=False, default='ghrinlp')
-    parser.add_argument('--database', required=False, default='nlpdev')
+    parser.add_argument('--server', required=True)
+    parser.add_argument('--database', required=True)
     parser.add_argument('--max-intervening-terms', required=False, default=1, type=int)
     parser.add_argument('--max-length-of-search', required=False, default=3, type=int)
     parser.add_argument('--valence', required=False, default=None, type=int)

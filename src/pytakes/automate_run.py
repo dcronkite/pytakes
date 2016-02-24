@@ -182,8 +182,8 @@ def automate_run(dbi, cm_options, concept_miner, document_table,
 def main():
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
     parser.add_argument('--driver', default='SQL Server', help='Driver to connect with.')
-    parser.add_argument('-s', '--server', default='ghrinlp', help='Database server to use.')
-    parser.add_argument('-d', '--database', default='nlpdev', help='Database to use.')
+    parser.add_argument('-s', '--server', required=True, help='Database server to use.')
+    parser.add_argument('-d', '--database', required=True, help='Database to use.')
     parser.add_argument('--document-table', help='Table of input documents.')
     parser.add_argument('--output-dir', help='Destination directory.')
     parser.add_argument('--destination-table', help='Output table, to be created.')

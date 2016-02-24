@@ -176,8 +176,8 @@ def postprocess(dbi,
 def main():
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
     parser.add_argument('--driver', required=False, default='SQL Server')
-    parser.add_argument('-s', '--server', default='ghrinlp', help='Database server to use.')
-    parser.add_argument('-d', '--database', default='nlpdev', help='Database to use.')
+    parser.add_argument('-s', '--server', required=True, help='Database server to use.')
+    parser.add_argument('-d', '--database', required=True, help='Database to use.')
     parser.add_argument('--negation-table', help='Table of negation triggers, along with role.')
     parser.add_argument('--negation-variation', type=int, default=0, required=False,
                         help='Amount of variation to allow in negations. Values: 0-3.')
