@@ -75,6 +75,10 @@ PP_BATCH_FILE = r'''{{ python }} {{ pytakes_path }}postprocessor.py "@.\postproc
 pause
 '''
 
+PP_COMMAND_BATCH_FILE = r'''postprocessor "@.\postprocess.conf"
+pause
+'''
+
 PP_CONF_FILE = r'''--driver={{ driver }}
 --server={{ server }}
 --database={{ database }}

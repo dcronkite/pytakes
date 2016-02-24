@@ -97,7 +97,6 @@ def create_batch_file(output_dir, batch_label, document_table, destination_table
                 meta_labels=meta_labels, primary_key=primary_key,
                 options=options,
                 batch_size=batch_size, batch_start=batch_start, batch_end=batch_end,
-                python=python, pytakes_path=pytakes_path
             ))
 
 
@@ -107,21 +106,26 @@ def create_email_file(output_dir, filecount, destination_table,
         out.write(
             Template(templates.EMAIL_CONF_FILE).render(
                 recipients=recipients, filecount=filecount, destination_table=destination_table,
-                python=python, pytakes_path=pytakes_path, sender=sender, mail_server_address=mail_server_address
+                sender=sender, mail_server_address=mail_server_address
             ))
 
     with open(os.path.join(output_dir, 'bad_email.conf'), 'w') as out:
         out.write(
             Template(templates.BAD_EMAIL_CONF_FILE).render(
                 recipients=recipients, filecount=filecount, destination_table=destination_table,
-                python=python, pytakes_path=pytakes_path, sender=sender, mail_server_address=mail_server_address
+                sender=sender, mail_server_address=mail_server_address
             ))
 
 
 def create_post_process_batch(pp_dir, destination_table, negation_table, negation_variation, driver,
                               server, database, batch_count, python, pytakes_path):
     with open(os.path.join(pp_dir, 'postprocess.bat'), 'w') as out:
-        out.write(templates.PP_BATCH_FILE)
+        if pytakes_path:
+            out.write(Template(templates.PP_BATCH_FILE).render(
+                pytakes_path=pytakes_path, python=python
+            ))
+        else:
+            out.write(templates.PP_COMMAND_BATCH_FILE)
     with open(os.path.join(pp_dir, 'postprocess.conf'), 'w') as out:
         out.write(Template(templates.PP_CONF_FILE).render(
             driver=driver, server=server, database=database,
