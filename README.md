@@ -73,8 +73,8 @@ This is the table containing the terms you want to search for (i.e., the entitie
     ​TextLength	​int	​length of term (all characters including spaces)
     ​RegexVariation	​int	​amount of variation: 0=none; 3=very; 1=default; see #Rules#parameters below; I suggest you just use "0"
     ​WordOrder	​int	​how accurate must the given word order be; 2=exactly; 1=fword constraint; 0=no word order
-​    Valence	​int	​this should just be "1"; pytakes not designed to work with this correctly
-    
+    Valence	​int	​this should just be "1"; pytakes not designed to work with this correctly
+
 
 #### Document Table ####
 This is the table containing the text you are in interesting in searching in.
