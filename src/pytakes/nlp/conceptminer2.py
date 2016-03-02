@@ -27,7 +27,7 @@ from .negex import MyStatusTagger, sort_rules_for_status
 
 
 def remove_punct(text):
-    return re.sub(r'\p{P}+', '', text)
+    return re.sub(r'\p{P}', ' ', text)
 
 
 class ConceptMiner(object):
@@ -337,9 +337,6 @@ class MinerCask(object):
         offset = 0  # length of all previous sentences (for Concept location)
         for orig_sentence in sentences:
             sentence = self.prepare(orig_sentence)
-            # print sentence
-            # offset added 20131212, but this number isn't exact becuase of
-            # the removal of punctuation
             termlist = clean_terms(find_terms(self.rx_id, sentence, offset=offset))
             termlist += self.tagger.find_negation(sentence)
             termlist += add_words(termlist, sentence)
