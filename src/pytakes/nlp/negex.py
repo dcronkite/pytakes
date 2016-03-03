@@ -554,74 +554,35 @@ class MyStatusTagger(object):
         self.__rules = []
         self.maxscope_ = maxscope
 
+        # negation key
+        negex_level = {
+            1: [(12, '{1i+1d<3})'),
+                (8, '{1i+1d<2})'),
+                (0, '')
+                ],
+            2: [(14, '{1i+1d<4}'),
+                (10, '{1i+1d<3}'),
+                (6, '{1i+1d<2}'),
+                (0, '')
+                ],
+            3: [(12, '{1i+1d<4}'),
+                (8, '{1i+1d<3}'),
+                (4, '{1i+1d<2}'),
+                (0, '')
+                ]
+        }
+
+        def get_negation_string(values, length):
+            for x, y in values:
+                if x > length:
+                    return y
+            return ''
+
         # add rules, but permit errors based on length
         for negex, _type, direction, pattern in rules:
-
-            if rx_var == 0:  # no variation
-                self.__rules.append((negex, pattern, _type[1:5], direction))
-
-            # minimal variation in negation
-            elif rx_var == 1:  # minimal variation
-                if len(negex) > 12:
-                    self.__rules.append(
-                        (negex,
-                         re.compile(r'(\b' + r'\s+'.join(negex.split()) + r'\b{1i+1d<3})', re.V1 | re.I),
-                         _type[1:5],
-                         direction))
-                elif len(negex) > 8:
-                    self.__rules.append(
-                        (negex,
-                         re.compile(r'(\b' + r'\s+'.join(negex.split()) + r'\b{1i+1d<2})', re.V1 | re.I),
-                         _type[1:5],
-                         direction))
-                else:  # less than 4
-                    self.__rules.append((negex, pattern, _type[1:5], direction))
-
-            # allow moderate variation in negation
-            elif rx_var == 2:  # moderate variation
-                if len(negex) > 14:
-                    self.__rules.append(
-                        (negex,
-                         re.compile(r'(\b' + r'\s+'.join(negex.split()) + r'\b{1i+1d<4})', re.V1 | re.I),
-                         _type[1:5],
-                         direction))
-                elif len(negex) > 10:
-                    self.__rules.append(
-                        (negex,
-                         re.compile(r'(\b' + r'\s+'.join(negex.split()) + r'\b{1i+1d<3})', re.V1 | re.I),
-                         _type[1:5],
-                         direction))
-                elif len(negex) > 6:
-                    self.__rules.append(
-                        (negex,
-                         re.compile(r'(\b' + r'\s+'.join(negex.split()) + r'\b{1i+1d<2})', re.V1 | re.I),
-                         _type[1:5],
-                         direction))
-                else:  # less than 4
-                    self.__rules.append((negex, pattern, _type[1:5]))
-
-            # very flexible negation          
-            elif rx_var >= 3:  # very flexible
-                if len(negex) > 12:
-                    self.__rules.append(
-                        (negex,
-                         re.compile(r'(\b' + r'\s+'.join(negex.split()) + r'\b{1i+1d<4})', re.V1 | re.I),
-                         _type[1:5],
-                         direction))
-                elif len(negex) > 8:
-                    self.__rules.append(
-                        (negex,
-                         re.compile(r'(\b' + r'\s+'.join(negex.split()) + r'\b{1i+1d<3})', re.V1 | re.I),
-                         _type[1:5],
-                         direction))
-                elif len(negex) > 4:
-                    self.__rules.append(
-                        (negex,
-                         re.compile(r'(\b' + r'\s+'.join(negex.split()) + r'\b{1i+1d<2})', re.V1 | re.I),
-                         _type[1:5],
-                         direction))
-                else:  # less than 4
-                    self.__rules.append((negex, pattern, _type[1:5], direction))
+            negex_pat = '\b{}\b{}'.format(r'\W+'.join(negex.split()),
+                                          get_negation_string(negex_level[rx_var], len(negex)))
+            self.__rules.append((negex, re.compile(negex_pat), _type[1:5], direction))
 
     def find_negation(self, text, offset=0):
         """

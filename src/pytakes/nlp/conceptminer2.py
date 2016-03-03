@@ -350,13 +350,7 @@ class MinerCask(object):
         return resultconcepts
 
     def prepare(self, sentence):
-        try:
-            sentence = remove_punct(sentence)
-        except Exception as e:
-            print("Failed:", sentence)
-            print(type(sentence))
-            raise e
-        return ' '.join(sentence.split())
+        return sentence
 
 
 def assert_words(lst):
