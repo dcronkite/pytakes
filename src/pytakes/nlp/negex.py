@@ -46,7 +46,7 @@ def get_context(dbi, neg_table):
     ''' % neg_table)
 
 
-def sort_rules_for_status(rulelist, exclusions=[]):
+def sort_rules_for_status(rulelist, exclusions=None):
     """
     Return sorted list of rules: (negex, type, direction, pattern)
 
@@ -62,19 +62,18 @@ def sort_rules_for_status(rulelist, exclusions=[]):
     rulelist.sort(key=lambda x: len(x[0]), reverse=True)
     sortedlist = []
     for negex, type_, direction in rulelist:
-        if negex in exclusions: continue
-        trig = r'\s+'.join(negex.split())
-        pattern = re.compile(r'\b(' + trig + r')\b', re.I)
-        sortedlist.append((negex, type_, direction, pattern))
+        if exclusions and negex in exclusions:
+            continue
+        sortedlist.append((negex, type_, direction))
     return sortedlist
 
 
-def sort_rules_from_tuple(rulelist, exclusions=[]):
+def sort_rules_from_tuple(rulelist, exclusions=None):
     """Return sorted list of rules.
-    
+
     Input: list of tuples (negex, type).
 
-    Sorts list of rules descending based on length of the rule, 
+    Sorts list of rules descending based on length of the rule,
     splits each rule into components, converts pattern to regular expression,
     and appends it to the end of the rule.
     :param rulelist:
@@ -82,428 +81,10 @@ def sort_rules_from_tuple(rulelist, exclusions=[]):
     rulelist.sort(key=lambda x: len(x[0]), reverse=True)
     sortedlist = []
     for negex, _type in rulelist:
-        if negex in exclusions:
+        if exclusions and negex in exclusions:
             continue
-        trig = r'\s+'.join(negex.split())
-        pattern = re.compile(r'\b(' + trig + r')\b', re.I)
-        sortedlist.append((negex, '', _type, pattern))
+        sortedlist.append((negex, '', _type))
     return sortedlist
-
-
-def sort_rules2(rulelist):
-    """Return sorted list of rules.
-    
-    ONLY ONE TAB REQUIRED!!!!
-    
-    Rules should be in a tab-delimited format: 'rule\t[four letter negation tag]'
-    Sorts list of rules descending based on length of the rule, 
-    splits each rule into components, converts pattern to regular expression,
-    and appends it to the end of the rule.
-    :param rulelist: """
-    rulelist.sort(key=len, reverse=True)
-    sortedlist = []
-    for s in rulelist:
-        splittrig = s[0].split()
-        trig = r'\s+'.join(splittrig)
-        pattern = r'\b(' + trig + r')\b'
-        sortedlist.append((s[0], '', s[1], re.compile(pattern, re.IGNORECASE)))
-    return sortedlist
-
-
-def sort_rules(rulelist):
-    """Return sorted list of rules.
-    
-    Rules should be in a tab-delimited format: 'rule\t\t[four letter negation tag]'
-    Sorts list of rules descending based on length of the rule, 
-    splits each rule into components, converts pattern to regular expression,
-    and appends it to the end of the rule.
-    :param rulelist: """
-    rulelist.sort(key=len, reverse=True)
-    sortedlist = []
-    for rule in rulelist:
-        s = rule.strip().split('\t')
-        splittrig = s[0].split()
-        trig = r'\s+'.join(splittrig)
-        pattern = r'\b(' + trig + r')\b'
-        s.append(re.compile(pattern, re.IGNORECASE))
-        sortedlist.append(s)
-    return sortedlist
-
-
-class NegTagger(object):
-    """Take a sentence and tag negation terms and negated phrases.
-
-    Keyword arguments:
-    sentence -- string to be tagged
-    phrases  -- list of phrases to check for negation
-    rules    -- list of negation trigger terms from the sortRules function
-    negP     -- tag 'possible' terms as well (default = True)    """
-
-    def __init__(self, sentence='', phrases=None, rules=None,
-                 neg_p=True):
-        self.__sentence = sentence
-        self.__phrases = phrases
-        self.__rules = rules
-        self.__negTaggedSentence = ''
-        self.__scopesToReturn = []
-        self.__negationFlag = None
-
-        filler = '_'
-
-        for rule in self.__rules:
-            reformatrule = re.sub(r'\s+', filler, rule[0].strip())
-            self.__sentence = rule[3].sub(' ' + rule[2].strip() + reformatrule + rule[2].strip() + ' ', self.__sentence)
-        for phrase in self.__phrases:
-            phrase = re.sub(r'([.^$*+?{\\|()[\]])', r'\\\1', phrase)  # prep for conversion to regex
-            splitphrase = phrase.split()
-            joiner = r'\W+'
-            joinedpattern = r'\b' + joiner.join(splitphrase) + r'\b'
-            re_p = re.compile(joinedpattern, re.IGNORECASE)
-            m = re_p.search(self.__sentence)
-            if m:
-                self.__sentence = self.__sentence.replace(m.group(0), '[PHRASE]' + re.sub(r'\s+', filler, m.group(
-                    0).strip()) + '[PHRASE]')
-
-                #        Exchanges the [PHRASE] ... [PHRASE] tags for [NEGATED] ... [NEGATED]
-                #        based on PREN, POST rules and if negPoss is set to True then based on
-                #        PREP and POSP, as well.
-                #        Because PRENEGATION [PREN} is checked first it takes precedent over
-                #        POSTNEGATION [POST]. Similarly POSTNEGATION [POST] takes precedent over
-                #        POSSIBLE PRENEGATION [PREP] and [PREP] takes precedent over POSSIBLE
-                #        POSTNEGATION [POSP].
-
-        overlapflag = 0
-        prenflag = 0
-        postflag = 0
-        prepossibleflag = 0
-        postpossibleflag = 0
-
-        sentencetokens = self.__sentence.split()
-        sentenceportion = ''
-        a_scopes = []
-        sb = []
-        # check for [PREN]
-        for i in range(len(sentencetokens)):
-            if sentencetokens[i][:6] == '[PREN]':
-                prenflag = 1
-                overlapflag = 0
-
-            if sentencetokens[i][:6] in ['[CONJ]', '[PSEU]', '[POST]', '[PREP]', '[POSP]']:
-                overlapflag = 1
-
-            if i + 1 < len(sentencetokens):
-                if sentencetokens[i + 1][:6] == '[PREN]':
-                    overlapflag = 1
-                    if sentenceportion.strip():
-                        a_scopes.append(sentenceportion.strip())
-                    sentenceportion = ''
-
-            if prenflag == 1 and overlapflag == 0:
-                sentencetokens[i] = sentencetokens[i].replace('[PHRASE]', '[NEGATED]')
-                sentenceportion = sentenceportion + ' ' + sentencetokens[i]
-
-            sb.append(sentencetokens[i])
-
-        if sentenceportion.strip():
-            a_scopes.append(sentenceportion.strip())
-
-        sentenceportion = ''
-        sb.reverse()
-        sentencetokens = sb
-        sb2 = []
-        # Check for [POST]
-        for i in range(len(sentencetokens)):
-            if sentencetokens[i][:6] == '[POST]':
-                postflag = 1
-                overlapflag = 0
-
-            if sentencetokens[i][:6] in ['[CONJ]', '[PSEU]', '[PREN]', '[PREP]', '[POSP]']:
-                overlapflag = 1
-
-            if i + 1 < len(sentencetokens):
-                if sentencetokens[i + 1][:6] == '[POST]':
-                    overlapflag = 1
-                    if sentenceportion.strip():
-                        a_scopes.append(sentenceportion.strip())
-                    sentenceportion = ''
-
-            if postflag == 1 and overlapflag == 0:
-                sentencetokens[i] = sentencetokens[i].replace('[PHRASE]', '[NEGATED]')
-                sentenceportion = sentencetokens[i] + ' ' + sentenceportion
-
-            sb2.insert(0, sentencetokens[i])
-
-        if sentenceportion.strip():
-            a_scopes.append(sentenceportion.strip())
-
-        sentenceportion = ''
-        self.__negTaggedSentence = ' '.join(sb2)
-
-        if neg_p:
-            sentencetokens = sb2
-            sb3 = []
-            # Check for [PREP]
-            for i in range(len(sentencetokens)):
-                if sentencetokens[i][:6] == '[PREP]':
-                    prepossibleflag = 1
-                    overlapflag = 0
-
-                if sentencetokens[i][:6] in ['[CONJ]', '[PSEU]', '[POST]', '[PREN]', '[POSP]']:
-                    overlapflag = 1
-
-                if i + 1 < len(sentencetokens):
-                    if sentencetokens[i + 1][:6] == '[PREP]':
-                        overlapflag = 1
-                        if sentenceportion.strip():
-                            a_scopes.append(sentenceportion.strip())
-                        sentenceportion = ''
-
-                if prepossibleflag == 1 and overlapflag == 0:
-                    sentencetokens[i] = sentencetokens[i].replace('[PHRASE]', '[POSSIBLE]')
-                    sentenceportion = sentenceportion + ' ' + sentencetokens[i]
-
-                sb3 = sb3 + ' ' + sentencetokens[i]
-
-            if sentenceportion.strip():
-                a_scopes.append(sentenceportion.strip())
-
-            sentenceportion = ''
-            sb3.reverse()
-            sentencetokens = sb3
-            sb4 = []
-            # Check for [POSP]
-            for i in range(len(sentencetokens)):
-                if sentencetokens[i][:6] == '[POSP]':
-                    postpossibleflag = 1
-                    overlapflag = 0
-
-                if sentencetokens[i][:6] in ['[CONJ]', '[PSEU]', '[PREN]', '[PREP]', '[POST]']:
-                    overlapflag = 1
-
-                if i + 1 < len(sentencetokens):
-                    if sentencetokens[i + 1][:6] == '[POSP]':
-                        overlapflag = 1
-                        if sentenceportion.strip():
-                            a_scopes.append(sentenceportion.strip())
-                        sentenceportion = ''
-
-                if postpossibleflag == 1 and overlapflag == 0:
-                    sentencetokens[i] = sentencetokens[i].replace('[PHRASE]', '[POSSIBLE]')
-                    sentenceportion = sentencetokens[i] + ' ' + sentenceportion
-
-                sb4.insert(0, sentencetokens[i])
-
-            if sentenceportion.strip():
-                a_scopes.append(sentenceportion.strip())
-
-            self.__negTaggedSentence = ' '.join(sb4)
-
-        if '[NEGATED]' in self.__negTaggedSentence:
-            self.__negationFlag = 'negated'
-        elif '[POSSIBLE]' in self.__negTaggedSentence:
-            self.__negationFlag = 'possible'
-        else:
-            self.__negationFlag = 'affirmed'
-
-        self.__negTaggedSentence = self.__negTaggedSentence.replace(filler, ' ')
-
-        for line in a_scopes:
-            tokenstoreturn = []
-            thislinetokens = line.split()
-            for token in thislinetokens:
-                if token[:6] not in ['[PREN]', '[PREP]', '[POST]', '[POSP]']:
-                    tokenstoreturn.append(token)
-            self.__scopesToReturn.append(' '.join(tokenstoreturn))
-
-    def get_neg_tagged_sentence(self):
-        return self.__negTaggedSentence
-
-    def get_negation_flag(self):
-        return self.__negationFlag
-
-    def get_scopes(self):
-        return self.__scopesToReturn
-
-    def is_negated(self):
-        return self.__negationFlag == 'negated'
-
-    def is_affirmed(self):
-        return self.__negationFlag == 'affirmed'
-
-    def __str__(self):
-        text = self.__negTaggedSentence
-        text += '\t' + self.__negationFlag
-        text += '\t' + '\t'.join(self.__scopesToReturn)
-        return text
-
-
-class MyNegTagger(object):
-    """
-    Customizations of Peter Kang & Wendy Chapman's negex.py algorithm.
-
-    Output Terms with negation/possibility flags inherent in the term
-    rather than words.
-    Terms are sorted by relative position in the sentence.
-
-    Overview of use:
-        1. initialize with rules (grab from db with sortRulesFromTuples)
-        2. call findNegation on the text, and hold onto the return
-            Negation(Term) objects
-        3. convert all other words in the text to some sort of Term
-            objects
-        4. call negateSentence(s) to determine which Terms are
-            negated (and, optionally, which terms are possible)
-    """
-
-    def __init__(self, rules, neg_p=True, rx_var=0):
-        """
-        Parameters:
-            rules - list of negation trigger terms from the sortRules function
-            negP - tag 'possible' terms as well (default = True)
-            rxVar - allowable regular expression variation
-                    0: no variation; words must be exact
-                    1: minimal variation
-                    2: moderate variation
-                    3: flexible
-        """
-        self.__rules = []
-        # add rules, but permit errors based on length
-        for negex, _, _type, pattern in rules:
-
-            # improve this bit, in order to allow variations
-            # enforce first letter of words?
-            if len(negex) > 12:
-                self.__rules.append(
-                    (negex,
-                     re.compile('(\b' + r'\s+'.join(negex.split()) + '\b{1i+1d<4})', re.V1 | re.I),
-                     _type[1:5]))
-            elif len(negex) > 8:
-                self.__rules.append(
-                    (negex,
-                     re.compile('(\b' + r'\s+'.join(negex.split()) + '\b{1i+1d<3})', re.V1 | re.I),
-                     _type[1:5]))
-            elif len(negex) > 4:
-                self.__rules.append(
-                    (negex,
-                     re.compile('(\b' + r'\s+'.join(negex.split()) + '\b{1i+1d<2})', re.V1 | re.I),
-                     _type[1:5]))
-            else:  # less than 4
-                self.__rules.append((negex, pattern, _type[1:5]))
-
-        self.negP = neg_p
-
-    def find_negation(self, text, offset=0):
-        """
-        Find negations in a piece of text. If called sentence by
-        sentence, set 'offset' to the len() of all previous
-        sentences so that the Negation indices are correct.
-
-        Parameters:
-            text - piece of text to find negation
-            offset - (default 0) len(all previous sentences)
-                    if putting in only one sentence at a time
-                    (not recommended as sentence boundaries
-                    are not important for this portion of the
-                    algorithm)
-                    :param text:
-                    :param offset:
-        """
-        negations = []
-        # rules already sorted by length of negation expression
-        for negex, pattern, _type in self.__rules:
-            for m in pattern.finditer(text):
-                n = Negation(negex, m.start() + offset, m.end() + offset, _type=_type)
-                # longer sequences will trump smaller ones
-                if n not in negations:
-                    negations.append(n)
-        return negations
-
-    def negate_sentences(self, sentences):
-        new_sentences = []
-        for sentence in sentences:
-            new_sentences += self.negate_sentence(sentence)
-        return new_sentences
-
-    def negate_sentence(self, sentence):
-        overlapflag = 0
-        prenflag = 0
-        postflag = 0
-        prepossibleflag = 0
-        postpossibleflag = 0
-        # check for PREN
-        counter = 0  # limit scope of prenegation
-        for idx, term in enumerate(sentence):
-            if term.type() == 'pren':
-                prenflag = 1
-                overlapflag = 0
-                counter = 0
-
-            elif term.type() in ['conj', 'pseu', 'post', 'prep', 'posp']:
-                overlapflag = 1
-
-            elif term.type() == 'phrasebreak':  # include commas (NYI)
-                prenflag = 0
-
-            else:
-                counter += 1
-
-            if idx + 1 < len(sentence):
-                if sentence[idx + 1].type() == 'pren':
-                    overlapflag = 1
-
-            if prenflag == 1 and overlapflag == 0 and counter <= 5:
-                term.negate()
-        # check for POST
-        sentence.reverse()  # reverse sentence
-        for idx, term in enumerate(sentence):
-            if term.type() == 'post':
-                postflag = 1
-                overlapflag = 0
-
-            elif term.type() in ['conj', 'pseu', 'pren', 'prep', 'posp']:
-                overlapflag = 1
-
-            if idx + 1 < len(sentence):
-                if sentence[idx + 1].type() == 'post':
-                    overlapflag = 1
-
-            if postflag == 1 and overlapflag == 0:
-                term.negate()
-
-        if self.negP:  # check POSSIBILITY
-            # check for PREP (sentence is still reversed)
-            for idx, term in enumerate(sentence):
-                if term.type() == 'prep':
-                    prepossibleflag = 1
-                    overlapflag = 0
-
-                elif term.type() in ['conj', 'pseu', 'post', 'pren', 'posp']:
-                    overlapflag = 1
-
-                if idx + 1 < len(sentence):
-                    if sentence[idx + 1].type() == 'prep':
-                        overlapflag = 1
-
-                if prepossibleflag == 1 and overlapflag == 0:
-                    term.possible()
-            # check for POSP
-            sentence.reverse()  # sentence correctly ordered
-            for idx, term in enumerate(sentence):
-                if term.type() == 'posp':
-                    postpossibleflag = 1
-                    overlapflag = 0
-
-                elif term.type() in ['conj', 'pseu', 'post', 'pren', 'prep']:
-                    overlapflag = 1
-
-                if idx + 1 < len(sentence):
-                    if sentence[idx + 1].type() == 'posp':
-                        overlapflag = 1
-
-                if postpossibleflag == 1 and overlapflag == 0:
-                    term.possible()
-
-        return sentence
 
 
 # noinspection PyShadowingNames
@@ -579,9 +160,9 @@ class MyStatusTagger(object):
             return ''
 
         # add rules, but permit errors based on length
-        for negex, _type, direction, pattern in rules:
-            negex_pat = '\b{}\b{}'.format(r'\W+'.join(negex.split()),
-                                          get_negation_string(negex_level[rx_var], len(negex)))
+        for negex, _type, direction in rules:
+            negex_pat = '\b({})\b{}'.format(r'\W+'.join(negex.split()),
+                                            get_negation_string(negex_level[rx_var], len(negex)))
             self.__rules.append((negex, re.compile(negex_pat), _type[1:5], direction))
 
     def find_negation(self, text, offset=0):

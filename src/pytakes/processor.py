@@ -14,7 +14,6 @@ import pyodbc
 import sys
 
 from .util import mylogger
-from .nlp import conceptminer as miner
 from .nlp.ngrams import FeatureMiner
 from .nlp.sentence_boundary import SentenceBoundary
 
@@ -273,14 +272,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
     all_types = ['varchar(255)'] * len(meta_labels)
     all_labels = list(meta_labels)
 
-    if concept_miner_v == 1:
-        negation_tuples = get_negex(dbi, neg_table)
-        concept_entries = get_terms(dbi, term_table, **terms_options)
-        mc = miner.MinerCask(concept_entries, negation_tuples, neg_var)
-        all_labels += ['id', 'captured', 'context', 'polarity', 'certainty']
-        all_types += ['int', 'varchar(255)', 'varchar(255)', 'int', 'int']
-
-    elif concept_miner_v == 2:
+    if concept_miner_v in [1, 2]:
         negation_tuples = get_context(dbi, neg_table)
         concept_entries = get_terms(dbi, term_table, **terms_options)
         mc = miner2.MinerCask(concept_entries, negation_tuples, neg_var)
@@ -354,7 +346,7 @@ def main():
     parser.add_argument('--text-label', help='Name of text column.')  # for backwards compatibility
     parser.add_argument('--text-labels', nargs='+', help='Name of text columns.')
     parser.add_argument('--destination-table', help='Output table. Should not exist.')
-    parser.add_argument('--concept-miner', default=1, type=int, help='Version of ConceptMiner to use.')
+    parser.add_argument('--concept-miner', default=2, type=int, help='Version of ConceptMiner to use.')
     parser.add_argument('--batch-mode', help='Specify Identity column.')
     parser.add_argument('--batch-size', nargs='?', default=100000, const=100000, type=int,
                         help='Process documents in batch mode. Optionally specify batch size.')

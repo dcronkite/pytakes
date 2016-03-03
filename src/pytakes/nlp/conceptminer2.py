@@ -19,15 +19,9 @@ Edits:
 import copy
 import numbers
 
-import regex as re
-
 from pytakes.nlp import convert
 from pytakes.nlp.terms import Term, Concept, clean_terms, add_words, find_terms
 from .negex import MyStatusTagger, sort_rules_for_status
-
-
-def remove_punct(text):
-    return re.sub(r'\p{P}', ' ', text)
 
 
 class ConceptMiner(object):
