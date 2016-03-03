@@ -120,7 +120,7 @@ def postprocess(dbi,
     :param output_table:
 
     """
-    tagger = MyStatusTagger(sort_rules_for_status(get_context(dbi, negation_table)))
+    tagger = MyStatusTagger(sort_rules_for_status(get_context(dbi, negation_table)), rx_var=negation_variation)
     first_input_table = '{}_{}'.format(input_table, 1)  # input table for first instance
     columns = dbi.get_table_columns(first_input_table)
     out_columns = list(columns)
