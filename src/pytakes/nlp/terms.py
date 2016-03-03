@@ -16,10 +16,6 @@ class Word(object):
         self.end_ = end
         self.type_ = _type.lower()
         self.offset_ = offset
-
-        # certainty replaces possible/negated
-        #     possible: certainty==2
-        #     negated: certainty==0
         self.certainty_ = 4  # 0-4 (neg to affm)
         self.hypothetical_ = False  # for status only
         self.other_ = False  # for status only

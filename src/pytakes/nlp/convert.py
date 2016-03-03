@@ -19,10 +19,8 @@ def get_affix_morphs():
     count represents the number of letters which are becoming
         optional (not _new_ optional ones)
     """
-    return [(re.compile(r'\bintra(\S{3,})'), r'(intra)?\g<1>', 5, 8),  # intra
-            # assumes intra is optional (intraductal carc)
-            (re.compile(r'\bun(\S{3,})'), r'(non|un|in)\g<1>', 2, 11),  # un
-            (re.compile(r'\bnon(\S{3,})'), r'(non|un|in)\g<1>', 3, 11)]  # non
+    return [(re.compile(r'\bun(\S{3,})'), r'(non|un|in|im)\g<1>', 2, 11),  # un
+            (re.compile(r'\bnon(\S{3,})'), r'(non|un|in|im)\g<1>', 3, 11)]  # non
 
 
 def get_medial_morphs():
@@ -69,116 +67,6 @@ def get_final_morphs():
     return [(re.compile(r'\b(\S+)s(\W*)\b'), r'\g<1>\g<2>s(es)?', 0),  # pl='es'
             (re.compile(r'\b(\S+)o(\W*)\b'), r'\g<1>\g<2>o(e?s)?', 0),  # pl='es'
             (re.compile(r'\b(\S+)(\W*)\b'), r'\g<1>\g<2>s?', 0)]  # pl='s'
-
-
-def convert_text_to_regex(strings_ids, convertall=False,
-                          affixmorphs=None, suffixmorphs=None,
-                          medialmorphs=None, finalmorphs=None):
-    """
-    Takes a list of string-id tuples which are the words which
-        need to be converted to regular expressions.
-        The id part should be a unique identifier.
-    Duplicate regexes will not be included. Duplicates
-        are defined by whether or not a previous regex
-        matches a succeeding one.
-        
-    Parameters:
-        string_ids: list of (string, id) in which 
-            string is to be converted to regex;
-            order is important as the strings are
-            converted to regexes in list order, and
-            any following strings which are matched
-            by the previous regexes will not be included
-        convertall=False: if true, all strings will be
-            converted to regexes regardless of a previous
-            regex matching it
-            :param strings_ids:
-            :param convertall:
-            :param affixmorphs:
-            :param suffixmorphs:
-            :param medialmorphs:
-            :param finalmorphs:
-    """
-    if not affixmorphs:
-        affixmorphs = get_affix_morphs()
-    if not medialmorphs:
-        medialmorphs = get_medial_morphs()
-    if not suffixmorphs:
-        suffixmorphs = get_suffix_morphs()
-    if not finalmorphs:
-        finalmorphs = get_final_morphs()
-
-    regexes = []  # [(regex, id), ...]
-    updated_ids = {}  # new_id -> old_id
-    for string, id_ in strings_ids:
-        if not convertall:
-            # see if string is matched by previously-
-            #    created RegEx
-            found = False
-            for rx, rx_id in regexes:
-                if rx.match(string):
-                    found = True
-                    if rx_id not in updated_ids:
-                        updated_ids[rx_id] = {rx_id}
-                    updated_ids[rx_id].add(id_)
-                    break
-            if found:
-                continue  # Duplicate RegEx was found
-
-        length = len(string)
-        start_idx = 0  # ensure first letter is unable to change
-        orig_string = string
-
-        # 1) convert string to regex
-        # a) convert any prefix
-        for morph, repl, L, rLen in affixmorphs:
-            if morph.match(string):
-                string = morph.sub(repl, string)
-                length -= L
-                start_idx += rLen
-                break
-        # b) convert any medial elements
-        for morph, repl, L in medialmorphs:
-            if morph.match(string):
-                string = morph.sub(repl, string)
-                length -= L
-                break
-        # c) convert any suffix
-        for morph, repl, L in suffixmorphs:
-            if morph.match(string):
-                string = morph.sub(repl, string)
-                length -= L
-                break
-        # d) add final elements
-        if len(orig_string) > 2:
-            if orig_string[0] == 's':
-                string += r'(es)?'
-            elif orig_string[0] == 'o':
-                string += r'(e?s)?'
-            else:
-                string += r's?'
-
-        # 2) add Error permissions
-        length -= 1  # removing the first term
-        if length in [4, 5, 6]:
-            string = (string[:start_idx + 1] + '(' + string[start_idx + 1:] + '){i<2,d<2}')
-        elif length in [7, 8, 9]:
-            string = (string[:start_idx + 1] + '(' + string[start_idx + 1:] + '){1i+1d<4}')
-        elif length >= 10:
-            string = (string[:start_idx + 1] + '(' + string[start_idx + 1:] + '){e<4}')
-
-        # 3) add word boundary
-        string = r'\b' + string + r'\b'
-
-        # 4) compile string to regex
-        rx = re.compile(string, re.V1 | re.I)
-        try:
-            assert rx.match(orig_string)
-        except AssertionError:
-            raise ValueError(r'Regex {} failed to match original string "{}".'.format(rx, orig_string))
-        regexes.append((rx, id_))
-
-    return regexes, updated_ids
 
 
 def convert_to_regex(strings_ids_rxvar, convert_all=True,

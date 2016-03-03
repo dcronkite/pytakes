@@ -93,7 +93,7 @@ def get_terms(dbi, term_table, valence=None, regex_variation=None, word_order=No
     columns = [x[0].lower() for x in columns]
     valence = valence if valence else '' if 'valence' in columns else '1 as'
     regex_variation = regex_variation if regex_variation else '' if 'regexvariation' in columns else '3 as'
-    word_order = word_order if word_order else '' if 'WordOrder' in columns else '1 as' #changed wordorder to WordOrder
+    word_order = word_order if word_order else '' if 'WordOrder' in columns else '1 as'
 
     return dbi.execute_fetchall('''
         SELECT id
