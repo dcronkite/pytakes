@@ -376,11 +376,11 @@ def main():
 
     args = parser.parse_args()
 
-    term_table = args.term_table  # 'COT_Dict_Clin_Lab_Abuse_09Aug2013'
+    term_table = args.term_table
     neg_table = args.negation_table
     neg_var = args.negation_variation
-    document_table = args.document_table  # 'vCOT_Clinabuse_data'
-    meta_labels = args.meta_labels  # ['ft_id', 'chsid']
+    document_table = args.document_table
+    meta_labels = args.meta_labels
     if args.text_labels:
         text_labels = args.text_labels
     elif args.text_label:
@@ -390,7 +390,7 @@ def main():
         raise ValueError('No text labels provided.')
 
     concept_miner_v = args.concept_miner
-    destination_table = args.destination_table  # 'COT_LOCAL_Clinabuse_out_20131020'
+    destination_table = args.destination_table
     batch_mode = args.batch_mode
     batch_size = args.batch_size
     batch_number = args.batch_number

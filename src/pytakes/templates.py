@@ -34,6 +34,7 @@ RUN_CONF_FILE = r'''--driver={{ driver }}
 --database={{ database }}
 --document-table={{ document_table }}
 --meta-labels
+{{ primary_key }}
 {%- for meta_label in meta_labels %}
 {{ meta_label }}
 {%- endfor %}
@@ -88,4 +89,29 @@ PP_CONF_FILE = r'''--driver={{ driver }}
 --negation-variation={{ negation_variation }}
 --input-column=captured
 --batch-count={{ batch_count }}
+'''
+
+SAMPLE_CONF_FILE = r'''--driver=DRIVER
+--server=SERVER
+--database=DB
+--dictionary-table=DICTIONARY_TABLE
+--negation-table=NEGATION_TABLE
+--negation-variation=0
+--document-table=DOCUMENT_TABLE
+--output-dir=DIRECTORY
+--destination-table=DESTINATION_TABLE
+--max-intervening-terms=0
+--max-length-of-search=1
+--regex-variation=-1
+--meta-labels
+doc_id
+pat_id
+date
+--primary-key
+doc_id
+--sender
+Automated Email,example@example.com
+--recipients
+Recipient Name,example@example.com
+Recipient2 Name,example2@example.com
 '''

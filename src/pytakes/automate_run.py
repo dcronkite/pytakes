@@ -82,14 +82,17 @@ def resolve_formatting(label, value):
 def create_batch_file(output_dir, batch_label, document_table, destination_table,
                       batch_size, batch_start, batch_end, driver, server, database, meta_labels,
                       primary_key, options, python, pytakes_path):
-    with open(os.path.join(output_dir, 'pytakes-batch' + str(batch_label) + '.bat'), 'w') as out:
+    with open(os.path.join(output_dir, 'pytakes-batch{}.bat'.format(batch_label)), 'w') as out:
         if pytakes_path:
             out.write(Template(templates.RUN_BATCH_FILE).render(
                 batch_number=batch_label, python=python, pytakes_path=pytakes_path))
         else:
             out.write(Template(templates.RUN_COMMAND_BATCH_FILE).render(batch_number=batch_label))
 
-    with open(os.path.join(output_dir, 'pytakes-batch' + str(batch_label) + '.conf'), 'w') as out:
+    if primary_key in meta_labels:
+        meta_labels.remove(primary_key)
+
+    with open(os.path.join(output_dir, 'pytakes-batch{}.conf'.format(batch_label)), 'w') as out:
         out.write(
             Template(templates.RUN_CONF_FILE).render(
                 driver=driver, server=server, database=database, document_table=document_table,
@@ -151,13 +154,10 @@ def automate_run(dbi, cm_options, concept_miner, document_table,
     logging.info('Batches per file: %d' % batchesperfile)
 
     options = [resolve_formatting(x, y) for x, y in cm_options if y]
-    if not meta_labels:
-        logging.warning('Using default meta labels is DEPRECATED. Please specify --meta-labels flag.')
-        meta_labels = ['ft_id', 'chsid', 'hybrid_date']
-    if primary_key not in meta_labels:
-        ve = ValueError('Primary key must be a value in the meta values list: {}.'.format(', '.join(meta_labels)))
-        logging.error(ve)
-        raise ve
+    if not primary_key:
+        primary_key = meta_labels[0]
+    elif primary_key in meta_labels:
+        meta_labels.remove(primary_key)
 
     mkdir_p(output_dir)
     batch_start = 1
@@ -211,13 +211,13 @@ def main():
     parser.add_argument('--stopword-tables', required=False, default=None, nargs='+',
                         help='Tables containing relevant stopwords. NYI')
 
-    parser.add_argument('--meta-labels', nargs='+',
-                        help='Identifying labels to include in output. Default is ft_id, chsid, hybrid_date.')
-    parser.add_argument('--primary-key', required=False, default='ft_id',
+    parser.add_argument('--meta-labels', required=True, nargs='+',
+                        help='Identifying labels to include in output.')
+    parser.add_argument('--primary-key', required=False, default=None,
                         help='Primary key for documents. This will be used in sorting batches. '
-                             'Must be in "meta labels".')
+                             'If not included, the first meta label will be the primary key.')
 
-    # library
+    # library -- these are more for debugging
     parser.add_argument('--python', default='python', help='Specify Python version.')
     parser.add_argument('--pytakes-path', default='',
                         help='Path to pytakes directory, which should contain the "src" directory.'
@@ -233,7 +233,16 @@ def main():
     parser.add_argument('--mail-server-address', required=True,
                         help='Mail server address.')
 
+    # autogenerate sample config file
+    parser.add_argument('--create-sample', action='store_true',
+                        help='Generate a sample configuration file to fill out.')
+
     args = parser.parse_args()
+
+    if args.create_sample:
+        with open(args.create_sample, 'w') as out:
+            out.write(templates.SAMPLE_CONF_FILE)
+        return
 
     loglevel = mylogger.resolve_verbosity(args.verbosity)
     logging.config.dictConfig(mylogger.setup(name='automate_run', loglevel=loglevel))
