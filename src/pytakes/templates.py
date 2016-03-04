@@ -102,7 +102,6 @@ SAMPLE_CONF_FILE = r'''--driver=DRIVER
 --destination-table=DESTINATION_TABLE
 --max-intervening-terms=0
 --max-length-of-search=1
---regex-variation=-1
 --meta-labels
 doc_id
 pat_id

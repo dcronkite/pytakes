@@ -197,7 +197,7 @@ def main():
     parser.add_argument('--max-length-of-search', required=False, default=3, type=int,
                         help='Max number of words in which to look for the next term.')
     parser.add_argument('--valence', required=False, default=None, type=int)
-    parser.add_argument('--regex-variation', required=False, default=None, type=int)
+    parser.add_argument('--regex-variation', required=False, default=-1, type=int)
     parser.add_argument('--word-order', required=False, default=None, type=int)
     parser.add_argument('--dictionary-table', help='Term table/dictionary table as input.')
     parser.add_argument('--negation-table', help='Negation/status table with (negex,status,direction).')
