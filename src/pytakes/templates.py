@@ -39,6 +39,7 @@ RUN_CONF_FILE = r'''--driver={{ driver }}
 {{ meta_label }}
 {%- endfor %}
 --text-labels=note_text
+--tracking-method={{ tracking_method }}
 --destination-table={{ destination_table }}_pre
 {%- for option in options %}
 {{ option }}
@@ -89,6 +90,7 @@ PP_CONF_FILE = r'''--driver={{ driver }}
 --negation-variation={{ negation_variation }}
 --input-column=captured
 --batch-count={{ batch_count }}
+--tracking-method={{ tracking_method }}
 '''
 
 SAMPLE_CONF_FILE = r'''--driver=DRIVER
@@ -113,4 +115,43 @@ Automated Email,example@example.com
 --recipients
 Recipient Name,example@example.com
 Recipient2 Name,example2@example.com
+'''
+
+INSERT_INTO2_QUERY = r'''INSERT INTO {{ destination_table }} (
+{%- for label in labels %}
+{{ label }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+) VALUES (
+{%- for meta in metas %}
+'{{ meta }}',
+{%- endfor %}
+{{ feature.id() }},
+'{{ captured }}',
+'{{ context }}',
+'{{ text }}',
+{{ feature.get_certainty() }},
+{% if feature.is_hypothetical() %}1{% else %}0{% endif %},
+{% if feature.is_historical() %}1{% else %}0{% endif %},
+{% if feature.is_hypothetical() %}1{% else %}0{% endif %},
+{{ feature.begin() }},
+{{ feature.end() }},
+{{ feature.get_absolute_begin() }},
+{{ feature.get_absolute_end() }}
+{% if hostname %}, {{ hostname }}, {{ batch_number }}{% endif %}
+)
+'''
+
+INSERT_INTO3_QUERY = r'''INSERT INTO {{ destination_table }} (
+{%- for label in labels %}
+{{ label }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+) VALUES (
+{%- for meta in metas %}
+'{{ meta }}',
+{%- endfor %}
+{{ feature.get_id() }},
+{{ feature.get_feature() }},
+{{ feature.get_category() }}
+{% if hostname %}, {{ hostname }}, {{ batch_number }}{% endif %}
+)
 '''

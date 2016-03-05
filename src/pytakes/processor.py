@@ -12,7 +12,11 @@ import logging.config
 import math
 import pyodbc
 import sys
+from socket import gethostname
 
+from jinja2 import Template
+
+from pytakes import templates
 from .util import mylogger
 from .nlp.ngrams import FeatureMiner
 from .nlp.sentence_boundary import SentenceBoundary
@@ -56,6 +60,10 @@ class Document(object):
 def get_document_ids(dbi, document_table, table_id, order_by):
     """
     Retrieve documents from table (for batch mode)
+    :param dbi:
+    :param document_table:
+    :param table_id:
+    :param order_by:
     """
     sql = "SELECT %s FROM %s" % (table_id, document_table)
     sql += order_by
@@ -66,6 +74,13 @@ def get_document_ids(dbi, document_table, table_id, order_by):
 def get_documents(dbi, document_table, meta_labels, text_labels, where_clause, order_by, batch_size):
     """
     Retrieve documents from table
+    :param dbi:
+    :param document_table:
+    :param meta_labels:
+    :param text_labels:
+    :param where_clause:
+    :param order_by:
+    :param batch_size:
     """
     sql = "SELECT "
     if where_clause and order_by:
@@ -87,6 +102,11 @@ def get_terms(dbi, term_table, valence=None, regex_variation=None, word_order=No
     Retrieve terms from table.
     Function checks to see if optional columns are present,
     otherwise uses cTAKES defaults.
+    :param dbi:
+    :param term_table:
+    :param valence:
+    :param regex_variation:
+    :param word_order:
     """
     logging.info('Getting Terms and Negation.')
     columns = dbi.get_table_columns(term_table.split('.')[-1])  # if [dbo] or [MASTER\...] prefaced to tablename
@@ -109,6 +129,8 @@ def get_terms(dbi, term_table, valence=None, regex_variation=None, word_order=No
 def get_negex(dbi, neg_table):
     """
     Retrieve negation triggers from table
+    :param dbi:
+    :param neg_table:
     """
     return dbi.execute_fetchall('''
             SELECT negex
@@ -120,6 +142,8 @@ def get_negex(dbi, neg_table):
 def get_context(dbi, neg_table):
     """
     Retrieve negation triggers from table.
+    :param dbi:
+    :param neg_table:
     """
     return dbi.execute_fetchall('''
             SELECT negex
@@ -131,6 +155,10 @@ def get_context(dbi, neg_table):
 
 def create_table(dbi, destination_table, labels, types):
     """
+    :param dbi:
+    :param destination_table:
+    :param labels:
+    :param types:
 
     """
     sql = "CREATE TABLE %s ( rowid int IDENTITY(1,1) PRIMARY KEY, " % destination_table
@@ -152,50 +180,33 @@ def delete_table_rows(dbi, destination_table):
     dbi.execute_commit(sql)
 
 
-def insert_into(dbi, destination_table, feat, text, labels, meta):
+def insert_into2(dbi, destination_table, feat, text, labels, meta, hostname, batch_number):
     """
-
+    :param dbi:
+    :param destination_table:
+    :param feat:
+    :param text:
+    :param labels:
+    :param meta:
+    :param hostname:
+    :param batch_number:
     """
-    sql = "INSERT INTO %s (" % destination_table
-    sql += ','.join(labels) + ') VALUES ('
-    sql += '\'' + "','".join([str(x) for x in meta]) + '\','
-    sql += (" %d, '%s', '%s', %d, %d)" %
-            (feat.id(),
-             text[feat.begin():feat.end()].strip(),
-             text[get_index(len(text), feat.begin() - 75):
-             get_index(len(text), feat.end() + 75)],
-             0 if feat.is_negated() else 1,
-             0 if feat.is_possible() else 1))
-    dbi.execute_commit(sql)
+    dbi.execute_commit(
+        Template(templates.INSERT_INTO2_QUERY).render(
+            labels=labels, metas=meta,
+            destination_table=destination_table, feature=feat, text=text,
+            captured=text[feat.begin():feat.end()].strip(),
+            context=text[get_index(len(text), feat.begin() - 75):get_index(len(text), feat.end() + 75)],
+            hostname=hostname, batch_number=batch_number
+        )
+    )
 
 
-def insert_into2(dbi, destination_table, feat, text, labels, meta):
-    """
-
-    """
-    sql = "INSERT INTO %s (" % destination_table
-    sql += ','.join(labels) + ') VALUES ('
-    sql += '\'' + "','".join([str(x) for x in meta]) + '\','
-    sql += (" %d, '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d)" %
-            (feat.id(),
-             text[feat.begin():feat.end()].strip(),
-             text[get_index(len(text), feat.begin() - 75):
-             get_index(len(text), feat.end() + 75)],
-             text,
-             feat.get_certainty(),
-             1 if feat.is_hypothetical() else 0,
-             1 if feat.is_historical() else 0,
-             1 if feat.is_not_patient() else 0,
-             feat.begin(),
-             feat.end(),
-             feat.get_absolute_begin(),
-             feat.get_absolute_end()))
-    dbi.execute_commit(sql)
-
-
-def insert_into3(dbi, destination_table, feat, labels, meta):
+def insert_into3(dbi, destination_table, feat, labels, meta, hostname, batch_number):
     """
     Insert ngram features into database.
+    :param batch_number:
+    :param hostname:
     :param dbi:
     :param destination_table:
     :param feat:
@@ -203,12 +214,13 @@ def insert_into3(dbi, destination_table, feat, labels, meta):
     :param meta:
     :return:
     """
-    sql = "INSERT INTO %s (" % destination_table
-    sql += ','.join(labels) + ') VALUES ('
-    sql += '\'' + "','".join([str(x) for x in meta]) + '\','
-    sql += " {}, '{}', '{}'".format(feat.get_id(), feat.get_feature(), feat.get_category())
-    sql += ')'
-    dbi.execute_commit(sql)
+    dbi.execute_commit(
+        Template(templates.INSERT_INTO3_QUERY).render(
+            labels=labels, metas=meta,
+            destination_table=destination_table, feature=feat,
+            hostname=hostname, batch_number=batch_number
+        )
+    )
 
 
 def get_index(length, value):
@@ -218,8 +230,21 @@ def get_index(length, value):
 
 
 def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_labels, concept_miner_v, all_labels,
-            where_clause, order_by, batch_size, mine_options):
+            where_clause, order_by, batch_size, mine_options, tracking_method, batch_number):
     """
+    :param dbi:
+    :param mc:
+    :param sb:
+    :param destination_table:
+    :param document_table:
+    :param meta_labels:
+    :param text_labels:
+    :param concept_miner_v:
+    :param all_labels:
+    :param where_clause:
+    :param order_by:
+    :param batch_size:
+    :param mine_options:
 
     """
     logging.info('Retrieving notes.')
@@ -228,10 +253,14 @@ def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_la
     logging.info('Retrieved %d notes.' % length)
 
     pct = 5
+    if tracking_method == 'column':
+        hostname = gethostname()
+    else:
+        hostname = ''
 
     for num, doc in enumerate(documents):
         if 100 * (float(num) / length) > pct:
-            logging.info('Completed %d%%.' % int(pct))
+            logging.info('Completed {}%.'.format(int(pct)))
             pct += 5
 
         # adding sentence splitting (2013-11-08)
@@ -250,21 +279,37 @@ def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_la
             if not sect:
                 continue
             for feat in sect:
-                if concept_miner_v == 1:
-                    insert_into(dbi, destination_table, feat, mc.prepare(sentences[sect_num]), all_labels,
-                                doc.get_metalist())
-                elif concept_miner_v == 2:
+                if concept_miner_v == 2:
                     insert_into2(dbi, destination_table, feat, mc.prepare(sentences[sect_num]), all_labels,
-                                 doc.get_metalist())
+                                 doc.get_metalist(), hostname, batch_number)
                 elif concept_miner_v == 3:
-                    insert_into3(dbi, destination_table, feat, all_labels, doc.get_metalist())
+                    insert_into3(dbi, destination_table, feat, all_labels, doc.get_metalist(),
+                                 hostname, batch_number)
                 else:
                     raise ValueError('Concept Miner v.%d is not defined.' % concept_miner_v)
+    logging.info('Completed: 100%')
 
 
 def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_labels, concept_miner_v,
-            destination_table, batch_mode, batch_size, batch_number, db_options, mine_options, terms_options, force):
+            destination_table, batch_mode, batch_size, batch_number, db_options, mine_options, terms_options,
+            force, tracking_method):
     """
+    :param term_table:
+    :param neg_table:
+    :param neg_var:
+    :param document_table:
+    :param meta_labels:
+    :param text_labels:
+    :param concept_miner_v:
+    :param destination_table:
+    :param batch_mode:
+    :param batch_size:
+    :param batch_number:
+    :param db_options:
+    :param mine_options:
+    :param terms_options:
+    :param force:
+    :param tracking_method:
 
     """
     dbi = DbInterface(**db_options)
@@ -281,10 +326,18 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
         all_types += ['int', 'varchar(255)', 'varchar(255)', 'varchar(max)', 'int',
                       'int', 'int', 'int', 'int', 'int', 'int', 'int']
 
+        if tracking_method == 'column':
+            all_labels += ['cpu_name', 'version']
+            all_types += ['varchar(50)', 'int']
+
     elif concept_miner_v == 3:
         all_labels += ['featid', 'feature', 'category']
         all_types += ['bigint', 'varchar(max)', 'varchar(50)']
         mc = FeatureMiner(**mine_options)
+
+        if tracking_method == 'column':
+            all_labels += ['cpu_name', 'version']
+            all_types += ['varchar(50)', 'int']
 
     else:
         raise ValueError('Invalid version for ConceptMiner: %d.' % concept_miner_v)
@@ -307,7 +360,13 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
             continue
 
         # create table
-        dest_table = '{}_{}'.format(destination_table, curr_batch)
+        if tracking_method == 'name':
+            dest_table = '{}_{}'.format(destination_table, curr_batch)
+        elif tracking_method == 'column':
+            dest_table = destination_table
+        else:
+            raise ValueError('Unrecognized tracking method: "{}".'.format(tracking_method))
+
         try:
             create_table(dbi, dest_table, all_labels, all_types)
             logging.info('Table created: %s.' % dest_table)
@@ -331,7 +390,8 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
         else:
             where_clause = ''
         process(dbi, mc, SentenceBoundary(dbi), dest_table, document_table, meta_labels, text_labels,
-                concept_miner_v, all_labels, where_clause, order_by, batch_size, mine_options)
+                concept_miner_v, all_labels, where_clause, order_by, batch_size, mine_options,
+                tracking_method, batch_number)
         logging.info('Finished batch #%d of %d.' % (curr_batch, batch_length))
 
 
@@ -351,6 +411,9 @@ def main():
     parser.add_argument('--batch-size', nargs='?', default=100000, const=100000, type=int,
                         help='Process documents in batch mode. Optionally specify batch size.')
     parser.add_argument('--batch-number', nargs='+', type=int, help='Specify a certain batch to do.')
+
+    parser.add_argument('--tracking-method', choices=['name', 'column'], default='name',
+                        help='Method to track progress of batches.')
 
     parser.add_argument('--verbosity', type=int, default=2, help='Verbosity of log output.')
 
@@ -423,7 +486,7 @@ def main():
             raise ValueError('Concept Miner v.%d is not defined.' % concept_miner_v)
         prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_labels, concept_miner_v,
                 destination_table, batch_mode, batch_size, batch_number, db_options,
-                mine_options, terms_options, args.force)
+                mine_options, terms_options, args.force, args.tracking_method)
     except Exception as e:
         import traceback
 

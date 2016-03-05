@@ -109,8 +109,10 @@ def postprocess(dbi,
                 input_table,
                 input_column,
                 output_table,
-                batch_count):
+                batch_count,
+                tracking_method):
     """
+    :param tracking_method:
     :param batch_count:
     :param dbi:
     :param negation_table:
@@ -121,7 +123,14 @@ def postprocess(dbi,
 
     """
     tagger = MyStatusTagger(sort_rules_for_status(get_context(dbi, negation_table)), rx_var=negation_variation)
-    first_input_table = '{}_{}'.format(input_table, 1)  # input table for first instance
+
+    if tracking_method == 'name':
+        first_input_table = '{}_{}'.format(input_table, 1)  # input table for first instance
+    elif tracking_method == 'column':
+        first_input_table = input_table
+    else:
+        raise ValueError('Unrecognized tracking method: "{}".'.format(tracking_method))
+
     columns = dbi.get_table_columns(first_input_table)
     out_columns = list(columns)
     out_columns.append('updated')
@@ -132,7 +141,13 @@ def postprocess(dbi,
         raise ValueError('Unrecognized column "%s" in table %s.' % (input_column, input_table))
 
     for i in range(1, batch_count):
-        curr_input_table = '{}_{}'.format(input_table, i)
+        if tracking_method == 'name':
+            curr_input_table = '{}_{}'.format(input_table, 1)  # input table for first instance
+        elif tracking_method == 'column':
+            curr_input_table = input_table
+        else:
+            raise ValueError('Unrecognized tracking method: "{}".'.format(tracking_method))
+
         data = get_input_data(dbi, curr_input_table, columns)
         for row in data:
             new_row = []
@@ -185,6 +200,8 @@ def main():
     parser.add_argument('--input-column', help='Column name which needs to be modified.')
     parser.add_argument('--output-table', help='Output table.')
     parser.add_argument('--batch-count', type=int, help='Batch count.')
+    parser.add_argument('--tracking-method', choices=['name', 'column'], default='name',
+                        help='Method to track progress of batches.')
 
     parser.add_argument('--verbosity', type=int, default=2, help='Verbosity of log output.')
     args = parser.parse_args()
