@@ -117,7 +117,8 @@ Recipient Name,example@example.com
 Recipient2 Name,example2@example.com
 '''
 
-INSERT_INTO2_QUERY = r'''INSERT INTO {{ destination_table }} (
+# for processor.py
+PROC_INSERT_INTO2_QUERY = r'''INSERT INTO {{ destination_table }} (
 {%- for label in labels %}
 {{ label }}{% if not loop.last %},{% endif %}
 {%- endfor %}
@@ -141,7 +142,7 @@ INSERT_INTO2_QUERY = r'''INSERT INTO {{ destination_table }} (
 )
 '''
 
-INSERT_INTO3_QUERY = r'''INSERT INTO {{ destination_table }} (
+PROC_INSERT_INTO3_QUERY = r'''INSERT INTO {{ destination_table }} (
 {%- for label in labels %}
 {{ label }}{% if not loop.last %},{% endif %}
 {%- endfor %}
@@ -154,4 +155,82 @@ INSERT_INTO3_QUERY = r'''INSERT INTO {{ destination_table }} (
 {{ feature.get_category() }}
 {% if hostname %}, {{ hostname }}, {{ batch_number }}{% endif %}
 )
+'''
+
+PROC_GET_DOC_IDS = r'''SELECT {{ table_id }}
+FROM {{ doc_table }}
+{%- if order_by %}
+ORDER BY {{ order_by }}
+{%- endif %}
+'''
+
+PROC_CREATE_TABLE = r'''CREATE TABLE {{ destination_table }} (
+rowid int IDENTITY(1, 1) PRIMARY KEY,
+{%- for label, column_type in labels_types %}
+{{ label }}, {{ column_type }}
+{%- endfor %}
+)
+'''
+
+PROC_GET_CONTEXT = r'''SELECT negex, type, direction
+FROM {{ neg_table }}
+'''
+
+PROC_GET_TERMS = r'''SELECT id
+    , text
+    , cui
+    ,{% if 'valence' in columns %} 1 as {% endif %} valence
+    ,{% if 'regexvariation' in columns %} 3 as {% endif %} regexvariation
+    ,{% if 'WordOrder' in columns %} 1 as {% endif %} wordorder
+FROM {{ term_table }}
+'''
+
+PROC_GET_DOCS = r'''SELECT
+{%- if where_clause and order_by %}
+TOP {{ batch_size }}
+{%- endif %}
+{%- for meta in meta_labels %}
+{{ meta }},
+{%- endfor %}
+{%- for text in text_labels %}
+{{ text }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+FROM {{ doc_table }}
+{%- if where_clause and order_by %}
+WHERE {{ where_clause }}
+ORDER BY {{ order_by }}
+{%- endif %}
+'''
+
+# for postprocessor.py
+PP_INSERT_INTO = r'''INSERT INTO {{ table_name }} (
+{%- for label in labels %}
+'{{ label }}' {% if not loop.last %},{% endif %}
+{%- endfor %}
+) VALUES (
+{%- for value in values %}
+    {%- if value is number %}
+    {{ value }} {% if not loop.last %},{% endif %}
+    {%- elif %}
+    {{ value }} {% if not loop.last %},{% endif %}
+    {%- endif %}
+{%- endfor %}
+)
+'''
+
+PP_INPUT_DATA = r'''SELECT
+{%- for label in labels %}
+'{{ label }}' {% if not loop.last %},{% endif %}
+{%- endfor %}
+FROM {{ input_table }}
+'''
+
+PP_PREP_DEST_TABLE = r'''ALTER TABLE {{ table_name }}
+ADD updated int
+'''
+
+PP_DEST_TABLE = r'''SELECT *
+INTO {{ dest_table }}
+FROM {{ input_table }}
+WHERE 1 = 2
 '''

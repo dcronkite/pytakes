@@ -1,0 +1,13 @@
+NEGATION_TYPE = 'negn'
+IMPROBABLE_TYPE = 'impr'
+POSSIBLE_TYPE = 'poss'
+PROBABLE_TYPE = 'prob'
+HYPOTHETICAL_TYPE = 'hypo'
+FUTURE_TYPE = 'futp'
+HISTORICAL_TYPE = 'hist'
+OTHER_SUBJECT_TYPE = 'othr'
+
+CERTAINTY = 'certainty'
+HYPOTHETICAL = 'hypothetical'
+HISTORICAL = 'historical'
+OTHER_SUBJECT = 'otherSubject'

@@ -65,9 +65,11 @@ def get_document_ids(dbi, document_table, table_id, order_by):
     :param table_id:
     :param order_by:
     """
-    sql = "SELECT %s FROM %s" % (table_id, document_table)
-    sql += order_by
-    document_ids = dbi.execute_fetchall(sql)
+    document_ids = dbi.execute_fetchall(Template(templates.PROC_GET_TERMS).render({
+        'table_id': table_id,
+        'doc_table': document_table,
+        'order_by': order_by
+    }))
     return [x[0] for x in document_ids]  # remove lists
 
 
@@ -82,13 +84,14 @@ def get_documents(dbi, document_table, meta_labels, text_labels, where_clause, o
     :param order_by:
     :param batch_size:
     """
-    sql = "SELECT "
-    if where_clause and order_by:
-        sql += ' TOP %d ' % batch_size
-    sql += ','.join([x for x in meta_labels])
-    sql += "," + ','.join(text_labels)
-    sql += " FROM " + document_table
-    sql += ' ' + where_clause + order_by
+    sql = Template(templates.PROC_GET_DOCS).render({
+        'where_clause': where_clause,
+        'order_by': order_by,
+        'batch_size': batch_size,
+        'meta_labels': meta_labels,
+        'text_labels': text_labels,
+        'doc_table': document_table
+    })
     document_list = dbi.execute_fetchall(sql)
     result_list = []
     for row in document_list:
@@ -111,32 +114,14 @@ def get_terms(dbi, term_table, valence=None, regex_variation=None, word_order=No
     logging.info('Getting Terms and Negation.')
     columns = dbi.get_table_columns(term_table.split('.')[-1])  # if [dbo] or [MASTER\...] prefaced to tablename
     columns = [x[0].lower() for x in columns]
-    valence = valence if valence else '' if 'valence' in columns else '1 as'
-    regex_variation = regex_variation if regex_variation else '' if 'regexvariation' in columns else '3 as'
-    word_order = word_order if word_order else '' if 'WordOrder' in columns else '1 as'
 
-    return dbi.execute_fetchall('''
-        SELECT id
-             , text
-             , cui
-             , %s valence
-             , %s regex_variation
-             , %s word_order
-        FROM %s
-    ''' % (valence, regex_variation, word_order, term_table))
-
-
-def get_negex(dbi, neg_table):
-    """
-    Retrieve negation triggers from table
-    :param dbi:
-    :param neg_table:
-    """
-    return dbi.execute_fetchall('''
-            SELECT negex
-                 , type
-             FROM %s
-    ''' % neg_table)
+    return dbi.execute_fetchall(Template(templates.PROC_GET_TERMS).render({
+        'columns': columns,
+        'valence': valence,
+        'regex_variation': regex_variation,
+        'word_order': word_order,
+        'term_table': term_table
+    }))
 
 
 def get_context(dbi, neg_table):
@@ -145,12 +130,9 @@ def get_context(dbi, neg_table):
     :param dbi:
     :param neg_table:
     """
-    return dbi.execute_fetchall('''
-            SELECT negex
-                 , type
-                 , direction
-             FROM %s
-    ''' % neg_table)
+    return dbi.execute_fetchall(Template(templates.PROC_GET_CONTEXT).render({
+        'neg_table': neg_table
+    }))
 
 
 def create_table(dbi, destination_table, labels, types):
@@ -161,11 +143,10 @@ def create_table(dbi, destination_table, labels, types):
     :param types:
 
     """
-    sql = "CREATE TABLE %s ( rowid int IDENTITY(1,1) PRIMARY KEY, " % destination_table
-    sql += ','.join([x + ' ' + y for x, y in zip(labels, types)])
-    sql += ")"
-    logging.debug(sql)
-    dbi.execute_commit(sql)
+    dbi.execute_commit(Template(templates.PROC_CREATE_TABLE).render({
+        'destination_table': destination_table,
+        'labels_types': zip(labels, types)
+    }), debug=True)
 
 
 def delete_table_rows(dbi, destination_table):
@@ -192,7 +173,7 @@ def insert_into2(dbi, destination_table, feat, text, labels, meta, hostname, bat
     :param batch_number:
     """
     dbi.execute_commit(
-        Template(templates.INSERT_INTO2_QUERY).render(
+        Template(templates.PROC_INSERT_INTO2_QUERY).render(
             labels=labels, metas=meta,
             destination_table=destination_table, feature=feat, text=text,
             captured=text[feat.begin():feat.end()].strip(),
@@ -215,7 +196,7 @@ def insert_into3(dbi, destination_table, feat, labels, meta, hostname, batch_num
     :return:
     """
     dbi.execute_commit(
-        Template(templates.INSERT_INTO3_QUERY).render(
+        Template(templates.PROC_INSERT_INTO3_QUERY).render(
             labels=labels, metas=meta,
             destination_table=destination_table, feature=feat,
             hostname=hostname, batch_number=batch_number
@@ -232,6 +213,8 @@ def get_index(length, value):
 def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_labels, concept_miner_v, all_labels,
             where_clause, order_by, batch_size, mine_options, tracking_method, batch_number):
     """
+    :param tracking_method:
+    :param batch_number:
     :param dbi:
     :param mc:
     :param sb:
@@ -250,7 +233,7 @@ def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_la
     logging.info('Retrieving notes.')
     documents = get_documents(dbi, document_table, meta_labels, text_labels, where_clause, order_by, batch_size)
     length = len(documents)
-    logging.info('Retrieved %d notes.' % length)
+    logging.info('Retrieved {} notes.'.format(length))
 
     pct = 5
     if tracking_method == 'column':
@@ -260,7 +243,7 @@ def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_la
 
     for num, doc in enumerate(documents):
         if 100 * (float(num) / length) > pct:
-            logging.info('Completed {}%.'.format(int(pct)))
+            logging.info('Completed: {:>3}%.'.format(pct))
             pct += 5
 
         # adding sentence splitting (2013-11-08)
@@ -273,7 +256,7 @@ def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_la
         elif concept_miner_v == 3:
             sections = mc.mine(sentences)  # mine_options passed to ctor
         else:
-            raise ValueError('Concept Miner v.%d is not defined.' % concept_miner_v)
+            raise ValueError('Concept Miner v{} is not defined.'.format(concept_miner_v))
 
         for sect_num, sect in enumerate(sections):
             if not sect:
@@ -286,7 +269,7 @@ def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_la
                     insert_into3(dbi, destination_table, feat, all_labels, doc.get_metalist(),
                                  hostname, batch_number)
                 else:
-                    raise ValueError('Concept Miner v.%d is not defined.' % concept_miner_v)
+                    raise ValueError('Concept Miner v{} is not defined.'.format(concept_miner_v))
     logging.info('Completed: 100%')
 
 
@@ -344,17 +327,17 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
 
     # if batch mode, select all ids, and split into batches
     if batch_mode:
-        order_by = ' ORDER BY %s ' % batch_mode
+        order_by = batch_mode
         doc_ids = get_document_ids(dbi, document_table, batch_mode, order_by)
         # get minimum value of each batch size
         batches = [doc_ids[x * batch_size]
                    for x in range(int(math.ceil(float(len(doc_ids)) / batch_size)))]
     else:
         batches = [None]
-        order_by = ''
+        order_by = None
 
     batch_length = len(batches)
-    logging.info('Prepared %d batch(es).' % batch_length)
+    logging.info('Prepared {} batch{}.'.format(batch_length, 'es' if batch_length > 1 else ''))
     for curr_batch, batch in enumerate(batches, 1):
         if batch_mode and batch_number and curr_batch not in batch_number:
             continue
@@ -370,7 +353,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
         try:
             create_table(dbi, dest_table, all_labels, all_types)
             logging.info('Table created: %s.' % dest_table)
-        except pyodbc.ProgrammingError as pe:
+        except pyodbc.ProgrammingError:
             logging.warning('Table already exists.')
             if force:
                 logging.warning('Force deleting rows from table {}.'.format(dest_table))
@@ -383,16 +366,16 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
             logging.error('Failed to create table.')
             raise e
 
-        logging.info('Started batch #%d (ending at %d).' % (curr_batch, batch_number[-1] if batch_number else 1))
+        logging.info('Started batch #{} (ending at {}).'.format(curr_batch, batch_number[-1] if batch_number else 1))
 
         if batch_mode:
-            where_clause = ' WHERE %s > %d ' % (batch_mode, batch)
+            where_clause = '{} > {}'.format(batch_mode, batch)
         else:
-            where_clause = ''
+            where_clause = None
         process(dbi, mc, SentenceBoundary(dbi), dest_table, document_table, meta_labels, text_labels,
                 concept_miner_v, all_labels, where_clause, order_by, batch_size, mine_options,
                 tracking_method, batch_number)
-        logging.info('Finished batch #%d of %d.' % (curr_batch, batch_length))
+        logging.info('Finished batch #{} of {}.'.format(curr_batch, batch_length))
 
 
 def main():

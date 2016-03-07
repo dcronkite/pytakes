@@ -11,6 +11,9 @@ import logging
 import logging.config
 import pyodbc
 
+from jinja2 import Template
+
+from pytakes import templates, header
 from .util import mylogger
 from .util.utils import get_valid_args
 
@@ -33,13 +36,11 @@ def insert_into(dbi, table, cols, row):
     :param row:
 
     """
-    sql = '''
-        INSERT INTO %s ( "%s" )
-        VALUES (
-    ''' % (table, '", "'.join(cols[1:]))
-    sql += ', '.join([str(r) if isinstance(r, int) else "'" + r + "'" for r in row[1:]])
-    sql += ')'
-
+    sql = Template(templates.PP_INSERT_INTO).render({
+        'table_name': table,
+        'labels': cols[1:],
+        'values': row[1:]
+    })
     try:
         dbi.execute_commit(sql)
     except Exception as e:
@@ -49,11 +50,10 @@ def insert_into(dbi, table, cols, row):
 
 
 def get_input_data(dbi, input_table, columns):
-    sql = '''
-        SELECT "%s"
-        FROM %s
-    ''' % ('", "'.join(columns),
-           input_table)
+    sql = Template(templates.PP_INPUT_DATA).render({
+        'input_table': input_table,
+        'labels': columns
+    })
     return dbi.execute_fetchall(sql)
 
 
@@ -64,11 +64,12 @@ def create_destination_table(dbi, input_table, output_table):
     :param input_table:
     :param output_table:
     """
+    sql = Template(templates.PP_DEST_TABLE).render({
+        'dest_table': output_table,
+        'input_table': input_table
+    })
     try:
-        dbi.execute_commit('''
-            SELECT * INTO %s FROM %s
-            WHERE 1 = 2
-        ''' % (output_table, input_table))
+        dbi.execute_commit(sql)
         prepare_output_tables(dbi, output_table)
     except pyodbc.ProgrammingError as pe:
         logging.warning('Table "%s" already exists.' % output_table)
@@ -76,31 +77,16 @@ def create_destination_table(dbi, input_table, output_table):
 
 
 def prepare_output_tables(dbi, output_table):
-    # add new column to show where changes happened
-    dbi.execute_commit('''
-        ALTER TABLE {}
-        ADD updated int
-    '''.format(output_table))
-
-
-def add_rowid(dbi, output_table):
     """
-    Add row id for output column
+
     :param dbi:
     :param output_table:
+    :return:
     """
-    try:
-        dbi.execute_commit('''
-            ALTER TABLE %s
-            ADD rowid bigint IDENTITY(1,1)
-        ''' % output_table)
-    except pyodbc.ProgrammingError as e:
-        logging.error('Failed to create identity column.')
-        logging.exception(e)
-        # don't raise exception since this is the last call of program
-        # also, this is currently untested, so if it fails,
-        # I don't want to think something went wrong, just know 
-        # that something needs to be fixed. :)
+    sql = Template(templates.PP_DEST_TABLE).render({
+        'table_name': output_table
+    })
+    dbi.execute_commit(sql)
 
 
 def postprocess(dbi,
@@ -161,22 +147,22 @@ def postprocess(dbi,
             orig_row = copy.copy(row)
             for negConcept in tagger.find_negation(text):
                 _type = negConcept.type().lower()
-                if _type == 'negn':
-                    row[out_columns.index('certainty')] = 0
-                elif _type == 'impr':
-                    row[out_columns.index('certainty')] = 1
-                elif _type == 'poss':
-                    row[out_columns.index('certainty')] = 2
-                elif _type == 'prob':
-                    row[out_columns.index('certainty')] = 3
-                if _type == 'hypo':
-                    row[out_columns.index('hypothetical')] = 1
-                if _type == 'futp':
-                    row[out_columns.index('hypothetical')] = 1
-                if _type == 'hist':
-                    row[out_columns.index('historical')] = 1
-                if _type == 'othr':
-                    row[out_columns.index('otherSubject')] = 1
+                if _type == header.NEGATION_TYPE:
+                    row[out_columns.index(header.CERTAINTY)] = 0
+                elif _type == header.IMPROBABLE_TYPE:
+                    row[out_columns.index(header.CERTAINTY)] = 1
+                elif _type == header.POSSIBLE_TYPE:
+                    row[out_columns.index(header.CERTAINTY)] = 2
+                elif _type == header.PROBABLE_TYPE:
+                    row[out_columns.index(header.CERTAINTY)] = 3
+                if _type == header.HYPOTHETICAL_TYPE:
+                    row[out_columns.index(header.HYPOTHETICAL)] = 1
+                if _type == header.FUTURE_TYPE:
+                    row[out_columns.index(header.HYPOTHETICAL)] = 1
+                if _type == header.HISTORICAL_TYPE:
+                    row[out_columns.index(header.HISTORICAL)] = 1
+                if _type == header.OTHER_SUBJECT_TYPE:
+                    row[out_columns.index(header.OTHER_SUBJECT)] = 1
 
             if lists_are_equal(orig_row, row):
                 row.append(0)

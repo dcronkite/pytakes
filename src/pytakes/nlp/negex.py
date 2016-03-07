@@ -14,22 +14,12 @@ Edits:
     2013-12-09  - added getNegex and getContext functions; I'm going to need these each
                 time I use negex, so might as well include them
 """
+from jinja2 import Template
 
 import regex as re
+
+from pytakes import templates
 from .terms import *
-
-
-def get_negex(dbi, neg_table):
-    """
-    Retrieve negation triggers from table
-    :param dbi:
-    :param neg_table:
-    """
-    return dbi.execute_fetchall('''
-            SELECT negex
-                 , type
-             FROM %s
-    ''' % neg_table)
 
 
 def get_context(dbi, neg_table):
@@ -38,12 +28,9 @@ def get_context(dbi, neg_table):
     :param dbi:
     :param neg_table:
     """
-    return dbi.execute_fetchall('''
-            SELECT negex
-                 , type
-                 , direction
-             FROM %s
-    ''' % neg_table)
+    return dbi.execute_fetchall(Template(templates.PROC_GET_CONTEXT).render({
+        'neg_table': neg_table
+    }))
 
 
 def sort_rules_for_status(rulelist, exclusions=None):
