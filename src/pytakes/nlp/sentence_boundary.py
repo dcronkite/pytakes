@@ -7,7 +7,8 @@
  # @version 1.2
  # <p>Description: This program is used to detect sentence boundary and format each sentence as a single line </p>
  # Input: 1: English_dictionary 2: Abbreviation_dictionary 3: input_dir 4: output_dir
- # Output: Each file in the file_list will be processed by this sentence boundary tool, the out put will be generated in output directory with name: "file_name.sent"
+ # Output: Each file in the file_list will be processed by this sentence boundary tool,
+ the out put will be generated in output directory with name: "file_name.sent"
 
 Modified so that it will:
     1. read input from database
@@ -19,10 +20,12 @@ Editor: David Cronkite, GHRI
 """
 
 import re
+import sqlite3
+import pkg_resources
 
 
 class SentenceBoundary(object):
-    def __init__(self, cur, ignorecase=True, word_table='res_ss_word', abbr_table='res_ss_abbr', debug=False):
+    def __init__(self, ignorecase=True, config='', debug=False):
         """
         Parameters:
             cur = dbi connection cursor
@@ -36,13 +39,26 @@ class SentenceBoundary(object):
                      'underneath', 'versus', 'via', 'where', 'while', 'with', 'within', 'without', 'also'}
         self.det = {'a', 'an', 'the'}
         self.conj = {'and', 'or', 'but', 'if', 'nor', 'for', 'except', 'although', 'no'}
-        self.non_stop_punct = set([])  # set([',']) #set([',', ';'])
+        self.non_stop_punct = {}
         self.sentence_word = {'we', 'us', 'patient', 'denies', 'reveals', 'no', 'none', 'he', 'she', 'his', 'her',
                               'they', 'them', 'is', 'was', 'who', 'when', 'where', 'which', 'are', 'be', 'have', 'had',
                               'has', 'this', 'will', 'that', 'the', 'to', 'in', 'with', 'for', 'an', 'and', 'but', 'or',
                               'as', 'at', 'of', 'have', 'it', 'that', 'by', 'from', 'on', 'include'}
-        self.knuthus = self.load_set_lower(cur.execute_return("SELECT * FROM %s" % word_table))
-        self.abbr_dic = self.load_set_lower(cur.execute_return("SELECT * FROM %s" % abbr_table)) - self.knuthus
+
+        if 'knuthus' in config or 'abbrevs' in config:
+            conn = sqlite3.connect(pkg_resources.resource_filename('pytakes.nlp', 'data/ssplit.db'))
+            cur = conn.cursor()
+            cur.execute('SELECT abbr FROM abbreviations')
+            self.knuthus = {x[0] for x in cur.fetchall()}
+            cur.execute('SELECT word FROM knuthus')
+            self.abbrevs = {x[0] for x in cur.fetchall()}
+        else:
+            self.knuthus = {}
+            self.abbrevs = {}
+
+        for el in config:
+            setattr(self, el, self.load_set_lower(config[el]))
+
         self.ignorecase = ignorecase
         self.debug = debug
 
@@ -76,8 +92,8 @@ class SentenceBoundary(object):
                                 else:  # postoperative day 3.
                                     tmp += word[:-1] + ' .\n'
                             # afebrile .
-                            elif (word[:-1].lower() not in self.abbr_dic and
-                                    word.lower() not in self.abbr_dic):
+                            elif (word[:-1].lower() not in self.abbrevs and
+                                    word.lower() not in self.abbrevs):
                                 tmp += (word[:-1] + ' .\n')
                             else:  # abbreviations
                                 if j + 1 < len(words):

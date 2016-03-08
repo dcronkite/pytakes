@@ -28,5 +28,6 @@ setup(name='pytakes',
       install_requires=['regex', 'pyodbc', 'jinja2'],
       package_dir={'': 'src'},
       packages=setuptools.find_packages('src'),
+      package_data={'': ['*.db']},
       zip_safe=False
       )

@@ -2,6 +2,7 @@
 
 """
 
+# automate run details
 RUN_BATCH_FILE = r'''@echo off
 echo Running batch {{ batch_number }}.
 {{ python }} {{ pytakes_path }}processor.py "@.\pytakes-batch{{ batch_number }}.conf"
@@ -27,7 +28,6 @@ echo Failed.
 )
 pause
 '''
-
 
 RUN_CONF_FILE = r'''--driver={{ driver }}
 --server={{ server }}
