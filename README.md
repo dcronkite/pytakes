@@ -52,7 +52,7 @@ Columns:
     * 3: term applies negation, etc. **forward and/or backward** in the sentence (e.g., 'likely')
 
 
-#### Term Table #### 
+#### Term Table ####
 This is the table containing the terms you want to search for (i.e., the entities you wan't extracted). I have a script to auto-generate these, and will plan to include this in the file in due course (give me month ;) ). This is comparable to input required by cTAKES (and is derived from that).
 
     ​Column	​Type	​Description
