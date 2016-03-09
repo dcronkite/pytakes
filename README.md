@@ -14,12 +14,6 @@
 ### Basics ###
 Until I add more doco, check out the pytakes-automate-run script (should be in your Scripts directory).
 
-Right now, you will need to create two additional tables in the specified server/database with these names/columns:
-
-1. res_ss_word: word
-2. res_ss_abbr: abbr
-
-These had something to do with sentence splitting (don't split the abbreviations, but not sure about the words).
 
 ### Install ###
 1. Clone from bitbucket repo.
