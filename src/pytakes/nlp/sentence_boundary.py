@@ -25,10 +25,22 @@ import pkg_resources
 
 
 class SentenceBoundary(object):
-    def __init__(self, ignorecase=True, config='', debug=False):
+    def __init__(self, ignorecase=True, config=None, debug=False):
         """
-        Parameters:
-            cur = dbi connection cursor
+
+        :param ignorecase: case insensitive (default=True)
+        :param config: dictionary which may contain the following keys
+        .. note::
+            prep -- list of prepositions
+            det -- list of determiners
+            conj -- list of conjunctions
+            non_stop_punct -- list of stop punctuation
+            sentence_word -- list of sentence words
+            knuthus -- list of knuthus words
+            abbrevs -- list of abbreviation words
+
+        :param debug: enable debug mode (default=False)
+        :return:
         """
         self.prep = {'about', 'above', 'across', 'after', 'against', 'aka', 'along', 'and', 'anti', 'apart', 'around',
                      'as', 'astride', 'at', 'away', 'because', 'before', 'behind', 'below', 'beneath', 'beside',
@@ -56,9 +68,10 @@ class SentenceBoundary(object):
             self.knuthus = {}
             self.abbrevs = {}
 
-        for el in config:
+        for el in config or []:
             setattr(self, el, self.load_set_lower(config[el]))
 
+        self.abbrevs -= self.knuthus  # remove duplicates
         self.ignorecase = ignorecase
         self.debug = debug
 
