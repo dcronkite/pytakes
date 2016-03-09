@@ -12,7 +12,7 @@
 ## Doco ##
 
 ### Basics ###
-Until I add more doco, check out the pytakes-automate-run script (should be in your Scripts directory).
+Until I add more doco, check out the pytakes-automate-run script (should be in your Scripts directory). Run it with the `--create-sample` option to autogenerate a sample configuration file.
 
 
 ### Install ###
