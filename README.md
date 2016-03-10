@@ -14,6 +14,17 @@
 ### Basics ###
 Until I add more doco, check out the pytakes-automate-run script (should be in your Scripts directory). Run it with the `--create-sample` option to autogenerate a sample configuration file.
 
+    pytakes-automate-run --create-sample >> config
+    # edit sample config file
+    pytakes-automate-run @config
+
+    # open the directory OUTPUT_DIRECTORY
+    # run each auto-generated batch file
+
+    # when all batch files have been run,
+    # open the "post" directory, and run the
+    # post process batch script
+
 
 ### Install ###
 1. Clone from bitbucket repo.
