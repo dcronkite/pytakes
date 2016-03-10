@@ -12,14 +12,8 @@
 ## Doco ##
 
 ### Basics ###
-Until I add more doco, check out the pytakes-automate-run script (should be in your Scripts directory).
+Until I add more doco, check out the pytakes-automate-run script (should be in your Scripts directory). Run it with the `--create-sample` option to autogenerate a sample configuration file.
 
-Right now, you will need to create two additional tables in the specified server/database with these names/columns:
-
-1. res_ss_word: word
-2. res_ss_abbr: abbr
-
-These had something to do with sentence splitting (don't split the abbreviations, but not sure about the words).
 
 ### Install ###
 1. Clone from bitbucket repo.
@@ -58,7 +52,7 @@ Columns:
     * 3: term applies negation, etc. **forward and/or backward** in the sentence (e.g., 'likely')
 
 
-#### Term Table #### 
+#### Term Table ####
 This is the table containing the terms you want to search for (i.e., the entities you wan't extracted). I have a script to auto-generate these, and will plan to include this in the file in due course (give me month ;) ). This is comparable to input required by cTAKES (and is derived from that).
 
     ​Column	​Type	​Description
