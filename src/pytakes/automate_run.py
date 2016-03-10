@@ -239,15 +239,17 @@ def main():
                         help='Mail server address.')
 
     # autogenerate sample config file
-    parser.add_argument('--create-sample', action='store_true',
-                        help='Generate a sample configuration file to fill out.')
+    cparser = argparse.ArgumentParser(fromfile_prefix_chars='@')
+    cparser.add_argument('--create-sample', action='store_true', default=False,
+                         help='Generate a sample configuration file to fill out.')
 
-    args = parser.parse_args()
-
+    args = cparser.parse_args()
     if args.create_sample:
         with open(args.create_sample, 'w') as out:
             out.write(templates.SAMPLE_CONF_FILE)
         return
+
+    args = parser.parse_args()
 
     loglevel = mylogger.resolve_verbosity(args.verbosity)
     logging.config.dictConfig(mylogger.setup(name='automate_run', loglevel=loglevel))
