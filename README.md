@@ -80,7 +80,17 @@ The document table must also include a unique id for each note_text (just make a
 #### Example Config File ####
 To get started, create the following file and then run:
 
-    pytakes-automate-run @config.conf
+    pytakes-automate-run --create-sample >> config
+    # edit sample config file
+    pytakes-automate-run @config
+
+    # open the directory OUTPUT_DIRECTORY
+    # run each auto-generated batch file
+
+    # when all batch files have been run,
+    # open the "post" directory, and run the
+    # post process batch script
+
 
 Config.conf:
 
@@ -95,7 +105,7 @@ Config.conf:
     date
     --text-labels   # not yet implemented, where your text goes, defaults to "note_text"
     note_text
-    --output-dir=main
+    --output-dir=OUTPUT_DIRECTORY
     --destination-table=pytakes_out_20150217
     --max-intervening-terms=2
     --max-length-of-search=2
