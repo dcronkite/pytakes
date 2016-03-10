@@ -2,7 +2,7 @@ from distutils.core import setup
 import setuptools
 
 setup(name='pytakes',
-      version='0.1',
+      version='0.2',
       description='Basic information extraction tool.',
       url='https://bitbucket.org/dcronkite/pytakes',
       author='dcronkite',
@@ -28,6 +28,6 @@ setup(name='pytakes',
       install_requires=['regex', 'pyodbc', 'jinja2'],
       package_dir={'': 'src'},
       packages=setuptools.find_packages('src'),
-      package_data={'': ['*.db']},
+      package_data={'pytakes.nlp': ['data/*.db']},
       zip_safe=False
       )

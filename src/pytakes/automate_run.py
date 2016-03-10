@@ -80,8 +80,9 @@ def resolve_formatting(label, value):
 
 
 def create_batch_file(output_dir, batch_label, document_table, destination_table,
-                      batch_size, batch_start, batch_end, driver, server, database, meta_labels,
-                      primary_key, options, python, pytakes_path, tracking_method):
+                      batch_size, batch_start, batch_end, driver, server, database,
+                      meta_labels, primary_key, text_labels,
+                      options, python, pytakes_path, tracking_method):
     with open(os.path.join(output_dir, 'pytakes-batch{}.bat'.format(batch_label)), 'w') as out:
         if pytakes_path:
             out.write(Template(templates.RUN_BATCH_FILE).render(
@@ -97,7 +98,7 @@ def create_batch_file(output_dir, batch_label, document_table, destination_table
             Template(templates.RUN_CONF_FILE).render(
                 driver=driver, server=server, database=database, document_table=document_table,
                 destination_table=destination_table,
-                meta_labels=meta_labels, primary_key=primary_key,
+                meta_labels=meta_labels, primary_key=primary_key, text_labels=text_labels,
                 options=options,
                 batch_size=batch_size, batch_start=batch_start, batch_end=batch_end,
                 tracking_method=tracking_method
@@ -141,7 +142,7 @@ def create_post_process_batch(pp_dir, destination_table, negation_table, negatio
 def automate_run(dbi, cm_options, concept_miner, document_table,
                  output_dir, destination_table,
                  driver, server, database,
-                 meta_labels, primary_key,
+                 meta_labels, primary_key, text_labels,
                  recipients, sender, mail_server_address, negation_table, negation_variation,
                  python, pytakes_path,
                  tracking_method):
@@ -166,8 +167,9 @@ def automate_run(dbi, cm_options, concept_miner, document_table,
     for batch_label in range(1, filecount + 1):
         batch_end = batch_start + batchesperfile
         create_batch_file(output_dir, batch_label, document_table, destination_table,
-                          batchsize, batch_start, batch_end, driver, server, database, meta_labels,
-                          primary_key, options, python, pytakes_path, tracking_method)
+                          batchsize, batch_start, batch_end, driver, server, database,
+                          meta_labels, primary_key, text_labels,
+                          options, python, pytakes_path, tracking_method)
         batch_start = batch_end
 
     create_email_file(output_dir, filecount, destination_table,
@@ -219,6 +221,8 @@ def main():
     parser.add_argument('--primary-key', required=False, default=None,
                         help='Primary key for documents. This will be used in sorting batches. '
                              'If not included, the first meta label will be the primary key.')
+    parser.add_argument('--text-labels', nargs='+', help='Name of text columns.')
+
     parser.add_argument('--tracking-method', choices=['name', 'column'], default='name',
                         help='Method to track progress of batches.')
 
@@ -243,7 +247,7 @@ def main():
     cparser.add_argument('--create-sample', action='store_true', default=False,
                          help='Generate a sample configuration file to fill out.')
 
-    args = cparser.parse_args()
+    args, _ = cparser.parse_known_args()
     if args.create_sample:
         with open(args.create_sample, 'w') as out:
             out.write(templates.SAMPLE_CONF_FILE)

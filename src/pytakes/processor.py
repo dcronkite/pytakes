@@ -57,7 +57,7 @@ class Document(object):
         return text
 
 
-def get_document_ids(dbi, document_table, table_id, order_by):
+def get_document_ids(dbi, document_table, term_table, table_id, order_by):
     """
     Retrieve documents from table (for batch mode)
     :param dbi:
@@ -68,7 +68,8 @@ def get_document_ids(dbi, document_table, table_id, order_by):
     document_ids = dbi.execute_fetchall(Template(templates.PROC_GET_TERMS).render({
         'table_id': table_id,
         'doc_table': document_table,
-        'order_by': order_by
+        'order_by': order_by,
+        'term_table': term_table
     }))
     return [x[0] for x in document_ids]  # remove lists
 
@@ -146,7 +147,7 @@ def create_table(dbi, destination_table, labels, types):
     dbi.execute_commit(Template(templates.PROC_CREATE_TABLE).render({
         'destination_table': destination_table,
         'labels_types': zip(labels, types)
-    }), debug=True)
+    }))
 
 
 def delete_table_rows(dbi, destination_table):
@@ -328,7 +329,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
     # if batch mode, select all ids, and split into batches
     if batch_mode:
         order_by = batch_mode
-        doc_ids = get_document_ids(dbi, document_table, batch_mode, order_by)
+        doc_ids = get_document_ids(dbi, document_table, term_table, batch_mode, order_by)
         # get minimum value of each batch size
         batches = [doc_ids[x * batch_size]
                    for x in range(int(math.ceil(float(len(doc_ids)) / batch_size)))]
@@ -353,8 +354,9 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
         try:
             create_table(dbi, dest_table, all_labels, all_types)
             logging.info('Table created: %s.' % dest_table)
-        except pyodbc.ProgrammingError:
+        except pyodbc.ProgrammingError as pe:
             logging.warning('Table already exists.')
+            logging.error(pe)
             if force:
                 logging.warning('Force deleting rows from table {}.'.format(dest_table))
                 delete_table_rows(dbi, dest_table)

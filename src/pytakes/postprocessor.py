@@ -83,7 +83,7 @@ def prepare_output_tables(dbi, output_table):
     :param output_table:
     :return:
     """
-    sql = Template(templates.PP_DEST_TABLE).render({
+    sql = Template(templates.PP_PREP_DEST_TABLE).render({
         'table_name': output_table
     })
     dbi.execute_commit(sql)

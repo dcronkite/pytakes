@@ -38,7 +38,10 @@ RUN_CONF_FILE = r'''--driver={{ driver }}
 {%- for meta_label in meta_labels %}
 {{ meta_label }}
 {%- endfor %}
---text-labels=note_text
+--text-labels
+{%- for text_label in text_labels %}
+{{ text_label }}
+{%- endfor %}
 --tracking-method={{ tracking_method }}
 --destination-table={{ destination_table }}_pre
 {%- for option in options %}
@@ -110,6 +113,10 @@ pat_id
 date
 --primary-key
 doc_id
+--text-labels
+note_text
+--mail-server-address
+mail.test.org
 --sender
 Automated Email,example@example.com
 --recipients
@@ -167,7 +174,7 @@ ORDER BY {{ order_by }}
 PROC_CREATE_TABLE = r'''CREATE TABLE {{ destination_table }} (
 rowid int IDENTITY(1, 1) PRIMARY KEY,
 {%- for label, column_type in labels_types %}
-{{ label }}, {{ column_type }}
+{{ label }} {{ column_type }}{% if not loop.last %},{% endif %}
 {%- endfor %}
 )
 '''
@@ -205,22 +212,23 @@ ORDER BY {{ order_by }}
 # for postprocessor.py
 PP_INSERT_INTO = r'''INSERT INTO {{ table_name }} (
 {%- for label in labels %}
-'{{ label }}' {% if not loop.last %},{% endif %}
+{{ label }} {% if not loop.last %},{% endif %}
 {%- endfor %}
 ) VALUES (
 {%- for value in values %}
     {%- if value is number %}
-    {{ value }} {% if not loop.last %},{% endif %}
-    {%- elif %}
-    {{ value }} {% if not loop.last %},{% endif %}
+    {{ value }}
+    {%- else %}
+    '{{ value }}'
     {%- endif %}
+     {% if not loop.last %},{% endif %}
 {%- endfor %}
 )
 '''
 
 PP_INPUT_DATA = r'''SELECT
 {%- for label in labels %}
-'{{ label }}' {% if not loop.last %},{% endif %}
+{{ label }} {% if not loop.last %},{% endif %}
 {%- endfor %}
 FROM {{ input_table }}
 '''

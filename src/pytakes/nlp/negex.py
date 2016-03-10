@@ -124,6 +124,8 @@ class MyStatusTagger(object):
 
         # negation key
         negex_level = {
+            0: [(0, '')
+                ],
             1: [(12, '{1i+1d<3})'),
                 (8, '{1i+1d<2})'),
                 (0, '')

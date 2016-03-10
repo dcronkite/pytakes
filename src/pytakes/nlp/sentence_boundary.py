@@ -18,7 +18,7 @@ Modified so that it will:
 Edited: 2may13
 Editor: David Cronkite, GHRI
 """
-
+import logging
 import re
 import sqlite3
 import pkg_resources
@@ -57,16 +57,16 @@ class SentenceBoundary(object):
                               'has', 'this', 'will', 'that', 'the', 'to', 'in', 'with', 'for', 'an', 'and', 'but', 'or',
                               'as', 'at', 'of', 'have', 'it', 'that', 'by', 'from', 'on', 'include'}
 
-        if 'knuthus' in config or 'abbrevs' in config:
+        if config and 'knuthus' in config and 'abbrevs' in config:
+            self.knuthus = {}
+            self.abbrevs = {}
+        else:
             conn = sqlite3.connect(pkg_resources.resource_filename('pytakes.nlp', 'data/ssplit.db'))
             cur = conn.cursor()
             cur.execute('SELECT abbr FROM abbreviations')
             self.knuthus = {x[0] for x in cur.fetchall()}
             cur.execute('SELECT word FROM knuthus')
             self.abbrevs = {x[0] for x in cur.fetchall()}
-        else:
-            self.knuthus = {}
-            self.abbrevs = {}
 
         for el in config or []:
             setattr(self, el, self.load_set_lower(config[el]))
