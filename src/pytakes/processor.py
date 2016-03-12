@@ -92,9 +92,9 @@ def get_documents(dbi, document_table, meta_labels, text_labels, where_clause, o
         'text_labels': text_labels,
         'doc_table': document_table
     })
-    document_list = dbi.execute_fetchall(sql)
+    dbi.execute(sql)
     result_list = []
-    for row in document_list:
+    for row in dbi:
         doc = Document(row[:-len(text_labels)], row[-len(text_labels):])
         result_list.append(doc)
     return result_list
@@ -326,6 +326,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
         raise ValueError('Invalid version for ConceptMiner: %d.' % concept_miner_v)
 
     # if batch mode, select all ids, and split into batches
+    logging.info('Preparing batches.')
     if batch_mode:
         order_by = batch_mode
         doc_ids = get_document_ids(dbi, document_table, batch_mode, order_by)
