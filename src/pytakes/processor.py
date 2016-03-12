@@ -328,10 +328,14 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
     # if batch mode, select all ids, and split into batches
     if batch_mode:
         order_by = batch_mode
-        doc_ids = get_document_ids(dbi, document_table, term_table, batch_mode, order_by)
+        doc_ids = get_document_ids(dbi, document_table, batch_mode, order_by)
+        if not doc_ids:
+            logging.error('No documents found.')
+            return
         # get minimum value of each batch size
         batches = [doc_ids[x * batch_size]
                    for x in range(int(math.ceil(float(len(doc_ids)) / batch_size)))]
+
     else:
         batches = [None]
         order_by = None
