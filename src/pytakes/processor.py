@@ -57,7 +57,7 @@ class Document(object):
         return text
 
 
-def get_document_ids(dbi, document_table, term_table, table_id, order_by):
+def get_document_ids(dbi, document_table, table_id, order_by):
     """
     Retrieve documents from table (for batch mode)
     :param dbi:
@@ -65,13 +65,12 @@ def get_document_ids(dbi, document_table, term_table, table_id, order_by):
     :param table_id:
     :param order_by:
     """
-    document_ids = dbi.execute_fetchall(Template(templates.PROC_GET_TERMS).render({
+    dbi.execute(Template(templates.PROC_GET_DOC_IDS).render({
         'table_id': table_id,
         'doc_table': document_table,
-        'order_by': order_by,
-        'term_table': term_table
+        'order_by': order_by
     }))
-    return [x[0] for x in document_ids]  # remove lists
+    return [x[0] for x in dbi]  # remove lists
 
 
 def get_documents(dbi, document_table, meta_labels, text_labels, where_clause, order_by, batch_size):

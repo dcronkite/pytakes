@@ -48,6 +48,14 @@ class DbInterface(object):
             pass
 
     @connection_continue
+    def __next__(self):
+        return next(self.cur)
+
+    @connection_continue
+    def __iter__(self):
+        return self
+
+    @connection_continue
     def fetchall(self):
         return self.cur.fetchall()
 
