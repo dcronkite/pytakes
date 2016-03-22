@@ -131,12 +131,12 @@ PROC_INSERT_INTO2_QUERY = r'''INSERT INTO {{ destination_table }} (
 {%- endfor %}
 ) VALUES (
 {%- for meta in metas %}
-'{{ meta }}',
+'{{ meta|replace("'", "''") }}',
 {%- endfor %}
 {{ feature.id() }},
-'{{ captured }}',
-'{{ context }}',
-'{{ text }}',
+'{{ captured|replace("'", "''") }}',
+'{{ context|replace("'", "''") }}',
+'{{ text|replace("'", "''") }}',
 {{ feature.get_certainty() }},
 {% if feature.is_hypothetical() %}1{% else %}0{% endif %},
 {% if feature.is_historical() %}1{% else %}0{% endif %},
@@ -145,7 +145,7 @@ PROC_INSERT_INTO2_QUERY = r'''INSERT INTO {{ destination_table }} (
 {{ feature.end() }},
 {{ feature.get_absolute_begin() }},
 {{ feature.get_absolute_end() }}
-{% if hostname %}, {{ hostname }}, {{ batch_number }}{% endif %}
+{% if hostname %}, '{{ hostname|replace("'", "''") }}', {{ batch_number }}{% endif %}
 )
 '''
 
@@ -219,7 +219,7 @@ PP_INSERT_INTO = r'''INSERT INTO {{ table_name }} (
     {%- if value is number %}
     {{ value }}
     {%- else %}
-    '{{ value }}'
+    '{{ value|replace("'", "''") }}'
     {%- endif %}
      {% if not loop.last %},{% endif %}
 {%- endfor %}
