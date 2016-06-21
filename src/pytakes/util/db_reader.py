@@ -103,15 +103,12 @@ class DbInterface(object):
 
     @connection_continue
     def fetch_rowcount(self, table, debug=False):
-        sql = '''
-            SELECT COUNT(*)
-            FROM %s
-        ''' % table
+        sql = '''SELECT COUNT(*) FROM {}'''.format(table)
         return self.execute_fetchone(sql, debug)[0]
 
     def get_table_columns(self, table_name):
         """returns columns of specified table """
-        if 'sql server' in self._cs.lower():
+        if self.is_sql_server_connection():
             cols = self.execute_fetchall('''
                 SELECT column_name
                 FROM INFORMATION_SCHEMA.COLUMNS
@@ -121,6 +118,10 @@ class DbInterface(object):
         else:
             raise ValueError('Unsupported database connection.')
 
+    def is_sql_server_connection(self):
+        return 'sql server' in self._cs.lower()
+
+    # noinspection PyUnboundLocalVariable
     def wait_for_connection_resume(self, waittime, err):
         while True:
             if isinstance(err, pyodbc.ProgrammingError):

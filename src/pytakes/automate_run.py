@@ -25,7 +25,6 @@ import os
 
 from jinja2 import Template
 from pytakes.util import mylogger
-from pytakes.util.unix import mkdir_p
 from pytakes.util.utils import get_valid_args
 
 from pytakes import templates
@@ -162,7 +161,7 @@ def automate_run(dbi, cm_options, concept_miner, document_table,
     elif primary_key in meta_labels:
         meta_labels.remove(primary_key)
 
-    mkdir_p(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
     batch_start = 1
     for batch_label in range(1, filecount + 1):
         batch_end = batch_start + batchesperfile
@@ -178,7 +177,7 @@ def automate_run(dbi, cm_options, concept_miner, document_table,
     postprocess_dir = os.path.join(output_dir, 'post')
 
     if concept_miner == 2:
-        mkdir_p(postprocess_dir)
+        os.mkdir(postprocess_dir, exist_ok=True)
         create_post_process_batch(postprocess_dir, destination_table, negation_table, negation_variation,
                                   driver, server, database, filecount + 1, python, pytakes_path,
                                   tracking_method)

@@ -2,11 +2,11 @@ from distutils.core import setup
 import setuptools
 
 setup(name='pytakes',
-      version='0.2',
+      version='0.3',
       description='Basic information extraction tool.',
       url='https://bitbucket.org/dcronkite/pytakes',
       author='dcronkite',
-      author_email='dcronkite-gmail-com',
+      author_email='dcronkite-gmail',
       license='MIT',
       classifiers=[  # from https://pypi.python.org/pypi?%3Aaction=list_classifiers
           'Development Status :: 3 - Alpha',
@@ -23,6 +23,7 @@ setup(name='pytakes',
                   'pytakes-postprocessor = pytakes.postprocessor:main',
                   'pytakes-processor = pytakes.processor:main',
                   'pytakes-sendmail = pytakes.sendmail:main',
+                  'pytakes-build-dictionary = pytakes.build_dictionary:main',
               ]
       },
       install_requires=['regex', 'pyodbc', 'jinja2'],

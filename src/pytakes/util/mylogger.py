@@ -9,8 +9,6 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 
-from .unix import mkdir_p
-
 
 def setup(name=__name__, logdir='log', console=True, text=True, loglevel='DEBUG', logfile=None):
     """
@@ -33,7 +31,7 @@ def setup(name=__name__, logdir='log', console=True, text=True, loglevel='DEBUG'
         :param name:
     """
     logdir = os.path.abspath(logdir)
-    mkdir_p(logdir)
+    os.makedirs(logdir, exist_ok=True)
     if not logfile:
         logfile = name + '.log'
 
@@ -102,7 +100,7 @@ def setup_local(name=__name__, logdir='log', console=True, text=True, loglevel=l
                 :param logfile:
         """
     logdir = os.path.abspath(logdir)
-    mkdir_p(logdir)
+    os.makedirs(logdir, exist_ok=True)
     logger = logging.getLogger(name)
     logger.setLevel(loglevel)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
