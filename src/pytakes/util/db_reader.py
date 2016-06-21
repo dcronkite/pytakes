@@ -69,7 +69,8 @@ class DbInterface(object):
 
     @connection_continue
     def execute(self, text, debug=False):
-        if debug: print(text)
+        if debug:
+            print(text)
         logging.debug(text)
         self.cur.execute(text)
 

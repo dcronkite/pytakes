@@ -177,7 +177,7 @@ def automate_run(dbi, cm_options, concept_miner, document_table,
     postprocess_dir = os.path.join(output_dir, 'post')
 
     if concept_miner == 2:
-        os.mkdir(postprocess_dir, exist_ok=True)
+        os.makedirs(postprocess_dir, exist_ok=True)
         create_post_process_batch(postprocess_dir, destination_table, negation_table, negation_variation,
                                   driver, server, database, filecount + 1, python, pytakes_path,
                                   tracking_method)

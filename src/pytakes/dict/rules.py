@@ -9,7 +9,8 @@ CUI_IDX, CAT_IDX, CONFIG_IDX = range(3)
 
 class Config(list):
     def __init__(self, *args):
-        if args: args = args[0]
+        if args:
+            args = args[0]
         newiter = []
         for el in args:
             newiter.append([el])
@@ -26,7 +27,7 @@ class Config(list):
         if self.__len__() > idx:
             try:
                 res = func(x for x in self.__getitem__(idx) if x is not None)
-            except ValueError as e:  # min() on empty list
+            except ValueError:  # min() on empty list
                 return default
             return res
         return default
@@ -35,8 +36,10 @@ class Config(list):
 def generate_combinations(rules, cats, generator):
     rows = []
     for cui, rule, configs in rules:
-        if not cui: cui = generator.generate_cui()
-        if not configs: configs = Config()
+        if not cui:
+            cui = generator.generate_cui()
+        if not configs:
+            configs = Config()
         cui = cui[:8]  # limit cui length to 8 characters
         lst = []
         start = 0
@@ -56,31 +59,32 @@ def build_rows(rows, generator):
     results = []
     for cui, c_rows, configs in rows:
         for row in c_rows:
-            Lconfigs, text = getMetaForRow(cui, configs, row)
+            row_configs, text = get_meta_for_row(cui, configs, row)
             # cui, fword, term, textlength, code, regexVariation, wordOrder
             insert = [None] * 8
             insert[0] = cui
             insert[2] = ' '.join((''.join(text).strip()).split())  # term
             insert[1] = insert[2].split(' ')[0]  # firstword
+            # noinspection PyTypeChecker
             insert[3] = len(insert[2])  # textlength
             insert[4] = generator.generate_code()  # unique code
             # min is the most conservative parameter (in the following...)
-            insert[5] = Lconfigs.get(0, default=1, func=min)  # regexVariation
+            insert[5] = row_configs.get(0, default=1, func=min)  # regexVariation
             # max is the most conservative parameter in the following...
-            insert[6] = Lconfigs.get(1, default=1, func=max)  # wordOrder
+            insert[6] = row_configs.get(1, default=1, func=max)  # wordOrder
             # valence doesn't do anything yet...it needs to be 1
-            insert[7] = Lconfigs.get(2, default=1, func=max)  # valence
+            insert[7] = row_configs.get(2, default=1, func=max)  # valence
             results.append(insert)
     return results
 
 
-def getMetaForRow(cui, configs, row):
-    '''
+def get_meta_for_row(cui, configs, row):
+    """
     get the min of each config
     NB: cui is ignored, and returns only the given CUI
         - I can't figure out how to make sense of
         word-level CUIs...which trumps the other?
-    '''
+    """
     text = []
     row_configs = copy.copy(configs)
 
@@ -101,7 +105,8 @@ def read_rules(rulefile, generator):
     with open(rulefile) as f:
         for line in f.readlines():
             line = line.strip()
-            if not line: continue
+            if not line:
+                continue
 
             # remove comments
             if line[0] == '#':
@@ -144,15 +149,15 @@ def read_file(catfile, categories):
         cat = os.path.splitext(os.path.split(catfile)[-1])[0]
         for line in f.readlines():
             line = line.strip()
-            if not line: continue
-
+            
             # remove comments
             if line[0] == '#':
                 continue
             elif '#' in line:
                 line = line[:line.index('#')].strip()
 
-            if not line: continue
+            if not line:
+                continue
 
             m = re.match(r'\[(\w+?)]', line)
             if m:  # found category name

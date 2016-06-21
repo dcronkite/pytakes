@@ -88,14 +88,14 @@ class Generator(object):
 
     def used_cuis(self, cuis):
         for cui in cuis:
-            self.used_cui(self, cui)
+            self.used_cui(cui)
 
     def used_cui(self, cui):
         self.cuis.add(cui)
 
     def used_codes(self, codes):
         for code in codes:
-            self.used_code(self, code)
+            self.used_code(code)
 
     def used_code(self, code):
         self.codes.add(code)
@@ -193,7 +193,8 @@ def build(path=None, output=None, table=None, driver=None, server=None, database
         csv_filename = input('CSV filename (press enter to skip): ')
 
     if csv_filename:
-        if csv_filename[-4:] != '.csv': csv_filename += '.csv'
+        if csv_filename[-4:] != '.csv':
+            csv_filename += '.csv'
         logging.info('Outputting rows to CSV: %s.' % csv_filename)
         add_rows_to_csv(rows, csv_filename)
 
