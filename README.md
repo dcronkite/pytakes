@@ -1,3 +1,5 @@
+Simple entity extraction module released under the MIT license.
+
 ## Requirements ##
 * Python 3.3+
 * regex package
