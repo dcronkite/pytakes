@@ -130,9 +130,12 @@ def get_context(dbi, neg_table):
     :param dbi:
     :param neg_table:
     """
-    return dbi.execute_fetchall(Template(templates.PROC_GET_CONTEXT).render({
-        'neg_table': neg_table
-    }))
+    if neg_table:
+        return dbi.execute_fetchall(Template(templates.PROC_GET_CONTEXT).render({
+            'neg_table': neg_table
+        }))
+    else:
+        return []
 
 
 def create_table(dbi, destination_table, labels, types):
