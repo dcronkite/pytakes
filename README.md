@@ -189,8 +189,8 @@ Rules may also maintain configuration parameters.The configurations are indexed 
 
 RegexVariation (integers)
 
-    0: no variation in regular expression coverage
-    **1: minimal variation in regular expression coverage**
+    **0: no variation in regular expression coverage**
+    1: minimal variation in regular expression coverage
     2: moderate variation in regular expression coverage
     3: high flexibility in regular expression coverage
     
