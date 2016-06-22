@@ -263,8 +263,6 @@ def main():
         cm_options = [
             ('concept-miner', 2),
             ('term-table', args.dictionary_table),
-            ('negation-table', args.negation_table),
-            ('negation-variation', args.negation_variation),
             ('max-intervening-terms', args.max_intervening_terms),
             ('max-length-of-search', args.max_length_of_search),
             ('valence', args.valence),
@@ -272,6 +270,10 @@ def main():
             ('word-order', args.word_order),
             ('destination-table', '{}_pre'.format(args.destination_table))
         ]
+        if args.negation_table:
+            cm_options += [('negation-table', args.negation_table),
+                           ('negation-variation', args.negation_variation)]
+
     elif args.concept_miner == 3:
         cm_options = [
             ('concept-miner', 3),

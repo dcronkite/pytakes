@@ -17,6 +17,7 @@ from socket import gethostname
 from jinja2 import Template
 
 from pytakes import templates
+from pytakes.nlp.negex import get_context
 from .util import mylogger
 from .nlp.ngrams import FeatureMiner
 from .nlp.sentence_boundary import SentenceBoundary
@@ -122,20 +123,6 @@ def get_terms(dbi, term_table, valence=None, regex_variation=None, word_order=No
         'word_order': word_order,
         'term_table': term_table
     }))
-
-
-def get_context(dbi, neg_table):
-    """
-    Retrieve negation triggers from table.
-    :param dbi:
-    :param neg_table:
-    """
-    if neg_table:
-        return dbi.execute_fetchall(Template(templates.PROC_GET_CONTEXT).render({
-            'neg_table': neg_table
-        }))
-    else:
-        return []
 
 
 def create_table(dbi, destination_table, labels, types):
