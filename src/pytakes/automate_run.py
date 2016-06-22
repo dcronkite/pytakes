@@ -81,13 +81,15 @@ def resolve_formatting(label, value):
 def create_batch_file(output_dir, batch_label, document_table, destination_table,
                       batch_size, batch_start, batch_end, driver, server, database,
                       meta_labels, primary_key, text_labels,
-                      options, python, pytakes_path, tracking_method):
+                      options, python, pytakes_path, tracking_method, send_email):
     with open(os.path.join(output_dir, 'pytakes-batch{}.bat'.format(batch_label)), 'w') as out:
         if pytakes_path:
             out.write(Template(templates.RUN_BATCH_FILE).render(
-                batch_number=batch_label, python=python, pytakes_path=pytakes_path))
+                batch_number=batch_label, python=python, pytakes_path=pytakes_path, send_email=send_email))
         else:
-            out.write(Template(templates.RUN_COMMAND_BATCH_FILE).render(batch_number=batch_label))
+            out.write(Template(templates.RUN_COMMAND_BATCH_FILE).render(
+                batch_number=batch_label, send_email=send_email
+            ))
 
     if primary_key in meta_labels:
         meta_labels.remove(primary_key)
@@ -122,7 +124,8 @@ def create_email_file(output_dir, filecount, destination_table,
 
 
 def create_post_process_batch(pp_dir, destination_table, negation_table, negation_variation, driver,
-                              server, database, batch_count, python, pytakes_path, tracking_method):
+                              server, database, batch_count, python, pytakes_path,
+                              tracking_method, send_email):
     with open(os.path.join(pp_dir, 'postprocess.bat'), 'w') as out:
         if pytakes_path:
             out.write(Template(templates.PP_BATCH_FILE).render(
@@ -161,6 +164,16 @@ def automate_run(dbi, cm_options, concept_miner, document_table,
     elif primary_key in meta_labels:
         meta_labels.remove(primary_key)
 
+    send_email = recipients and sender and mail_server_address
+    if send_email:
+        create_email_file(output_dir, filecount, destination_table,
+                          recipients, sender, mail_server_address, python, pytakes_path)
+    else:
+        logging.warning(
+            'Skipping email: Failed to specify at least one of "recipients", "sender", and "mail server address".')
+
+    postprocess_dir = os.path.join(output_dir, 'post')
+
     os.makedirs(output_dir, exist_ok=True)
     batch_start = 1
     for batch_label in range(1, filecount + 1):
@@ -168,19 +181,14 @@ def automate_run(dbi, cm_options, concept_miner, document_table,
         create_batch_file(output_dir, batch_label, document_table, destination_table,
                           batchsize, batch_start, batch_end, driver, server, database,
                           meta_labels, primary_key, text_labels,
-                          options, python, pytakes_path, tracking_method)
+                          options, python, pytakes_path, tracking_method, send_email)
         batch_start = batch_end
-
-    create_email_file(output_dir, filecount, destination_table,
-                      recipients, sender, mail_server_address, python, pytakes_path)
-
-    postprocess_dir = os.path.join(output_dir, 'post')
 
     if concept_miner == 2:
         os.makedirs(postprocess_dir, exist_ok=True)
         create_post_process_batch(postprocess_dir, destination_table, negation_table, negation_variation,
                                   driver, server, database, filecount + 1, python, pytakes_path,
-                                  tracking_method)
+                                  tracking_method, send_email)
     logging.info('Completed.')
 
 
@@ -234,11 +242,11 @@ def main():
     parser.add_argument('-v', '--verbosity', type=int, default=2, help='Verbosity of log output.')
 
     # email
-    parser.add_argument('--recipients', required=True, default=None, nargs='+',
+    parser.add_argument('--recipients', required=False, default=None, nargs='+',
                         help='In format of "name,email@address"')
-    parser.add_argument('--sender', required=True, default=None,
+    parser.add_argument('--sender', required=False, default=None,
                         help='In format of "name,email@address"')
-    parser.add_argument('--mail-server-address', required=True,
+    parser.add_argument('--mail-server-address', required=False,
                         help='Mail server address.')
 
     # autogenerate sample config file

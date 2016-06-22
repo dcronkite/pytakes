@@ -7,10 +7,14 @@ RUN_BATCH_FILE = r'''@echo off
 echo Running batch {{ batch_number }}.
 {{ python }} {{ pytakes_path }}processor.py "@.\pytakes-batch{{ batch_number }}.conf"
 if %%errorlevel%% equ 0 (
+{% if send_email %}
 {{ python }} {{ pytakes_path }}sendmail.py -s "Batch {{ batch_number }} Completed" "@.\email.conf"
+{% endif %}
 echo Successful.
 ) else (
+{% if send_email %}
 {{ python }} {{ pytakes_path }}sendmail.py -s "Batch {{ batch_number }} Failed: Log Included" -f ".\log\pytakes-processor{{ batch_number }}.log" "@.\bad_email.conf"
+{% endif %}
 echo Failed.
 )
 pause
@@ -20,10 +24,14 @@ RUN_COMMAND_BATCH_FILE = r'''@echo off
 echo Running batch {{ batch_number }}.
 pytakes-processor "@.\pytakes-batch{{ batch_number }}.conf"
 if %%errorlevel%% equ 0 (
+{% if send_email %}
 pytakes-sendmail -s "Batch {{ batch_number }} Completed" "@.\email.conf"
+{% endif %}
 echo Successful.
 ) else (
+{% if send_email %}
 pytakes-sendmail -s "Batch {{ batch_number }} Failed: Log Included" -f ".\log\pytakes-processor{{ batch_number }}.log" "@.\bad_email.conf"
+{% endif %}
 echo Failed.
 )
 pause
