@@ -146,17 +146,19 @@ def build(path=None, output=None, table=None, driver=None, server=None, database
     generator = Generator()
 
     # try to find the rules and categories files
-    files = os.listdir('.')
+    files = os.listdir(cwd)
 
     categories = {}
+    cat_dir = os.path.join(cwd, 'cat')
     if 'cat' in files:
-        if os.path.isdir('cat'):
+        if os.path.isdir(cat_dir):
             logging.info('Found \'cat\' directory.')
-            read_files([os.path.join('cat', x) for x in os.listdir('cat')], categories)
+            read_files([os.path.join(cat_dir, x) for x in os.listdir(cat_dir)], categories)
         else:
-            read_file('cat', categories)
+            read_file(cat_dir, categories)
     else:
         for file in files:
+            file = os.path.join(cwd, file)
             if os.path.splitext(file)[1] == '.cat':
                 read_file(file, categories)
                 logging.info('Found category file: %s.' % file)
@@ -172,7 +174,8 @@ def build(path=None, output=None, table=None, driver=None, server=None, database
 
     rules = []
     for file in files:
-        if os.path.splitext(file)[0] == 'rules':
+        file = os.path.join(cwd, file)
+        if os.path.splitext(os.path.split(file)[1])[0] == 'rules':
             rules += read_rules(file, generator)
             logging.info('Found rule file: %s.' % file)
     logging.info('Found %d rules.' % len(rules))
@@ -196,7 +199,7 @@ def build(path=None, output=None, table=None, driver=None, server=None, database
         if csv_filename[-4:] != '.csv':
             csv_filename += '.csv'
         logging.info('Outputting rows to CSV: %s.' % csv_filename)
-        add_rows_to_csv(rows, csv_filename)
+        add_rows_to_csv(rows, os.path.join(cwd, csv_filename))
 
     if table:
         newtable = table
@@ -262,7 +265,7 @@ def main():
     args = parser.parse_args()
 
     loglevel = mylogger.resolve_verbosity(args.verbosity)
-    logging.config.dictConfig(mylogger.setup('builder', loglevel=loglevel))
+    logging.config.dictConfig(mylogger.setup('builder', logdir=args.path, loglevel=loglevel))
 
     if args.create_sample:
         create_sample_directory(args.path)

@@ -59,10 +59,10 @@ def build_rows(rows, generator):
     results = []
     for cui, c_rows, configs in rows:
         for row in c_rows:
-            row_configs, text = get_meta_for_row(cui, configs, row)
+            row_cui, row_configs, text = get_meta_for_row(cui, configs, row)
             # cui, fword, term, textlength, code, regexVariation, wordOrder
             insert = [None] * 8
-            insert[0] = cui
+            insert[0] = row_cui
             insert[2] = ' '.join((''.join(text).strip()).split())  # term
             insert[1] = insert[2].split(' ')[0]  # firstword
             # noinspection PyTypeChecker
@@ -90,13 +90,15 @@ def get_meta_for_row(cui, configs, row):
 
     for el in row:
         if isinstance(el, (list, tuple)):
-            _, content, conf = el
+            row_cui, content, conf = el
             row_configs.add(conf)
             text.append(content)
+            if not cui or cui.startswith('G'):
+                cui = row_cui
         else:
             text.append(el)
 
-    return row_configs, text
+    return cui, row_configs, text
 
 
 #  RULES
