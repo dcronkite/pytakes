@@ -204,9 +204,13 @@ Valence
 
     **ALWAYS USE 1** or just ignore; NOT YET CORRECTLY IMPLEMENTED IN LCTAKES
     
-These are designated by the double percent ('%%') and follow the rule. For example:
+These are designated by the double percent ('%%') and follow the rule. 
 
-    [smart_person] is smart%%1,2   # minimal regex variation; requires precise word ordersmart 
+    [category]%%REGEX_VARIATION,WORD_ORDER,VALENCE
+
+For example:
+
+    [smart_person] is smart%%1,2   # minimal regex variation; requires precise word order 
     [smart_person]%%,2        # same as above: the first parameter is left blank, and the default is used
     [smart_person] not dumb           # default for both parameters are used
     [not_so_smart] not smart%%2    # default second parameter
@@ -279,4 +283,4 @@ Example:
 
 **Conflict Resolution.**
 
-Regardless of how the conflict occurs, the more conservative of the rule and all relevant definitions will be chosen. NB: This process will never choose values that have been left as default (unless the default is specifically requested). 
+Regardless of how the conflict occurs, the more conservative of the rule and all relevant definitions will be chosen. NB: This process will never choose values that have been left as default (unless the default is specifically requested).
