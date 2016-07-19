@@ -113,6 +113,7 @@ def convert_to_regex(strings_ids_rxvar, convert_all=True,
     regexes = []  # [(regex, id), ...]
     updated_ids = {}  # new_id -> old_id
     for string, id_, regex_variation in strings_ids_rxvar:
+        string = string.replace('(', '').replace(')', '')
         if regex_variation == -1:
             regexes.append((re.compile(r'\b{}\b'.format(string), re.I), id_))
             continue
