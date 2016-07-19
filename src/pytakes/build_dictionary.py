@@ -131,7 +131,8 @@ def create_sample_directory(path=None):
     logging.info('Created sample directory structure.')
 
 
-def build(path=None, output=None, table=None, driver=None, server=None, database=None):
+def build(path=None, output=None, table=None, driver=None, server=None, database=None,
+          ignore_categories=None):
     cwd = path
     while not path:
         cwd = input('Parent directory of files: ')
@@ -149,28 +150,32 @@ def build(path=None, output=None, table=None, driver=None, server=None, database
     files = os.listdir(cwd)
 
     categories = {}
-    cat_dir = os.path.join(cwd, 'cat')
-    if 'cat' in files:
-        if os.path.isdir(cat_dir):
-            logging.info('Found \'cat\' directory.')
-            read_files([os.path.join(cat_dir, x) for x in os.listdir(cat_dir)], categories)
-        else:
-            read_file(cat_dir, categories)
+    if ignore_categories:
+        logging.info('Ignoring category files.')
     else:
-        for file in files:
-            file = os.path.join(cwd, file)
-            if os.path.splitext(file)[1] == '.cat':
-                read_file(file, categories)
-                logging.info('Found category file: %s.' % file)
-    logging.info('Found {} categories.'.format(len(categories)))
+        cat_dir = os.path.join(cwd, 'cat')
+        if 'cat' in files:
+            if os.path.isdir(cat_dir):
+                logging.info('Found \'cat\' directory.')
+                read_files([os.path.join(cat_dir, x) for x in os.listdir(cat_dir)], categories)
+            else:
+                read_file(cat_dir, categories)
+        else:
+            for file in files:
+                file = os.path.join(cwd, file)
+                if os.path.splitext(file)[1] == '.cat':
+                    read_file(file, categories)
+                    logging.info('Found category file: %s.' % file)
+        logging.info('Found {} categories.'.format(len(categories)))
 
-    if len(categories) == 0:
-        ans = input('No categories were found, would you like\n' +
-                    'an example created in your current directory? (Y/n) ')
-        if ans.lower() in ['y', 'yes', 'ye']:
-            create_sample_directory()
-        logging.info('Could not find a category file. Terminating.')
-        return
+        if len(categories) == 0:
+            ans = input('No categories were found, would you like\n' +
+                        'an example created in your current directory? (Y/n) ')
+            if ans.lower() in ['y', 'yes', 'ye']:
+                create_sample_directory()
+            logging.error('Could not find a category file. Terminating.')
+            logging.info('If you are not using categories, consider using the "--ignore-categories" flag.')
+            return
 
     rules = []
     for file in files:
@@ -260,6 +265,8 @@ def main():
     parser.add_argument('--server', default=None, help='Server for database connection (if needed).')
     parser.add_argument('--database', default=None, help='Database for database connection (if needed).')
     parser.add_argument('--create-sample', default=None, action='store_true', help='Create sample directory.')
+    parser.add_argument('--ignore-categories', action='store_true', default=False,
+                        help='Do not look for cat files (categories).')
 
     parser.add_argument('-v', '--verbosity', type=int, default=2, help='Verbosity of log output.')
     args = parser.parse_args()
