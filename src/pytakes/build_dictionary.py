@@ -39,12 +39,12 @@ def create_table(db, table_name):
         CREATE TABLE %s
           (
             ID int,
-            CUI varchar(8),
+            CUI varchar(15),
             Fword varchar(80),
             Text varchar(8000),
             Code varchar(45),
             SourceType varchar(45),
-            TUI varchar(4),
+            TUI varchar(6),
             TextLength int,
             RegexVariation int,
             WordOrder int,
