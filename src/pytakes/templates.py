@@ -97,10 +97,10 @@ PP_CONF_FILE = r'''--driver={{ driver }}
 --database={{ database }}
 --input-table={{ destination_table }}_pre
 --output-table={{ destination_table }}
-{% if negation_table and negation_variation %}
+{%- if negation_table and negation_variation %}
 --negation-table={{ negation_table }}
 --negation-variation={{ negation_variation }}
-{% endif %}
+{%- endif %}
 --input-column=captured
 --batch-count={{ batch_count }}
 --tracking-method={{ tracking_method }}
