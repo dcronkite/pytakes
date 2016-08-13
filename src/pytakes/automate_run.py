@@ -165,6 +165,7 @@ def automate_run(dbi, cm_options, concept_miner, document_table,
         meta_labels.remove(primary_key)
 
     send_email = recipients and sender and mail_server_address
+    os.makedirs(output_dir, exist_ok=True)
     if send_email:
         create_email_file(output_dir, filecount, destination_table,
                           recipients, sender, mail_server_address, python, pytakes_path)
@@ -174,7 +175,6 @@ def automate_run(dbi, cm_options, concept_miner, document_table,
 
     postprocess_dir = os.path.join(output_dir, 'post')
 
-    os.makedirs(output_dir, exist_ok=True)
     batch_start = 1
     for batch_label in range(1, filecount + 1):
         batch_end = batch_start + batchesperfile
