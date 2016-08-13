@@ -62,7 +62,7 @@ RUN_CONF_FILE = r'''--driver={{ driver }}
 {{ batch_end }}
 '''
 
-EMAIL_CONF_FILE = r'''{%- for recipient in recipients %}--recipient
+EMAIL_CONF_FILE = r'''{% for recipient in recipients %}--recipient
 {{ recipient }}
 {%- endfor %}
 --server-address={{ mail_server_address }}

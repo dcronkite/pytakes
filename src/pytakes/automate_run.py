@@ -242,7 +242,7 @@ def main():
     parser.add_argument('-v', '--verbosity', type=int, default=2, help='Verbosity of log output.')
 
     # email
-    parser.add_argument('--recipients', required=False, default=None, nargs='+',
+    parser.add_argument('--recipients', required=False, default=[], nargs='+',
                         help='In format of "name,email@address"')
     parser.add_argument('--sender', required=False, default=None,
                         help='In format of "name,email@address"')
@@ -292,6 +292,9 @@ def main():
         ]
     else:
         raise ValueError('Invalid argument for concept miner.')
+
+    # clean recipients (see PYT-15)
+    args.recipients = [x for x in args.recipients if x and '@' in x]
 
     try:
         automate_run(dbi, cm_options, **get_valid_args(automate_run, vars(args)))
