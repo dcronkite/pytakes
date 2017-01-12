@@ -196,9 +196,9 @@ FROM {{ neg_table }}
 PROC_GET_TERMS = r'''SELECT id
     , text
     , cui
-    ,{% if 'valence' in columns %} 1 as {% endif %} valence
-    ,{% if 'regexvariation' in columns %} 3 as {% endif %} regexvariation
-    ,{% if 'WordOrder' in columns %} 1 as {% endif %} wordorder
+    ,{% if 'valence' not in columns %}  {% if valence %} {{ valence }} {% else %} 1 {% endif %}  as {% endif %} valence
+    ,{% if 'regexvariation' not in columns %} {% if regex_variation %} {{ regex_variation }} {% else %} 3 {% endif %} as {% endif %} regexvariation
+    ,{% if 'WordOrder' not in columns %} {% if word_order %} {{ word_order }} {% else %} 1 {% endif %} as {% endif %}  wordorder
 FROM {{ term_table }}
 '''
 
