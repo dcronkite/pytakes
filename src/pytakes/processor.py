@@ -116,13 +116,18 @@ def get_terms(dbi, term_table, valence=None, regex_variation=None, word_order=No
     columns = dbi.get_table_columns(term_table.split('.')[-1])  # if [dbo] or [MASTER\...] prefaced to tablename
     columns = [x[0].lower() for x in columns]
 
-    return dbi.execute_fetchall(Template(templates.PROC_GET_TERMS).render({
-        'columns': columns,
-        'valence': valence,
-        'regex_variation': regex_variation,
-        'word_order': word_order,
-        'term_table': term_table
-    }))
+    try:
+        return dbi.execute_fetchall(Template(templates.PROC_GET_TERMS).render({
+            'columns': columns,
+            'valence': valence,
+            'regex_variation': regex_variation,
+            'word_order': word_order,
+            'term_table': term_table
+        }))
+    except pyodbc.ProgrammingError as pe:
+        logging.exception(pe)
+        logging.error('Ensure that the term table has the variables "id", "text", and "cui".')
+        raise pe
 
 
 def create_table(dbi, destination_table, labels, types):
