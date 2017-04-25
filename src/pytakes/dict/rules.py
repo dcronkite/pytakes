@@ -107,11 +107,9 @@ def read_rules(rulefile, generator):
     with open(rulefile) as f:
         for line in f.readlines():
             line = line.strip()
-            if not line:
-                continue
 
             # remove comments
-            if line[0] == '#':
+            if not line or line[0] == '#':
                 continue
             elif '#' in line:
                 line = line[:line.index('#')].strip()
@@ -153,13 +151,10 @@ def read_file(catfile, categories):
             line = line.strip()
             
             # remove comments
-            if line[0] == '#':
+            if not line or line[0] == '#':
                 continue
             elif '#' in line:
                 line = line[:line.index('#')].strip()
-
-            if not line:
-                continue
 
             m = re.match(r'\[(\w+?)]', line)
             if m:  # found category name
