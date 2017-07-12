@@ -26,7 +26,7 @@ setup(name='pytakes',
                   'pytakes-build-dictionary = pytakes.build_dictionary:main',
               ]
       },
-      install_requires=['regex', 'pyodbc', 'jinja2'],
+      install_requires=['regex', 'pyodbc', 'jinja2', 'sas7bdat'],
       package_dir={'': 'src'},
       packages=setuptools.find_packages('src'),
       package_data={'pytakes.nlp': ['data/*.db']},

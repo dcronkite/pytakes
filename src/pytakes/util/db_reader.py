@@ -115,7 +115,7 @@ class DbInterface(object):
                 FROM INFORMATION_SCHEMA.COLUMNS
                 WHERE table_name = '%s'
             ''' % table_name)
-            return [x[0] for x in cols]
+            return (x[0] for x in cols)
         else:
             raise ValueError('Unsupported database connection.')
 

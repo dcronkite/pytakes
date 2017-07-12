@@ -14,6 +14,7 @@ Edits:
     2013-12-09  - added getNegex and getContext functions; I'm going to need these each
                 time I use negex, so might as well include them
 """
+import logging
 from jinja2 import Template
 
 import regex as re
@@ -33,6 +34,7 @@ def get_context(dbi, neg_table):
             'neg_table': neg_table
         }))
     else:
+        logging.warning('Unable to locate negation table: {}.'.format(neg_table))
         return []
 
 

@@ -26,7 +26,7 @@ from pytakes.nlp import conceptminer2 as miner2
 from pytakes.util.db_reader import DbInterface
 
 
-class Document(object):
+class TextItem(object):
     """ Carries metainformation and text for a document
     """
 
@@ -96,7 +96,7 @@ def get_documents(dbi, document_table, meta_labels, text_labels, where_clause, o
     dbi.execute(sql)
     result_list = []
     for row in dbi:
-        doc = Document(row[:-len(text_labels)], row[-len(text_labels):])
+        doc = TextItem(row[:-len(text_labels)], row[-len(text_labels):])
         result_list.append(doc)
     return result_list
 

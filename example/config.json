@@ -1,0 +1,76 @@
+{
+  "resources": {
+    "dictionary": {
+      "type": "sql",
+      "connection": "sql server",
+      "name": "term_table",
+      "schema": "dbo"
+    },
+    "document": {
+      "type": "sql",
+      "connection": "sql server",
+      "name": "docText1",
+      "schema": "dbo"
+    },
+    "output": {
+      "type": "sql",
+      "connection": "sql server",
+      "name": "outputTable",
+      "schema": "dbo"
+    },
+    "csv_example": {
+      "type": "csv",
+      "name": "test.csv",
+      "path": "D:\\"
+    }
+  },
+
+  "connections": {
+    "sql server": {
+      "driver": "SQL Server",
+      "server": "DAVID-ASUS",
+      "database": "ghri"
+    }
+  },
+
+  "dictionary": [
+    {
+      "resource": "dictionary"
+    }
+  ],
+
+  "document": [
+    {
+      "resource": "document",
+      "meta": ["id", "pat_id", "note_id"],
+      "text": ["note_text"]
+    }
+  ],
+
+  "output": [
+    {
+      "resource": "output"
+    }
+  ],
+
+  "miner": {
+    "stopwords": {
+
+    },
+    "features": {
+
+    },
+    "exclusions": {
+
+    },
+    "numberNormalization": true
+  },
+
+  "settings": {
+    "logging": {
+      "verbosity": 3,
+      "path": "output.log"
+    }
+  }
+
+}
