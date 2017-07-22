@@ -100,6 +100,9 @@ PP_CONF_FILE = r'''--driver={{ driver }}
 {%- if negation_table and negation_variation %}
 --negation-table={{ negation_table }}
 --negation-variation={{ negation_variation }}
+{% elif negation_table %}
+--negation-table={{ negation_table }}
+--negation-variation=-1
 {%- endif %}
 --input-column=captured
 --batch-count={{ batch_count }}
