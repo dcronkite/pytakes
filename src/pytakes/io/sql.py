@@ -92,24 +92,52 @@ class SqlDocument(Document):
 class SqlOutput(Output):
 
     def __init__(self, dbi=None, schema=None, labels=None,
-                 types=None, hostname=None, batch_number=None, **config):
+                 types=None, hostname=None, batch_number=None, force=False, **config):
         super().__init__(**config)
         self.dbi = dbi
         self.labels = labels
         self.types = types
         self.hostname = hostname
         self.batch_number = batch_number
+        self.force = force
         if schema:
             self.fullname = '{}.{}'.format(schema, self.name)
 
     def close(self):
         pass
 
+    def delete_table_rows(self):
+        """Drop all rows from destination table.
+
+        :param dbi:
+        :param destination_table:
+        :return:
+        """
+        sql = "TRUNCATE TABLE {}".format(self.fullname)
+        logging.debug(sql)
+        self.dbi.execute_commit(sql)
+
     def create_output(self):
-        self.dbi.execute_commit(Template(templates.PROC_CREATE_TABLE).render({
-            'destination_table': self.fullname,
-            'labels_types': zip(self.labels, self.types)
-        }))
+        try:
+            self.dbi.execute_commit(Template(templates.PROC_CREATE_TABLE).render({
+                'destination_table': self.fullname,
+                'labels_types': zip(self.labels, self.types)
+            }))
+            logging.info('Table created: %s.' % self.fullname)
+        except pyodbc.ProgrammingError as pe:
+            logging.warning('Table already exists.')
+            logging.error(pe)
+            if self.force:
+                logging.warning('Force deleting rows from table {}.'.format(self.fullname))
+                self.delete_table_rows()
+            else:
+                logging.error('Add option "force" to delete rows from table.')
+                raise pe
+        except Exception as e:
+            logging.exception(e)
+            logging.error('Failed to create table.')
+            raise e
+
 
     def write_row(self, meta, feat, text=None):
         self.dbi.execute_commit(

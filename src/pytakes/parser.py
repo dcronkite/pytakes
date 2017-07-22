@@ -31,7 +31,7 @@ def parse_processor(json_file):
     dicts = _parse(config['dictionary'], res, conn)
     docs = _parse(config['document'], res, conn)
     out = _parse(config['output'], res, conn)
-
+    return dicts, docs, out
 
 if __name__ == '__main__':
     import argparse

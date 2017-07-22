@@ -350,6 +350,7 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
         else:
             raise ValueError('Unrecognized tracking method: "{}".'.format(tracking_method))
 
+
         try:
             create_table(dbi, dest_table, all_labels, all_types)
             logging.info('Table created: %s.' % dest_table)
@@ -379,6 +380,13 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
         logging.info('Finished batch #{} of {}.'.format(curr_batch, batch_length))
 
 
+def main_json():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-j', '--json-config',
+                        help='Json file containing configuration information.')
+    args = parser.parse_args()
+
+
 def main():
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
     parser.add_argument('--term-table', help='cTAKES Dictionary Lookup table.')
@@ -387,7 +395,6 @@ def main():
                         help='Amount of variation to allow in negations. Values: 0-3.')
     parser.add_argument('--document-table', help='Table with text field.')
     parser.add_argument('--meta-labels', nargs='+', help='Extra identifying labels to include in output.')
-    parser.add_argument('--text-label', help='Name of text column.')  # for backwards compatibility
     parser.add_argument('--text-labels', nargs='+', help='Name of text columns.')
     parser.add_argument('--destination-table', help='Output table. Should not exist.')
     parser.add_argument('--concept-miner', default=2, type=int, help='Version of ConceptMiner to use.')
@@ -430,9 +437,6 @@ def main():
     meta_labels = args.meta_labels
     if args.text_labels:
         text_labels = args.text_labels
-    elif args.text_label:
-        text_labels = [args.text_label]
-        logging.warning('WARNING: Using deprecated option, --text-label; change to --text-labels.')
     else:
         raise ValueError('No text labels provided.')
 
