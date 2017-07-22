@@ -1,4 +1,7 @@
-﻿def remaining_time(complete, total, start_time, end_time, format_='%Y-%m-%d %H:%M:%S,%f'):
+﻿import collections
+
+
+def remaining_time(complete, total, start_time, end_time, format_='%Y-%m-%d %H:%M:%S,%f'):
     """
     Utility function for determining average length of time for each unit.
 
@@ -81,3 +84,12 @@ def _recursive_dict_to_string(d, padding, curr_pad=''):
 def get_valid_args(func, dct):
     argnames = func.__code__.co_varnames[:func.__code__.co_argcount]
     return dict((key, val) for key, val in list(dct.items()) if key in argnames)
+
+
+def flatten(it):
+    for x in it:
+        if (isinstance(x, collections.Iterable) and
+                not isinstance(x, str)):
+            yield from flatten(x)
+        else:
+            yield x

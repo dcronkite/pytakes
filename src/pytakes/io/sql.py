@@ -28,13 +28,8 @@ class SqlDictionary(Dictionary):
         Retrieve terms from table.
         Function checks to see if optional columns are present,
         otherwise uses cTAKES defaults.
-        :param dbi:
-        :param term_table:
-        :param valence:
-        :param regex_variation:
-        :param word_order:
         """
-        logging.info('Getting Terms and Negation.')
+        logging.info('Getting Terms.')
         # if [dbo] or [MASTER\...] prefaced to tablename
         columns = (x.lower() for x in self.dbi.get_table_columns(self.name))
 
@@ -53,6 +48,20 @@ class SqlDictionary(Dictionary):
 
 
 class SqlDocument(Document):
+
+    def get_ids(self):
+        """
+        Retrieve documents from table (for batch mode)
+        """
+        self.dbi.execute(Template(templates.PROC_GET_DOC_IDS).render({
+            'table_id': self.meta[0],
+            'doc_table': self.fullname,
+            'order_by': self.order_by
+        }))
+        return (x[0] for x in self.dbi)  # remove lists
+
+    def __len__(self):
+        pass
 
     def __init__(self, dbi=None, schema=None, where_clause=None,
                  order_by=None, batch_size=None, meta=None,
@@ -104,14 +113,12 @@ class SqlOutput(Output):
             self.fullname = '{}.{}'.format(schema, self.name)
 
     def close(self):
-        pass
+        self.dbi.close()
 
     def delete_table_rows(self):
         """Drop all rows from destination table.
 
-        :param dbi:
-        :param destination_table:
-        :return:
+        :return: None
         """
         sql = "TRUNCATE TABLE {}".format(self.fullname)
         logging.debug(sql)
@@ -137,7 +144,6 @@ class SqlOutput(Output):
             logging.exception(e)
             logging.error('Failed to create table.')
             raise e
-
 
     def write_row(self, meta, feat, text=None):
         self.dbi.execute_commit(

@@ -18,6 +18,12 @@
       "name": "outputTable",
       "schema": "dbo"
     },
+    "negation": {
+      "type": "sql",
+      "connection": "sql server",
+      "name": "negexTable",
+      "schema": "dbo"
+    },
     "csv_example": {
       "type": "csv",
       "name": "test.csv",
@@ -65,7 +71,11 @@
     },
     "numberNormalization": true,
     "maxLengthOfSearch": 2,
-    "maxInterveningTerms": 1
+    "maxInterveningTerms": 1,
+    "negation": {
+      "variation": -1,
+      "resource": "negation"
+    }
   },
 
   "settings": {

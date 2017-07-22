@@ -13,11 +13,15 @@ import math
 import pyodbc
 import sys
 from socket import gethostname
+from typing import List
 
 from jinja2 import Template
 
 from pytakes import templates
+from pytakes.io.base import Document, Dictionary, Output
 from pytakes.nlp.negex import get_context
+from pytakes.parser import parse_processor
+from pytakes.util.utils import flatten
 from .util import mylogger
 from .nlp.ngrams import FeatureMiner
 from .nlp.sentence_boundary import SentenceBoundary
@@ -268,54 +272,29 @@ def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_la
     logging.info('Completed: 100%')
 
 
-def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_labels, concept_miner_v,
-            destination_table, batch_mode, batch_size, batch_number, db_options, mine_options, terms_options,
-            force, tracking_method):
+def prepare(documents: List[Document], dictionaries: List[Dictionary],
+            outputs: List[Output], negation_dicts: List[Dictionary], concept_miner_v,
+            batch_mode, batch_size, batch_number,
+            tracking_method):
     """
-    :param term_table:
-    :param neg_table:
-    :param neg_var:
-    :param document_table:
-    :param meta_labels:
-    :param text_labels:
+    :param documents:
+    :param dictionaries:
+    :param outputs:
+    :param negation_dicts:
     :param concept_miner_v:
-    :param destination_table:
     :param batch_mode:
     :param batch_size:
     :param batch_number:
-    :param db_options:
-    :param mine_options:
-    :param terms_options:
-    :param force:
     :param tracking_method:
 
     """
-    dbi = DbInterface(**db_options)
-
-    all_types = ['varchar(255)'] * len(meta_labels)
-    all_labels = list(meta_labels)
-
     if concept_miner_v in [1, 2]:
-        negation_tuples = get_context(dbi, neg_table)
-        concept_entries = get_terms(dbi, term_table, **terms_options)
-        mc = miner2.MinerCask(concept_entries, negation_tuples, neg_var)
-        all_labels += ['dictid', 'captured', 'context', 'text', 'certainty', 'hypothetical', 'historical',
-                       'otherSubject', '"start"', '"finish"', 'start_idx', 'end_idx']
-        all_types += ['int', 'varchar(255)', 'varchar(255)', 'varchar(max)', 'int',
-                      'int', 'int', 'int', 'int', 'int', 'int', 'int']
-
-        if tracking_method == 'column':
-            all_labels += ['cpu_name', 'version']
-            all_types += ['varchar(50)', 'int']
+        negation_tuples = list(flatten(d.read() for d in negation_dicts))
+        concept_entries = list(flatten(d.read() for d in dictionaries))
+        mc = miner2.MinerCask(concept_entries, negation_tuples)
 
     elif concept_miner_v == 3:
-        all_labels += ['featid', 'feature', 'category']
-        all_types += ['bigint', 'varchar(max)', 'varchar(50)']
-        mc = FeatureMiner(**mine_options)
-
-        if tracking_method == 'column':
-            all_labels += ['cpu_name', 'version']
-            all_types += ['varchar(50)', 'int']
+        mc = FeatureMiner()
 
     else:
         raise ValueError('Invalid version for ConceptMiner: %d.' % concept_miner_v)
@@ -350,23 +329,9 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
         else:
             raise ValueError('Unrecognized tracking method: "{}".'.format(tracking_method))
 
-
-        try:
-            create_table(dbi, dest_table, all_labels, all_types)
+        for out in outputs:
+            out.create_output()
             logging.info('Table created: %s.' % dest_table)
-        except pyodbc.ProgrammingError as pe:
-            logging.warning('Table already exists.')
-            logging.error(pe)
-            if force:
-                logging.warning('Force deleting rows from table {}.'.format(dest_table))
-                delete_table_rows(dbi, dest_table)
-            else:
-                logging.error('Add option "force" to delete rows from table.')
-                sys.exit(1)
-        except Exception as e:
-            logging.exception(e)
-            logging.error('Failed to create table.')
-            raise e
 
         logging.info('Started batch #{} (ending at {}).'.format(curr_batch, batch_number[-1] if batch_number else 1))
 
@@ -374,9 +339,8 @@ def prepare(term_table, neg_table, neg_var, document_table, meta_labels, text_la
             where_clause = '{} > {}'.format(batch_mode, batch)
         else:
             where_clause = None
-        process(dbi, mc, SentenceBoundary(dbi), dest_table, document_table, meta_labels, text_labels,
-                concept_miner_v, all_labels, where_clause, order_by, batch_size, mine_options,
-                tracking_method, batch_number)
+        process(mc, SentenceBoundary(), dest_table,
+                concept_miner_v, batch_size, tracking_method, batch_number)
         logging.info('Finished batch #{} of {}.'.format(curr_batch, batch_length))
 
 
@@ -385,6 +349,7 @@ def main_json():
     parser.add_argument('-j', '--json-config',
                         help='Json file containing configuration information.')
     args = parser.parse_args()
+    parse_processor(args.json_config)
 
 
 def main():

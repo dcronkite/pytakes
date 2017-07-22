@@ -34,7 +34,6 @@ def get_data_item(res, datatype, conn):
 
 
 class Dictionary(metaclass=abc.ABCMeta):
-
     def __init__(self, name=None, **kwargs):
         self.name = name
 
@@ -44,9 +43,16 @@ class Dictionary(metaclass=abc.ABCMeta):
 
 
 class Document(metaclass=abc.ABCMeta):
-
     def __init__(self, name=None, **config):
         self.name = name
+
+    @abc.abstractmethod
+    def __len__(self):
+        pass
+
+    @abc.abstractmethod
+    def get_ids(self):
+        pass
 
     @abc.abstractmethod
     def read_next(self):
@@ -54,6 +60,13 @@ class Document(metaclass=abc.ABCMeta):
 
 
 class Output(metaclass=abc.ABCMeta):
+    # columns
+    all_labels = ['dictid', 'captured', 'context', 'text', 'certainty', 'hypothetical', 'historical',
+                  'otherSubject', '"start"', '"finish"', 'start_idx', 'end_idx', 'cpu_name', 'version']
+    all_types = ['int', 'varchar(255)', 'varchar(255)', 'varchar(max)', 'int',
+                 'int', 'int', 'int', 'int', 'int', 'int', 'int', 'varchar(50)', 'int']
+    all_labels = ['featid', 'feature', 'category', 'cpu_name', 'version']
+    all_types = ['bigint', 'varchar(max)', 'varchar(50)', 'varchar(50)', 'int']
 
     def __init__(self, name=None, **config):
         self.name = name
