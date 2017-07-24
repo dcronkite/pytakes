@@ -65,7 +65,7 @@ class SqlDocument(Document):
 
     def __init__(self, dbi=None, schema=None, where_clause=None,
                  order_by=None, batch_size=None, meta=None,
-                 text=None, **config):
+                 text=None, batch_mode=None, **config):
         super().__init__(**config)
         self.text = text
         self.meta = meta
@@ -74,16 +74,11 @@ class SqlDocument(Document):
             self.fullname = '{}.{}'.format(schema, self.name)
         self.order_by = order_by
         self.batch_size = batch_size
-        self.where_clause = where_clause
+        self.where_clause = '{} > {}'.format(self.meta[0], batch_mode)
 
     def read_next(self):
         """
         Retrieve documents from table
-        :param meta_labels:
-        :param text_labels:
-        :param where_clause:
-        :param order_by:
-        :param batch_size:
         """
         sql = Template(templates.PROC_GET_DOCS).render({
             'where_clause': self.where_clause,
@@ -109,8 +104,11 @@ class SqlOutput(Output):
         self.hostname = hostname
         self.batch_number = batch_number
         self.force = force
+        self.fullname = self.name
         if schema:
-            self.fullname = '{}.{}'.format(schema, self.name)
+            self.fullname = '{}.{}'.format(schema, self.fullname)
+        if batch_number:
+            self.fullname = '{}_{}'.format(self.fullname, batch_number)
 
     def close(self):
         self.dbi.close()
@@ -145,7 +143,7 @@ class SqlOutput(Output):
             logging.error('Failed to create table.')
             raise e
 
-    def write_row(self, meta, feat, text=None):
+    def writerow(self, meta, feat, text=None):
         self.dbi.execute_commit(
             Template(templates.PROC_INSERT_INTO2_QUERY).render(
                 labels=self.labels, metas=meta,

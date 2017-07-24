@@ -9,7 +9,6 @@ Edit:
 import argparse
 import logging
 import logging.config
-import math
 import pyodbc
 import sys
 from socket import gethostname
@@ -19,7 +18,6 @@ from jinja2 import Template
 
 from pytakes import templates
 from pytakes.io.base import Document, Dictionary, Output
-from pytakes.nlp.negex import get_context
 from pytakes.parser import parse_processor
 from pytakes.util.utils import flatten
 from .util import mylogger
@@ -27,7 +25,6 @@ from .nlp.ngrams import FeatureMiner
 from .nlp.sentence_boundary import SentenceBoundary
 
 from pytakes.nlp import conceptminer2 as miner2
-from pytakes.util.db_reader import DbInterface
 
 
 class TextItem(object):
@@ -209,66 +206,32 @@ def get_index(length, value):
     return min(value, length)
 
 
-def process(dbi, mc, sb, destination_table, document_table, meta_labels, text_labels, concept_miner_v, all_labels,
-            where_clause, order_by, batch_size, mine_options, tracking_method, batch_number):
+def process(documents: List[Document], outputs: List[Output], mc, sb):
     """
-    :param tracking_method:
-    :param batch_number:
-    :param dbi:
+    :param outputs:
+    :param documents:
     :param mc:
     :param sb:
-    :param destination_table:
-    :param document_table:
-    :param meta_labels:
-    :param text_labels:
-    :param concept_miner_v:
-    :param all_labels:
-    :param where_clause:
-    :param order_by:
-    :param batch_size:
-    :param mine_options:
 
     """
     logging.info('Retrieving notes.')
-    documents = get_documents(dbi, document_table, meta_labels, text_labels, where_clause, order_by, batch_size)
-    length = len(documents)
-    logging.info('Retrieved {} notes.'.format(length))
+    documents = (doc.read() for doc in documents)
 
-    pct = 5
-    if tracking_method == 'column':
-        hostname = gethostname()
-    else:
-        hostname = ''
+    for document in documents:
+        for num, doc in enumerate(document.read_next()):
+            if num % 100 == 0:
+                logging.info('Completed: {:>5}.'.format(num))
 
-    for num, doc in enumerate(documents):
-        if 100 * (float(num) / length) > pct:
-            logging.info('Completed: {:>3}%.'.format(pct))
-            pct += 5
+            sentences = []
+            for section in sb.ssplit(doc.get_text()):
+                sentences += section.split('\n')
 
-        # adding sentence splitting (2013-11-08)
-        sentences = []
-        for section in sb.ssplit(doc.get_text()):
-            sentences += section.split('\n')
-
-        if concept_miner_v == 1 or concept_miner_v == 2:
-            sections = mc.mine(sentences, **mine_options)
-        elif concept_miner_v == 3:
-            sections = mc.mine(sentences)  # mine_options passed to ctor
-        else:
-            raise ValueError('Concept Miner v{} is not defined.'.format(concept_miner_v))
-
-        for sect_num, sect in enumerate(sections):
-            if not sect:
-                continue
-            for feat in sect:
-                if concept_miner_v == 2:
-                    insert_into2(dbi, destination_table, feat, mc.prepare(sentences[sect_num]), all_labels,
-                                 doc.get_metalist(), hostname, batch_number)
-                elif concept_miner_v == 3:
-                    insert_into3(dbi, destination_table, feat, all_labels, doc.get_metalist(),
-                                 hostname, batch_number)
-                else:
-                    raise ValueError('Concept Miner v{} is not defined.'.format(concept_miner_v))
+            for sect_num, sect in enumerate(mc.mine(sentences)):
+                if not sect:
+                    continue
+                for feat in sect:
+                    for out in outputs:
+                        out.writerow(doc.get_metalist(), feat, text=doc.get_text())
     logging.info('Completed: 100%')
 
 
@@ -299,49 +262,10 @@ def prepare(documents: List[Document], dictionaries: List[Dictionary],
     else:
         raise ValueError('Invalid version for ConceptMiner: %d.' % concept_miner_v)
 
-    # if batch mode, select all ids, and split into batches
-    logging.info('Preparing batches.')
-    if batch_mode:
-        order_by = batch_mode
-        doc_ids = get_document_ids(dbi, document_table, batch_mode, order_by)
-        if not doc_ids:
-            logging.error('No documents found.')
-            return
-        # get minimum value of each batch size
-        batches = [doc_ids[x * batch_size]
-                   for x in range(int(math.ceil(float(len(doc_ids)) / batch_size)))]
+    for out in outputs:
+        out.create_output()
 
-    else:
-        batches = [None]
-        order_by = None
-
-    batch_length = len(batches)
-    logging.info('Prepared {} batch{}.'.format(batch_length, 'es' if batch_length > 1 else ''))
-    for curr_batch, batch in enumerate(batches, 1):
-        if batch_mode and batch_number and curr_batch not in batch_number:
-            continue
-
-        # create table
-        if tracking_method == 'name':
-            dest_table = '{}_{}'.format(destination_table, curr_batch)
-        elif tracking_method == 'column':
-            dest_table = destination_table
-        else:
-            raise ValueError('Unrecognized tracking method: "{}".'.format(tracking_method))
-
-        for out in outputs:
-            out.create_output()
-            logging.info('Table created: %s.' % dest_table)
-
-        logging.info('Started batch #{} (ending at {}).'.format(curr_batch, batch_number[-1] if batch_number else 1))
-
-        if batch_mode:
-            where_clause = '{} > {}'.format(batch_mode, batch)
-        else:
-            where_clause = None
-        process(mc, SentenceBoundary(), dest_table,
-                concept_miner_v, batch_size, tracking_method, batch_number)
-        logging.info('Finished batch #{} of {}.'.format(curr_batch, batch_length))
+    process(documents, outputs, mc, SentenceBoundary())
 
 
 def main_json():

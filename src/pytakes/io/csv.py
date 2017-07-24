@@ -92,7 +92,7 @@ class CsvOutput(Output):
         self.fh = csv.writer(open(self.fp, 'w'))
         self.fh.writerow(self.labels)  # header
 
-    def write_row(self, meta, feat, text=None):
+    def writerow(self, meta, feat, text=None):
         if text:
             length = len(text)
             self.fh.writerow(meta +

@@ -76,7 +76,7 @@ class Output(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def write_row(self, meta, feat, text=None):
+    def writerow(self, meta, feat, text=None):
         pass
 
     @abc.abstractmethod
