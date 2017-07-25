@@ -59,7 +59,8 @@
     }
   ],
 
-  "miner": {
+  "miner": [{
+    "type": "keyword",
     "stopwords": {
 
     },
@@ -76,7 +77,7 @@
       "variation": -1,
       "resource": "negation"
     }
-  },
+  }],
 
   "settings": {
     "logging": {
