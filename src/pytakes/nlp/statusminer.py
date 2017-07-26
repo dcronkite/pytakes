@@ -14,75 +14,16 @@ Edits:
     2013-12-09  - added getNegex and getContext functions; I'm going to need these each
                 time I use negex, so might as well include them
 """
-import logging
-from jinja2 import Template
-
 import regex as re
 
-from pytakes import templates
+from pytakes.nlp.miner import Miner
 from .terms import *
 
 
-def get_context(dbi, neg_table):
-    """
-    Retrieve negation triggers from table.
-    :param dbi:
-    :param neg_table:
-    """
-    if neg_table:
-        return dbi.execute_fetchall(Template(templates.PROC_GET_CONTEXT).render({
-            'neg_table': neg_table
-        }))
-    else:
-        logging.warning('Unable to locate negation table: {}.'.format(neg_table))
-        return []
-
-
-def sort_rules_for_status(rulelist, exclusions=None):
-    """
-    Return sorted list of rules: (negex, type, direction, pattern)
-
-    Input: list of tuples (negex, type, direction)
-
-    Sorts list of rules descending based on length of rule,
-    and converts the pattern into a regular expression.
-
-    For use with myStatusTagger
-    :param rulelist:
-    :param exclusions:
-    """
-    rulelist.sort(key=lambda x: len(x[0]), reverse=True)
-    sortedlist = []
-    for negex, type_, direction in rulelist:
-        if exclusions and negex in exclusions:
-            continue
-        sortedlist.append((negex, type_, direction))
-    return sortedlist
-
-
-def sort_rules_from_tuple(rulelist, exclusions=None):
-    """Return sorted list of rules.
-
-    Input: list of tuples (negex, type).
-
-    Sorts list of rules descending based on length of the rule,
-    splits each rule into components, converts pattern to regular expression,
-    and appends it to the end of the rule.
-    :param rulelist:
-    :param exclusions: """
-    rulelist.sort(key=lambda x: len(x[0]), reverse=True)
-    sortedlist = []
-    for negex, _type in rulelist:
-        if exclusions and negex in exclusions:
-            continue
-        sortedlist.append((negex, '', _type))
-    return sortedlist
-
-
 # noinspection PyShadowingNames
-class MyStatusTagger(object):
+class StatusMiner(Miner):
     """
-    Customizations of Peter Kang & Wendy Chapman's negex.py algorithm.
+    Customizations of Peter Kang & Wendy Chapman's statusminer.py algorithm.
 
     Output Terms with negation/possibility flags inherent in the term
     rather than words.
@@ -124,6 +65,7 @@ class MyStatusTagger(object):
             maxscope - maximum distance allowed for negation/etc.
                 DEFAULt is 100 (i.e., unlimited)
         """
+        super().__init__()
         self.__rules = []
         self.maxscope_ = maxscope
 
@@ -154,12 +96,37 @@ class MyStatusTagger(object):
             return ''
 
         # add rules, but permit errors based on length
-        for negex, _type, direction in rules:
+        for negex, _type, direction in self.sort_rules_for_status(rules):
             negex_pat = '\b({})\b{}'.format(r'\W+'.join(negex.split()),
                                             get_negation_string(negex_level[rx_var], len(negex)))
             self.__rules.append((negex, re.compile(negex_pat), _type[1:5], direction))
 
-    def find_negation(self, text, offset=0):
+    @staticmethod
+    def sort_rules_for_status(rulelist, exclusions=None):
+        """
+        Return sorted list of rules: (negex, type, direction, pattern)
+
+        Input: list of tuples (negex, type, direction)
+
+        Sorts list of rules descending based on length of rule,
+        and converts the pattern into a regular expression.
+
+        For use with myStatusTagger
+        :param rulelist:
+        :param exclusions:
+        """
+        rulelist.sort(key=lambda x: len(x[0]), reverse=True)
+        sortedlist = []
+        for negex, type_, direction in rulelist:
+            if exclusions and negex in exclusions:
+                continue
+            sortedlist.append((negex, type_, direction))
+        return sortedlist
+
+    def extract(self, terms):
+        return terms
+
+    def mine(self, text, offset):
         """
         Find negations in a piece of text. If called sentence by
         sentence, set 'offset' to the len() of all previous
@@ -186,16 +153,10 @@ class MyStatusTagger(object):
                     negations.append(n)
         return negations
 
-    def analyze_sentences(self, sentences):
-        new_sentences = []
-        for sentence in sentences:
-            new_sentences += self.analyze_sentence(sentence)
-        return new_sentences
-
     # noinspection PyPep8Naming
-    def analyze_sentence(self, sentence):
+    def postprocess(self, terms):
         """
-        :param sentence:
+        :param terms:
 
         """
         # indices
@@ -292,13 +253,16 @@ class MyStatusTagger(object):
             # end inner function
 
         # check all FORWARD (direction=2 or 3)
-        sentence = analyze_direction(sentence, [2, 3])
+        sentence = analyze_direction(terms, [2, 3])
 
         # reverse and check all BACKWARD/BIDIRECTIONAL (1 or 3)      
         sentence.reverse()  # reverse sentence
-        sentence = analyze_direction(sentence, [1, 3])
+        sentence = analyze_direction(terms, [1, 3])
 
         # put sentence back in correct order
         sentence.reverse()  # sentence correctly ordered
 
         return sentence
+
+    def clean(self, text):
+        return text

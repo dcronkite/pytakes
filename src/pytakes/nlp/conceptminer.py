@@ -18,16 +18,23 @@ Edits:
 """
 import copy
 import numbers
+from typing import List
 
+from pytakes.io.base import Dictionary
 from pytakes.nlp import convert
-from pytakes.nlp.terms import Term, Concept, clean_terms, add_words, find_terms
-from .negex import MyStatusTagger, sort_rules_for_status
+from pytakes.nlp.miner import Miner
+from pytakes.nlp.terms import Term, Concept
+from pytakes.util.utils import flatten
 
 
-class ConceptMiner(object):
-    def __init__(self, id_term_cat_val_rxvar_wdorder):
+class ConceptMiner(Miner):
+
+    def __init__(self, dictionaries: List[Dictionary]):
+        super().__init__()
+        self.entries = list(flatten(d.read() for d in dictionaries))
         self.cid_to_cat = {}  # ConceptID -> category
         self.cid_to_tids = {}  # ConceptID to TermIDs
+        self.cid_search_param = {}
         self.wordID = 0
         self.tid_to_tid = {}  # list of conversions of
         # new TermIDs to old TermIDs
@@ -41,9 +48,9 @@ class ConceptMiner(object):
         self.cid_word_order = {}  # word order constraints
         self.wordlist = []
 
-        self._unpack_concepts(id_term_cat_val_rxvar_wdorder)
+        self._unpack_concepts()
 
-    def _unpack_concepts(self, id_term_cat_val_rxvar_wdorder):
+    def _unpack_concepts(self):
         """
         Organizes input from database
         Parameters:
@@ -62,12 +69,12 @@ class ConceptMiner(object):
                             2: moderate variation
                             3: flexible
         """
-        self.wordlist = []
-        for cid, term, cat, val, rxVar, wdOrder in id_term_cat_val_rxvar_wdorder:
+        for cid, term, cat, val, rxVar, wdOrder, max_intervening, max_search in self.entries:
             # update references of ConceptID (think "CUI")
             self.cid_to_cat[cid] = cat
             self.cid_to_val[cid] = val
             self.cid_word_order[cid] = wdOrder
+            self.cid_search_param[cid] = (max_intervening, max_search)
             if wdOrder == 0:  # free word order
                 self.cid_to_tids[cid] = set()
             elif wdOrder > 0:  # restricted word order
@@ -82,10 +89,7 @@ class ConceptMiner(object):
                     self.cid_to_tids[cid].append(self.wordID)
                 self.wordID += 1
 
-    def get_wordlist(self, id_term_cat_val_rxvar_wdorder=None):
-        if id_term_cat_val_rxvar_wdorder:
-            self._unpack_concepts(id_term_cat_val_rxvar_wdorder)
-        return self.wordlist
+        self.wordlist = convert.convert_to_regex(self.wordlist)
 
     def add_conversion(self, newtid_to_oldtids):
         """
@@ -133,13 +137,13 @@ class ConceptMiner(object):
 
     def _check_valence(self, cid, judgment):
         """
-        Checks the value of the term's valence. 
+        Checks the value of the term's valence.
         If valence==0, then the term must be negated in order to be positive.
             -e.g., 'hyperplasia without atypia' since 'without' will make
                     the entire phrase negative
         If valence==1, then the term is treated normally
             -e.g., 'hyperplasia with atypia'
-            
+
         Return:
             True - should be negated
             False - should not be negated
@@ -184,33 +188,32 @@ class ConceptMiner(object):
             else:
                 return None
 
-    def aggregate(self, words, max_length_of_search=2, max_intervening_terms=1):
+    def extract(self, terms):
         """
         Aggregate terms (in the word list) into concepts according.
 
-        @param words: list of word-derived objects including negation, words, and terms
+        @param terms: list of word-derived objects including negation, words, and terms
             only Terms will be considered in determining concepts
-        @param max_length_of_search: maximum number of words to look at; increments
-        @param max_intervening_terms: maximum allowed number of intervening words
-            between words in concept
         @return: all found concepts
 
         """
         concepts = []
-        words.sort()
-        for i in range(len(words)):
-            cword = words[i]
+        terms.sort()
+        for i in range(len(terms)):
+            cword = terms[i]
             if isinstance(cword, Term):
                 c_all_tids = set(self.get_original_term_id(cword.id()))
                 for cid in self.cid_to_tids:  # look through concepts
+                    max_intervening, max_search = self.cid_search_param[cid]
                     remain_set = self._get_remaining(c_all_tids, self.cid_to_tids[cid], self.cid_word_order[cid],
                                                      first_word=True)
 
-                    if remain_set is None: continue  # return type of None was not a match
+                    if remain_set is None:
+                        continue  # return type of None was not a match
 
                     # check if concept was completed
                     if remain_set:  # concept has additional terms (> 1 word)
-                        concept = self._aggregate(words[i:],
+                        concept = self._aggregate(terms[i:],
                                                   remain_set,
                                                   cword.get_certainty(),
                                                   cword.is_hypothetical(),
@@ -218,8 +221,8 @@ class ConceptMiner(object):
                                                   cword.is_not_patient(),
                                                   cword.begin(),
                                                   cid,
-                                                  max_length_of_search,
-                                                  max_intervening_terms,
+                                                  max_search,
+                                                  max_intervening,
                                                   self.cid_word_order[cid])  # word order (added 2013-11-19)
                     else:  # one-term concept (remain_set is empty list/set)
                         concept = Concept(cword.word(),
@@ -293,68 +296,49 @@ class ConceptMiner(object):
                 break
         return False
 
+    def postprocess(self, terms):
+        return terms  # no postprocessing
 
-class MinerCask(object):
-    def __init__(self, id_term_cat_val_rxvar_wdorder, negation_tuples, rxvar=0, max_intervening_terms=2):
+    def mine(self, text, offset):
         """
-
-        Parameters
-        ------------
-        id_term_cat_val_rxVar_wdOrder - list of (id, term, category, valence, rxVar, wdOrder)
-        :rtype : MinerCask
-            id: unique id for each term
-            term: space-separated words (phrase) to be found
-            category: can be None; optional category
-            valence: 1 (positive mention), 0 (negative mention)
-        negation_tuples - negations as list of (negation_word, type)
-            where type is 4 letter code from NegEx
+        Paramters:
+            terms - list of (term,id) where unique id for each term
+            :param terms:
+            :param text:
+            :param offset:
         """
-        # prepare concept miner
-        self.miner = ConceptMiner(id_term_cat_val_rxvar_wdorder)
-        self.rx_id, newTids_to_origTids = convert.convert_to_regex(self.miner.get_wordlist())
-        self.miner.add_conversion(newTids_to_origTids)
-        self.table = str.maketrans("", "")
+        results = []
+        for term, id_ in self.wordlist:
+            for m in term.finditer(text):
+                results.append(Term(term, m.start(), m.end(), 'term', id_, offset=offset))
+        return sorted(results)
 
-        # prepare negation tagger
-        self.tagger = MyStatusTagger(sort_rules_for_status(negation_tuples))
-        if max_intervening_terms:
-            self.max_intervening_terms = max_intervening_terms
-        else:
-            self.max_intervening_terms = 2
+    def clean(self, terms):
+        """
+        remove terms that are subsumed by other terms
+        :param terms:
+        """
+        terms.sort(reverse=False)
+        if len(terms) < 2:
+            return terms
+        i = 1
+        curr = 0
+        while True:
+            if terms[curr] == terms[i]:
+                if len(terms[curr]) > len(terms[i]):
+                    del terms[i]
+                elif len(terms[curr]) < len(terms[i]):
+                    del terms[curr]
+                    curr = i - 1
+                elif terms[curr].begin() == terms[i].begin() and terms[curr].end() == terms[i].end():
+                    terms[curr].add_term(terms[i])
+                    del terms[i]
+                else:  # keep both representations
+                    curr = i
+                    i += 1
+            else:
+                curr = i
+                i += 1
 
-    def mine(self, sentences, max_length_of_search=3, max_intervening_terms=None):
-        if max_intervening_terms is None:
-            max_intervening_terms = self.max_intervening_terms
-        if isinstance(sentences, str):
-            sentences = [sentences]
-        resultconcepts = []
-        offset = 0  # length of all previous sentences (for Concept location)
-        for orig_sentence in sentences:
-            sentence = self.prepare(orig_sentence)
-            termlist = clean_terms(find_terms(self.rx_id, sentence, offset=offset))
-            termlist += self.tagger.find_negation(sentence)
-            termlist += add_words(termlist, sentence)
-            termlist.sort()
-            sentence = self.tagger.analyze_sentence(termlist)
-            resultconcepts.append(self.miner.aggregate(sentence, max_length_of_search=max_length_of_search,
-                                                       max_intervening_terms=max_intervening_terms))
-            # change orig_sentence to sentence to get an offset
-            # that is true after the "prepare" statement below
-            offset += len(orig_sentence)
-        return resultconcepts
-
-    def prepare(self, sentence):
-        return sentence
-
-
-def assert_words(lst):
-    types = {}
-    for el in lst:
-        t = type(el),
-        if t in types:
-            types[t] += 1
-        else:
-            types[t] = 1
-    for t in types:
-        print(t, ':', types[t])
-    print('-' * 20)
+            if i >= len(terms):
+                return terms

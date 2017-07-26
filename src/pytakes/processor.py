@@ -18,13 +18,16 @@ from jinja2 import Template
 
 from pytakes import templates
 from pytakes.io.base import Document, Dictionary, Output
+from pytakes.nlp.collections import MinerCollection
+from pytakes.nlp.conceptminer import ConceptMiner
+from pytakes.nlp.statusminer import StatusMiner
 from pytakes.parser import parse_processor
 from pytakes.util.utils import flatten
 from .util import mylogger
 from .nlp.ngrams import FeatureMiner
 from .nlp.sentence_boundary import SentenceBoundary
 
-from pytakes.nlp import conceptminer2 as miner2
+from pytakes.nlp import conceptminer as miner2
 
 
 class TextItem(object):
@@ -59,35 +62,6 @@ class TextItem(object):
         return text
 
 
-def process(documents: List[Document], outputs: List[Output], mc, sb):
-    """
-    :param outputs:
-    :param documents:
-    :param mc:
-    :param sb:
-
-    """
-    logging.info('Retrieving notes.')
-    documents = (doc.read() for doc in documents)
-
-    for document in documents:
-        for num, doc in enumerate(document.read_next()):
-            if num % 100 == 0:
-                logging.info('Completed: {:>5}.'.format(num))
-
-            sentences = []
-            for section in sb.ssplit(doc.get_text()):
-                sentences += section.split('\n')
-
-            for sect_num, sect in enumerate(mc.mine(sentences)):
-                if not sect:
-                    continue
-                for feat in sect:
-                    for out in outputs:
-                        out.writerow(doc.get_metalist(), feat, text=doc.get_text())
-    logging.info('Completed: 100%')
-
-
 def prepare(documents: List[Document], dictionaries: List[Dictionary],
             outputs: List[Output], negation_dicts: List[Dictionary]):
     """
@@ -95,28 +69,25 @@ def prepare(documents: List[Document], dictionaries: List[Dictionary],
     :param dictionaries:
     :param outputs:
     :param negation_dicts:
-    :param concept_miner_v:
-    :param batch_mode:
-    :param batch_size:
-    :param batch_number:
-    :param tracking_method:
-
     """
-    if concept_miner_v in [1, 2]:
-        negation_tuples = list(flatten(d.read() for d in negation_dicts))
-        concept_entries = list(flatten(d.read() for d in dictionaries))
-        mc = miner2.MinerCask(concept_entries, negation_tuples)
-
-    elif concept_miner_v == 3:
-        mc = FeatureMiner()
-
-    else:
-        raise ValueError('Invalid version for ConceptMiner: %d.' % concept_miner_v)
+    mc = MinerCollection(ssplit=SentenceBoundary().ssplit)
+    mc.add(ConceptMiner(dictionaries))
+    mc.add(StatusMiner(negation_dicts))
 
     for out in outputs:
         out.create_output()
 
-    process(documents, outputs, mc, SentenceBoundary())
+    logging.info('Retrieving notes.')
+    for document in documents:
+        for num, doc in enumerate(document.read_next()):
+            if num % 100 == 0:
+                logging.info('Completed: {:>5}.'.format(num))
+
+            for sent_no, (sentence, cleaned_text) in enumerate(mc.parse(doc)):
+                for feat, new in sentence:
+                    for out in outputs:
+                        out.writerow(doc.get_metalist(), feat, text=doc.get_text())
+    logging.info('Completed: 100%')
 
 
 def main():

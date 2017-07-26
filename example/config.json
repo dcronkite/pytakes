@@ -41,7 +41,16 @@
 
   "dictionary": [
     {
-      "resource": "dictionary"
+      "resource": "dictionary",
+      "id": "id",
+      "pattern": "text"
+    },
+    {
+      "resource": "negation",
+      "id": "id",
+      "pattern": "text",
+      "type": "type",
+      "direction": "direction"
     }
   ],
 
@@ -73,10 +82,7 @@
     "numberNormalization": true,
     "maxLengthOfSearch": 2,
     "maxInterveningTerms": 1,
-    "negation": {
-      "variation": -1,
-      "resource": "negation"
-    }
+    "sentenceSplit": "boundary"
   }],
 
   "settings": {
