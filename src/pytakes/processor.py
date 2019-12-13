@@ -81,7 +81,7 @@ def prepare(documents: List[Document], dictionaries: List[Dictionary],
     for document in documents:
         for num, doc in enumerate(document.read_next()):
             if num % 100 == 0:
-                logging.info('Completed: {:>5}.'.format(num))
+                logging.info(f'Completed: {num:>5}.')
 
             for sent_no, (sentence, cleaned_text) in enumerate(mc.parse(doc)):
                 for feat, new in sentence:

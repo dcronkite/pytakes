@@ -17,7 +17,7 @@ from pytakes import templates, header
 from .util import mylogger
 from .util.utils import get_valid_args
 
-from .nlp.statusminer import MyStatusTagger, sort_rules_for_status, get_context
+from .nlp.statusminer import MyStatusTagger, sort_rules_for_status, get_context, StatusMiner
 from .util.db_reader import DbInterface
 
 
