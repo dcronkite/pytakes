@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from pytakes.io.csv import CsvDictionary, CsvOutput
 from pytakes.dict.textitem import TextItem
@@ -18,11 +19,13 @@ def process(file, mc: MinerCollection):
         yield res, sent
 
 
-def run(input_dir, output_dir, *keyword_files):
+def run(input_dir, output_dir, *keyword_files, outfile=None):
     mc = MinerCollection(ssplit=SentenceBoundary().ssplit)
     mc.add(ConceptMiner([CsvDictionary(file) for file in keyword_files]))
     mc.add(StatusMiner())
-    out = CsvOutput('concepts.csv', output_dir, metalabels=['file'])
+    if not outfile:
+        outfile = 'extracted_concepts_{}.csv'.format(datetime.now().strftime('%Y%m%d%_H%M%S'))
+    out = CsvOutput(outfile, output_dir, metalabels=['file'])
     for root, dirs, files in os.walk(input_dir):
         for file in files:
             for results, sent in process(os.path.join(input_dir, file), mc):
@@ -34,8 +37,9 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
-    parser.add_argument('-i', '--input-dir', dest='input_dir')
-    parser.add_argument('-o', '--output-dir', dest='output_dir')
-    parser.add_argument('-k', '--keyword-files', nargs='+', dest='keyword_files')
+    parser.add_argument('-i', '--input-dir', dest='input_dir', required=True)
+    parser.add_argument('-o', '--output-dir', dest='output_dir', required=True)
+    parser.add_argument('-k', '--keyword-files', nargs='+', dest='keyword_files', required=True)
+    parser.add_argument('--outfile', dest='outfile', default=None)
     args = parser.parse_args()
-    run(args.input_dir, args.output_dir, args.keyword_files)
+    run(args.input_dir, args.output_dir, args.keyword_files, outfile=args.outfile)

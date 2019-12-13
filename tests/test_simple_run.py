@@ -8,5 +8,9 @@ def test_complete():
     indir = os.path.join(path, r'data\files')
     outdir = os.path.join(path, r'data\testout')
     concepts = os.path.join(path, r'data\concepts.csv')
-    os.makedirs(outdir, exist_ok=True)
-    run(indir, outdir, concepts)
+    run(indir, outdir, concepts, outfile='concepts.csv')
+    with open(os.path.join(outdir, 'concepts.csv')) as fh:
+        actual = fh.read()
+    with open(os.path.join(outdir, 'expected.csv')) as fh:
+        expected = fh.read()
+    assert actual == expected
