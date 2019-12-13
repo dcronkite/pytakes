@@ -34,8 +34,8 @@ class TextItem(object):
     """ Carries metainformation and text for a document
     """
 
-    def __init__(self, meta_list, text):
-        self.meta_ = meta_list
+    def __init__(self, text, meta_list=None):
+        self.meta_ = tuple(meta_list) or ()
         if isinstance(text, str):
             text = [text]
         else:
