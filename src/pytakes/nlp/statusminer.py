@@ -88,7 +88,7 @@ class StatusMiner(Miner):
                 DEFAULt is 100 (i.e., unlimited)
         """
         super().__init__()
-        self.__rules = []
+        self._rules = []
         self._maxscope = maxscope
         if rules is None:
             rules = self.load_negex_from_db(tablename)
@@ -112,9 +112,9 @@ class StatusMiner(Miner):
 
         # add rules, but permit errors based on length
         for negex, _type, direction in self.sort_rules_for_status(rules):
-            negex_pat = '\b({})\b{}'.format(r'\W+'.join(negex.split()),
-                                            get_negation_string(self.NEGEX_LEVEL[rx_var], len(negex)))
-            self.__rules.append((negex, re.compile(negex_pat), _type[1:5], direction))
+            negex_pat = r'\b({})\b{}'.format(r'\W+'.join(negex.split()),
+                                             get_negation_string(self.NEGEX_LEVEL[rx_var], len(negex)))
+            self._rules.append((negex, re.compile(negex_pat), _type[1:5], direction))
 
     @staticmethod
     def sort_rules_for_status(rulelist, exclusions=None):
@@ -159,7 +159,7 @@ class StatusMiner(Miner):
         """
         negations = []
         # rules already sorted by length of negation expression
-        for negex, pattern, _type, direction in self.__rules:
+        for negex, pattern, _type, direction in self._rules:
             for m in pattern.finditer(text):
                 n = Negation(negex, m.start() + offset, m.end() + offset, _type=_type, direction=direction)
                 # longer sequences will trump smaller ones
