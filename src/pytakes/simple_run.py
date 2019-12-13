@@ -24,7 +24,7 @@ def run(input_dir, output_dir, *keyword_files, outfile=None):
     mc.add(ConceptMiner([CsvDictionary(file) for file in keyword_files]))
     mc.add(StatusMiner())
     if not outfile:
-        outfile = 'extracted_concepts_{}.csv'.format(datetime.now().strftime('%Y%m%d%_H%M%S'))
+        outfile = 'extracted_concepts_{}.csv'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))
     out = CsvOutput(outfile, output_dir, metalabels=['file'])
     for root, dirs, files in os.walk(input_dir):
         for file in files:
@@ -42,4 +42,4 @@ if __name__ == '__main__':
     parser.add_argument('-k', '--keyword-files', nargs='+', dest='keyword_files', required=True)
     parser.add_argument('--outfile', dest='outfile', default=None)
     args = parser.parse_args()
-    run(args.input_dir, args.output_dir, args.keyword_files, outfile=args.outfile)
+    run(args.input_dir, args.output_dir, *args.keyword_files, outfile=args.outfile)
