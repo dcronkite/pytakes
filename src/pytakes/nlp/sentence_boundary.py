@@ -64,9 +64,9 @@ class SentenceBoundary(object):
             conn = sqlite3.connect(pkg_resources.resource_filename('pytakes.nlp', 'data/ssplit.db'))
             cur = conn.cursor()
             cur.execute('SELECT abbr FROM abbreviations')
-            self.knuthus = {x[0] for x in cur.fetchall()}
-            cur.execute('SELECT word FROM knuthus')
             self.abbrevs = {x[0] for x in cur.fetchall()}
+            cur.execute('SELECT word FROM knuthus')
+            self.knuthus = {x[0] for x in cur.fetchall()}
 
         for el in config or []:
             setattr(self, el, self.load_set_lower(config[el]))
@@ -200,7 +200,10 @@ class SentenceBoundary(object):
         # end for i, txt
         if text:
             text[-1] += '\n'
-        return text
+        for group in text:
+            for sentence in group.split('\n'):
+                if sentence.strip():
+                    yield sentence
 
     def isupper(self, word, default=False):
         if self.ignorecase:
@@ -275,7 +278,7 @@ class SentenceBoundary(object):
 
     def seperate_puncts(self, line):
         """
-        seperate punctuations from words,  except '.'
+        separate punctuations from words,  except '.'
         :param line:
         """
         linee = ''
