@@ -8,8 +8,8 @@ from pytakes.processor import TextItem
 
 class CsvDictionary(Dictionary):
 
-    def __init__(self, path=None, valence=None,
-                 regex_variation=None, word_order=None, **kwargs):
+    def __init__(self, path=None, valence=1,
+                 regex_variation=0, word_order=1, **kwargs):
         super().__init__(**kwargs)
         self.valence = valence
         self.regex_variation = regex_variation
@@ -24,13 +24,7 @@ class CsvDictionary(Dictionary):
         Retrieve terms from table.
         Function checks to see if optional columns are present,
         otherwise uses cTAKES defaults.
-        :param dbi:
-        :param term_table:
-        :param valence:
-        :param regex_variation:
-        :param word_order:
         """
-        logging.info('Getting Terms and Negation.')
         columns = {}
         res = []
         with open(self.fp) as fh:
@@ -42,9 +36,9 @@ class CsvDictionary(Dictionary):
                         line[columns['id']],
                         line[columns['text']],
                         line[columns['cui']],
-                        line[columns['valence']],
-                        line[columns['regexvariation']],
-                        line[columns['WordOrder']],
+                        line[columns.get('valence', self.valence)],
+                        line[columns.get('regexvariation', self.regex_variation)],
+                        line[columns.get('WordOrder', self.word_order)],
                     ])
         return res
 

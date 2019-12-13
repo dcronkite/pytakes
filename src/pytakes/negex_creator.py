@@ -74,7 +74,8 @@ def write_termlist_to_db(termlist, dbi, table_name, columns):
     return True
 
 
-def create_negex(negex_files, eqfiles, output_file=None, dbi=None, table_name='test', instances=['negex', 'type', 'direction']):
+def create_negex(negex_files, eqfiles, output_file=None, dbi=None, table_name='test',
+                 instances=('negex', 'type', 'direction')):
     length_of_instances = 0
     equivs = parse_equivalence_files(eqfiles)
     final_termlist = []
@@ -83,7 +84,8 @@ def create_negex(negex_files, eqfiles, output_file=None, dbi=None, table_name='t
         with open(negexfile) as f:
             for num, line in enumerate(f.readlines()):
                 line = line.strip().split('#')[0]
-                if not line or line[0] == '#': continue
+                if not line or line[0] == '#':
+                    continue
                 lst = line.split('\t')
                 length_of_instances = len(lst)
                 if len(lst) < 3:

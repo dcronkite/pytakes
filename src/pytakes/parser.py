@@ -7,7 +7,6 @@ from pytakes.io.base import get_data_item
 from pytakes.nlp.collections import MinerCollection
 from pytakes.util.db_reader import DbInterface
 
-
 DEFAULT_NEGATION_VARIATION = -1
 
 
@@ -56,6 +55,7 @@ def parse_processor(json_file):
         'document': docs,
         'output': out
     }
+
 
 if __name__ == '__main__':
     import argparse
