@@ -24,14 +24,13 @@ from pytakes.io.base import Dictionary
 from pytakes.nlp import convert
 from pytakes.nlp.miner import Miner
 from pytakes.nlp.terms import Term, Concept
-from pytakes.util.utils import flatten
 
 
 class ConceptMiner(Miner):
 
     def __init__(self, dictionaries: List[Dictionary]):
         super().__init__()
-        self.entries = list(flatten(d.read() for d in dictionaries))
+        self.entries = [entry for d in dictionaries for entry in d.read()]
         self.cid_to_cat = {}  # ConceptID -> category
         self.cid_to_tids = {}  # ConceptID to TermIDs
         self.cid_search_param = {}
@@ -89,7 +88,7 @@ class ConceptMiner(Miner):
                     self.cid_to_tids[cid].append(self.wordID)
                 self.wordID += 1
 
-        self.wordlist = convert.convert_to_regex(self.wordlist)
+        self.wordlist, upd_ids = convert.convert_to_regex(self.wordlist)
 
     def add_conversion(self, newtid_to_oldtids):
         """
@@ -193,12 +192,11 @@ class ConceptMiner(Miner):
         Aggregate terms (in the word list) into concepts according.
 
         @param terms: list of word-derived objects including negation, words, and terms
-            only Terms will be considered in determining concepts
+            only Terms will be considered in determining concepts; must be sorted
         @return: all found concepts
 
         """
         concepts = []
-        terms.sort()
         for i in range(len(terms)):
             cword = terms[i]
             if isinstance(cword, Term):
@@ -303,7 +301,6 @@ class ConceptMiner(Miner):
         """
         Paramters:
             terms - list of (term,id) where unique id for each term
-            :param terms:
             :param text:
             :param offset:
         """

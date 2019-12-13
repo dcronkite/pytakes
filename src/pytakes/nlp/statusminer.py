@@ -14,6 +14,9 @@ Edits:
     2013-12-09  - added getNegex and getContext functions; I'm going to need these each
                 time I use negex, so might as well include them
 """
+import sqlite3
+
+import pkg_resources
 import regex as re
 
 from pytakes.nlp.miner import Miner
@@ -52,11 +55,30 @@ class StatusMiner(Miner):
     HYPOTHETICAL_TAGS = ['hypo', 'indi']
     TEMPORAL_TAGS = ['futp', 'hist']
     SUBJECT_TAGS = ['subj', 'othr']
+    NEGEX_LEVEL = {
+        0: [(0, '')
+            ],
+        1: [(12, '{1i+1d<3})'),
+            (8, '{1i+1d<2})'),
+            (0, '')
+            ],
+        2: [(14, '{1i+1d<4}'),
+            (10, '{1i+1d<3}'),
+            (6, '{1i+1d<2}'),
+            (0, '')
+            ],
+        3: [(12, '{1i+1d<4}'),
+            (8, '{1i+1d<3}'),
+            (4, '{1i+1d<2}'),
+            (0, '')
+            ]
+    }
 
-    def __init__(self, rules, rx_var=0, maxscope=100):
+    def __init__(self, rules=None, rx_var=0, maxscope=100, tablename='status1'):
         """
         Parameters:
             rules - list of negation trigger terms from the sortRules function
+                if None, use built-in status
             rxVar - allowable regular expression variation
                     0: no variation; words must be exact => default
                     1: minimal variation
@@ -67,27 +89,20 @@ class StatusMiner(Miner):
         """
         super().__init__()
         self.__rules = []
-        self.maxscope_ = maxscope
+        self._maxscope = maxscope
+        if rules is None:
+            rules = self.load_negex_from_db(tablename)
+        self.add_rules(rules, rx_var)
 
-        # negation key
-        negex_level = {
-            0: [(0, '')
-                ],
-            1: [(12, '{1i+1d<3})'),
-                (8, '{1i+1d<2})'),
-                (0, '')
-                ],
-            2: [(14, '{1i+1d<4}'),
-                (10, '{1i+1d<3}'),
-                (6, '{1i+1d<2}'),
-                (0, '')
-                ],
-            3: [(12, '{1i+1d<4}'),
-                (8, '{1i+1d<3}'),
-                (4, '{1i+1d<2}'),
-                (0, '')
-                ]
-        }
+    @staticmethod
+    def load_negex_from_db(tablename):
+        conn = sqlite3.connect(pkg_resources.resource_filename('pytakes.nlp', 'data/status.db'))
+        cur = conn.cursor()
+        cur.execute(f'select negex, type, direction from {tablename}')
+        for negex, _type, direction in cur.fetchall():
+            yield negex, _type, direction
+
+    def add_rules(self, rules, rx_var):
 
         def get_negation_string(values, length):
             for x, y in values:
@@ -98,7 +113,7 @@ class StatusMiner(Miner):
         # add rules, but permit errors based on length
         for negex, _type, direction in self.sort_rules_for_status(rules):
             negex_pat = '\b({})\b{}'.format(r'\W+'.join(negex.split()),
-                                            get_negation_string(negex_level[rx_var], len(negex)))
+                                            get_negation_string(self.NEGEX_LEVEL[rx_var], len(negex)))
             self.__rules.append((negex, re.compile(negex_pat), _type[1:5], direction))
 
     @staticmethod
@@ -115,16 +130,15 @@ class StatusMiner(Miner):
         :param rulelist:
         :param exclusions:
         """
-        rulelist.sort(key=lambda x: len(x[0]), reverse=True)
         sortedlist = []
-        for negex, type_, direction in rulelist:
+        for negex, type_, direction in sorted(rulelist, key=lambda x: len(x[0]), reverse=True):
             if exclusions and negex in exclusions:
                 continue
             sortedlist.append((negex, type_, direction))
         return sortedlist
 
     def extract(self, terms):
-        return terms
+        return []
 
     def mine(self, text, offset):
         """
@@ -230,7 +244,7 @@ class StatusMiner(Miner):
 
                 # check if term should be updated with any types
                 for _type in types:
-                    if _type[STATUS] == 1 and _type[OVERLAP] == 0 and _type[COUNTER] <= self.maxscope_:
+                    if _type[STATUS] == 1 and _type[OVERLAP] == 0 and _type[COUNTER] <= self._maxscope:
                         # ignoring affirmation tag (affm)
                         if _type[TYPE] == 'negn':
                             term.negate()

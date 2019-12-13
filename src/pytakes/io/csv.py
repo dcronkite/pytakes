@@ -1,20 +1,28 @@
-import logging
 import os
 import csv
 
 from pytakes.io.base import Dictionary, Output, Document
-from pytakes.processor import TextItem
+from pytakes.dict.textitem import TextItem
+from pytakes.nlp.terms import Concept
 
 
 class CsvDictionary(Dictionary):
 
-    def __init__(self, path=None, valence=1,
-                 regex_variation=0, word_order=1, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, name=None, path=None, valence=1, regex_variation=0, word_order=1,
+                 max_intervening=1, max_search=2, **kwargs):
+        super().__init__(name=name, **kwargs)
         self.valence = valence
         self.regex_variation = regex_variation
         self.word_order = word_order
-        self.fp = os.path.join(path, self.name)
+        self.max_intervening = max_intervening
+        self.max_search = max_search
+        if name and path:
+            self.fp = os.path.join(path, self.name)
+        elif name:
+            self.fp = self.name
+        else:
+            self.fp = path
+            self.name = os.path.basename(path)
 
     def read(self):
         return self._get_terms()
@@ -30,20 +38,30 @@ class CsvDictionary(Dictionary):
         with open(self.fp) as fh:
             for i, line in enumerate(csv.reader(fh)):
                 if i == 0:
-                    columns = {x: i for i, x in enumerate(line)}
+                    columns = {x.lower(): i for i, x in enumerate(line)}
                 else:
-                    res.append([
+                    res.append((
                         line[columns['id']],
                         line[columns['text']],
                         line[columns['cui']],
-                        line[columns.get('valence', self.valence)],
-                        line[columns.get('regexvariation', self.regex_variation)],
-                        line[columns.get('WordOrder', self.word_order)],
-                    ])
+                        self.int_or_default(line[columns.get('valence', self.valence)], self.valence),
+                        self.int_or_default(line[columns.get('regexvariation', self.regex_variation)],
+                                            self.regex_variation),
+                        self.int_or_default(line[columns.get('wordorder', self.word_order)], self.word_order),
+                        self.int_or_default(line[columns.get('maxintervening', self.max_intervening)],
+                                            self.max_intervening),
+                        self.int_or_default(line[columns.get('maxwords', self.max_search)], self.max_search),
+                    ))
         return res
 
 
 class CsvDocument(Document):
+
+    def get_ids(self):
+        pass
+
+    def __len__(self):
+        pass
 
     def __init__(self, path=None, order_by=None, batch_size=None, meta=None,
                  text=None, **config):
@@ -72,10 +90,10 @@ class CsvDocument(Document):
 
 class CsvOutput(Output):
 
-    def __init__(self, labels=None, path=None,
+    def __init__(self, name=None, path=None, metalabels=None,
                  types=None, hostname=None, batch_number=None, **config):
-        super().__init__(**config)
-        self.labels = labels
+        super().__init__(name=name, **config)
+        self.labels = (metalabels or []) + self.all_labels
         self.types = types
         self.hostname = hostname
         self.batch_number = batch_number
@@ -83,19 +101,27 @@ class CsvOutput(Output):
         self.fh = None
 
     def create_output(self):
-        self.fh = csv.writer(open(self.fp, 'w'))
+        self.fh = csv.writer(open(self.fp, 'w', newline=''))
         self.fh.writerow(self.labels)  # header
 
-    def writerow(self, meta, feat, text=None):
+    def writerow(self, feat: Concept, meta=None, text=None):
+        if not meta:
+            meta = []
+        if not self.fh:
+            self.create_output()
         if text:
             length = len(text)
             self.fh.writerow(meta +
-                             [text[feat.begin():feat.end()].strip(),
-                              text[self._get_index(length, feat.begin() - 75):self._get_index(length, feat.end() + 75)],
+                             [feat.id(),
+                              self._get_text(text, feat.begin(), feat.end()),
+                              self._get_text(text, self._get_index(length, feat.begin() - self.context_width),
+                                             self._get_index(length, feat.end() + self.context_width)),
                               feat.get_certainty(),
                               feat.is_hypothetical(),
                               feat.is_historical(),
                               feat.is_not_patient(),
+                              feat.begin(),
+                              feat.end(),
                               self.hostname,
                               self.batch_number
                               ]
@@ -103,6 +129,11 @@ class CsvOutput(Output):
         else:
             self.fh.writerow(meta +
                              [text[feat.begin():feat.end()].strip(),
+                              None,
+                              None,
+                              None,
+                              None,
+                              None,
                               self.hostname,
                               self.batch_number
                               ]

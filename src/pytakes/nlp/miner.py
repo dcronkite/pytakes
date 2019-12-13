@@ -1,12 +1,4 @@
 import abc
-import copy
-import numbers
-from typing import List
-
-from pytakes.io.base import Dictionary
-from pytakes.nlp import convert
-from pytakes.nlp.terms import Term, Concept
-from pytakes.util.utils import flatten
 
 
 class Miner(object):

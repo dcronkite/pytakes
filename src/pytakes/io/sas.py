@@ -1,10 +1,14 @@
 import logging
 import os
 
-from sas7bdat import SAS7BDAT
+try:
+    from sas7bdat import SAS7BDAT
+except ImportError:
+    logging.warning(f'Missing SAS7BDAT library: will not be able to read from SAS.')
+    SAS7BDAT = None
 
 from pytakes.io.base import Dictionary, Document
-from pytakes.processor import TextItem
+from pytakes.dict.textitem import TextItem
 
 
 class SasDictionary(Dictionary):
@@ -30,7 +34,7 @@ class SasDictionary(Dictionary):
                     row[columns['cui']],
                     row[columns['valence']],
                     row[columns['regexvariation']],
-                    row[columns['WordOrder']],
+                    row[columns['wordorder']],
                 ])
         return res
 

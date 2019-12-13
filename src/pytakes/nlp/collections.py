@@ -21,7 +21,7 @@ class MinerCollection(object):
             yield text
 
     def clean_sentence(self, sentence):
-        if self.clean_sentence:
+        if self.clean_sentence and self.cleaner:
             return self.cleaner(sentence)
         else:
             return sentence
@@ -32,12 +32,13 @@ class MinerCollection(object):
             sent = self.clean_sentence(sentence)
             terms = []
             for miner in self.miners:
-                terms += miner.clean(miner.mine(sent))
+                terms += miner.clean(miner.mine(sent, offset=offset))
             if self.add_words:
                 terms += add_words(terms, sent, offset=offset)
             terms.sort()
             for miner in self.miners:
                 terms = miner.postprocess(terms)
+            terms.sort()
             res = []
             for miner in self.miners:
                 res += miner.extract(terms)

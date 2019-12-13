@@ -5,7 +5,7 @@ from jinja2 import Template
 
 from pytakes.io import templates
 from pytakes.io.base import Dictionary, Output, Document
-from pytakes.processor import TextItem
+from pytakes.dict.textitem import TextItem
 
 
 class SqlDictionary(Dictionary):

@@ -3,35 +3,6 @@ Base classes for interface.
 """
 import abc
 
-from pytakes.io.csv import CsvDictionary, CsvDocument, CsvOutput
-from pytakes.io.sas import SasDictionary, SasDocument
-from pytakes.io.sql import SqlDictionary, SqlDocument, SqlOutput
-
-data_items = {
-    'sql': {
-        'dictionary': SqlDictionary,
-        'document': SqlDocument,
-        'output': SqlOutput
-    },
-    'sas': {
-        'dictionary': SasDictionary,
-        'document': SasDocument,
-        # 'output': SasOutput  # not supported
-    },
-    'csv': {
-        'dictionary': CsvDictionary,
-        'document': CsvDocument,
-        'output': CsvOutput
-    }
-}
-
-
-def get_data_item(res, datatype, conn):
-    try:
-        return data_items[res['type']][datatype](**res, dbi=conn)
-    except Exception as e:
-        raise ValueError('Unsupported {} type: "{}"'.format(res['type'], datatype))
-
 
 class Dictionary(metaclass=abc.ABCMeta):
     def __init__(self, name=None, **kwargs):
@@ -40,6 +11,12 @@ class Dictionary(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def read(self):
         pass
+
+    def int_or_default(self, val, default):
+        try:
+            return int(val)
+        except (ValueError, TypeError):
+            return default
 
 
 class Document(metaclass=abc.ABCMeta):
@@ -61,22 +38,21 @@ class Document(metaclass=abc.ABCMeta):
 
 class Output(metaclass=abc.ABCMeta):
     # columns
-    all_labels = ['dictid', 'captured', 'context', 'text', 'certainty', 'hypothetical', 'historical',
-                  'otherSubject', '"start"', '"finish"', 'start_idx', 'end_idx', 'cpu_name', 'version']
-    all_types = ['int', 'varchar(255)', 'varchar(255)', 'varchar(max)', 'int',
-                 'int', 'int', 'int', 'int', 'int', 'int', 'int', 'varchar(50)', 'int']
-    all_labels = ['featid', 'feature', 'category', 'cpu_name', 'version']
-    all_types = ['bigint', 'varchar(max)', 'varchar(50)', 'varchar(50)', 'int']
+    all_labels = ['dictid', 'captured', 'context', 'certainty', 'hypothetical', 'historical',
+                  'otherSubject', 'start_idx', 'end_idx', 'cpu_name', 'version']
+    all_types = ['int', 'varchar(255)', 'varchar(255)', 'int', 'int', 'int',
+                 'int', 'int', 'int', 'varchar(50)', 'int']
 
-    def __init__(self, name=None, **config):
+    def __init__(self, name=None, context_width=75, **config):
         self.name = name
+        self.context_width = context_width
 
     @abc.abstractmethod
     def create_output(self):
         pass
 
     @abc.abstractmethod
-    def writerow(self, meta, feat, text=None):
+    def writerow(self, feat, meta=None, text=None):
         pass
 
     @abc.abstractmethod
@@ -88,3 +64,10 @@ class Output(metaclass=abc.ABCMeta):
         if value < 0:
             return 0
         return min(value, length)
+
+    @staticmethod
+    def _get_text(text, start, end, remove_newlines=True):
+        if remove_newlines:
+            return ' '.join(text[start:end].split('\n'))
+        else:
+            return text[start:end]

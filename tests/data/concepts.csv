@@ -1,0 +1,7 @@
+ID,CUI,TEXT,MAXINTERVENING,MAXSEARCH,WORDORDER
+0,WRITING,letter*,,,
+1,WRITING,pen(s|cil),,,
+2,GOOD,charm* letter,,,
+3,GOOD,letter charm*,,,
+4,FATHER,his father,,,
+5,WEATHER,weather,,,
