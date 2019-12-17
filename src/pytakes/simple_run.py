@@ -19,10 +19,10 @@ def process(file, mc: MinerCollection):
         yield res, sent
 
 
-def run(input_dir, output_dir, *keyword_files, outfile=None):
+def run(input_dir, output_dir, *keyword_files, outfile=None, negex_version=1):
     mc = MinerCollection(ssplit=SentenceBoundary().ssplit)
     mc.add(ConceptMiner([CsvDictionary(file) for file in keyword_files]))
-    mc.add(StatusMiner())
+    mc.add(StatusMiner(tablename=f'status{negex_version}'))
     if not outfile:
         outfile = 'extracted_concepts_{}.csv'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))
     out = CsvOutput(outfile, output_dir, metalabels=['file'])
@@ -41,5 +41,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output-dir', dest='output_dir', required=True)
     parser.add_argument('-k', '--keyword-files', nargs='+', dest='keyword_files', required=True)
     parser.add_argument('--outfile', dest='outfile', default=None)
+    parser.add_argument('--negex_version', dest='negex_version', default=1, type=int)
     args = parser.parse_args()
-    run(args.input_dir, args.output_dir, *args.keyword_files, outfile=args.outfile)
+    run(args.input_dir, args.output_dir, *args.keyword_files,
+        outfile=args.outfile, negex_version=args.negex_version)
