@@ -113,6 +113,7 @@ class CsvOutput(Output):
             length = len(text)
             self.fh.writerow(meta +
                              [feat.id(),
+                              feat.cat(),
                               self._get_text(text, feat.begin(), feat.end()),
                               self._get_text(text, self._get_index(length, feat.begin() - self.context_width),
                                              self._get_index(length, feat.end() + self.context_width)),

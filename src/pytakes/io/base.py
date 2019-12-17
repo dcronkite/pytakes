@@ -38,9 +38,9 @@ class Document(metaclass=abc.ABCMeta):
 
 class Output(metaclass=abc.ABCMeta):
     # columns
-    all_labels = ['dictid', 'captured', 'context', 'certainty', 'hypothetical', 'historical',
+    all_labels = ['dictid', 'concept', 'captured', 'context', 'certainty', 'hypothetical', 'historical',
                   'otherSubject', 'start_idx', 'end_idx', 'cpu_name', 'version']
-    all_types = ['int', 'varchar(255)', 'varchar(255)', 'int', 'int', 'int',
+    all_types = ['int', 'varchar(50)', 'varchar(255)', 'varchar(255)', 'int', 'int', 'int',
                  'int', 'int', 'int', 'varchar(50)', 'int']
 
     def __init__(self, name=None, context_width=75, **config):
