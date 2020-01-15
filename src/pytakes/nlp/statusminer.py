@@ -99,8 +99,8 @@ class StatusMiner(Miner):
         conn = sqlite3.connect(pkg_resources.resource_filename('pytakes.nlp', 'data/status.db'))
         cur = conn.cursor()
         cur.execute(f'select negex, type, direction from {tablename}')
-        for negex, _type, direction in cur.fetchall():
-            yield negex, _type, direction
+        for negex, _type, direction in cur:
+            yield negex, _type.strip('[]'), direction
 
     def add_rules(self, rules, rx_var):
 
@@ -114,7 +114,7 @@ class StatusMiner(Miner):
         for negex, _type, direction in self.sort_rules_for_status(rules):
             negex_pat = r'\b({})\b{}'.format(r'\W+'.join(negex.split()),
                                              get_negation_string(self.NEGEX_LEVEL[rx_var], len(negex)))
-            self._rules.append((negex, re.compile(negex_pat), _type[1:5], direction))
+            self._rules.append((negex, re.compile(negex_pat), _type.strip('[]'), direction))
 
     @staticmethod
     def sort_rules_for_status(rulelist, exclusions=None):
@@ -134,7 +134,7 @@ class StatusMiner(Miner):
         for negex, type_, direction in sorted(rulelist, key=lambda x: len(x[0]), reverse=True):
             if exclusions and negex in exclusions:
                 continue
-            sortedlist.append((negex, type_, direction))
+            sortedlist.append((negex, type_.strip('[]'), direction))
         return sortedlist
 
     def extract(self, terms):
@@ -161,7 +161,7 @@ class StatusMiner(Miner):
         # rules already sorted by length of negation expression
         for negex, pattern, _type, direction in self._rules:
             for m in pattern.finditer(text):
-                n = Negation(negex, m.start() + offset, m.end() + offset, _type=_type, direction=direction)
+                n = Negation(negex, m.start(), m.end(), _type=_type, direction=direction, offset=offset)
                 # longer sequences will trump smaller ones
                 if n not in negations:
                     negations.append(n)

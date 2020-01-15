@@ -187,8 +187,8 @@ class Concept(Term):
 
 
 class Negation(Word):
-    def __init__(self, word, begin, end, _type='negation', direction=0):
-        super(Negation, self).__init__(word, begin, end, _type)
+    def __init__(self, word, begin, end, _type='negn', direction=0, offset=0):
+        super(Negation, self).__init__(word, begin, end, _type, offset=offset)
         self.direction_ = direction
         self.negate()
 
