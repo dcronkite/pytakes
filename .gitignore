@@ -310,4 +310,4 @@ dmypy.json
 .pyre/
 
 # user-added
-tests/data/testout/concepts.csv
+tests/data/testout/concepts.*
