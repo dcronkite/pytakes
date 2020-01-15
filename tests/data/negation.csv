@@ -1,8 +1,8 @@
 negex,type,direction,id
 can rule out,[IMPR],2,1
-denied,[NEGN],2,175
-denies,[NEGN],2,176
-gram negative,[PSEU],2,282
+no,[NEGN],3,175
+not,[NEGN],3,176
+should,[HYPO],2,282
 no change,[PSEU],2,283
 could rule out,[INDI],2,284
 would rule out,[INDI],2,285

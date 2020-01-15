@@ -29,10 +29,21 @@ def output_context_manager(outfile, **kwargs):
         raise ValueError(f'Unrecognized file type: {outfile}')
 
 
-def run(input_dir, output_dir, *keyword_files, outfile=None, negex_version=1):
+def run(input_dir, output_dir, *keyword_files, outfile=None, negex_version=1,
+        negex_path=None):
+    """
+
+    :param input_dir:
+    :param output_dir:
+    :param keyword_files:
+    :param outfile:
+    :param negex_version:
+    :param negex_path: if included, will ignore table (will only use file)
+    :return:
+    """
     mc = MinerCollection(ssplit=SentenceBoundary().ssplit)
     mc.add(ConceptMiner([CsvDictionary(file) for file in keyword_files]))
-    mc.add(StatusMiner(tablename=f'status{negex_version}'))
+    mc.add(StatusMiner(tablename=f'status{negex_version}', path=negex_path))
     if not outfile:
         outfile = 'extracted_concepts_{}.jsonl'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))
     with output_context_manager(outfile, path=output_dir, metalabels=['file']) as out:
@@ -51,7 +62,9 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output-dir', dest='output_dir', required=True)
     parser.add_argument('-k', '--keyword-files', nargs='+', dest='keyword_files', required=True)
     parser.add_argument('--outfile', dest='outfile', default=None)
-    parser.add_argument('--negex_version', dest='negex_version', default=1, type=int)
+    parser.add_argument('--negex-version', dest='negex_version', default=1, type=int)
+    parser.add_argument('--negex-path', dest='negex_path', default=None,
+                        help='Specify csv file to use for negation rather than default.')
     args = parser.parse_args()
     run(args.input_dir, args.output_dir, *args.keyword_files,
         outfile=args.outfile, negex_version=args.negex_version)
