@@ -38,3 +38,21 @@ def test_negation_backward():
     miner.postprocess(terms)
     assert terms[0].is_negated()
     assert not terms[-1].is_negated()
+
+
+def test_negation_with_punct():
+    miner = StatusMiner(rules=[('c/o', 'negn', 3)])
+    assert len(miner.mine('pt c/o', 0)) == 1
+    assert len(miner.mine('pt c / o', 0)) == 0
+
+
+def test_negation_with_punct2():
+    miner = StatusMiner(rules=[('c / o', 'negn', 3)])
+    assert len(miner.mine('pt c/o', 0)) == 0
+    assert len(miner.mine('pt c / o', 0)) == 1
+
+
+def test_negation_with_punct3():
+    miner = StatusMiner(rules=[(r'c\s*/\s*o', 'negn', 3)])
+    assert len(miner.mine('pt c/o', 0)) == 1
+    assert len(miner.mine('pt c / o', 0)) == 1

@@ -5,7 +5,7 @@ not,[NEGN],3,176
 should,[HYPO],2,282
 no change,[PSEU],2,283
 could rule out,[INDI],2,284
-would rule out,[INDI],2,285
+pt c\s*/\s*o,[AFFM],2,285
 sequelae of,[HIST],2,362
 prior study,[HIST],3,363
 has had,[HIST],2,364
