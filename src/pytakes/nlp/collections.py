@@ -39,7 +39,6 @@ class MinerCollection(object):
         res = []
         for miner in self.miners:
             res += miner.extract(terms)
-        offset += len(sentence)
         return res, sentence
 
     def parse(self, doc):

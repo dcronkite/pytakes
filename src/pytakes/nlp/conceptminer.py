@@ -231,7 +231,8 @@ class ConceptMiner(Miner):
                                           self._check_valence(cid, cword.get_certainty()),
                                           cword.is_hypothetical(),
                                           cword.is_historical(),
-                                          cword.is_not_patient())
+                                          cword.is_not_patient(),
+                                          offset=cword.offset_)
                     if concept:  # function might return "False"
                         concepts.append(concept)
             else:  # current word is not a Term
@@ -288,7 +289,8 @@ class ConceptMiner(Miner):
                                            self._check_valence(cid, certainty),
                                            hypothetical,
                                            historical,
-                                           not_patient)
+                                           not_patient,
+                                           offset=nword.offset_)
 
             else:
                 break

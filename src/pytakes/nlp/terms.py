@@ -156,13 +156,13 @@ class Term(Word):
 
 class Concept(Term):
     def __init__(self, word, begin, end, id_, cat, certainty=4,
-                 hypothetical=0, historical=0, not_patient=0):
+                 hypothetical=0, historical=0, not_patient=0, offset=0):
         """
         For backwards compatibility:
             certainty used to be neg(ated), boolean
             hypothetical used to be pos(sible), boolean
         """
-        super(Concept, self).__init__(word, begin, end, "concept", id_)
+        super(Concept, self).__init__(word, begin, end, "concept", id_, offset=offset)
         self.cat_ = cat
 
         if isinstance(certainty, bool):  # old way
