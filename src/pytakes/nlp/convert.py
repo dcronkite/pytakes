@@ -202,10 +202,10 @@ def convert_to_regex(strings_ids_rxvar, convert_all=True,
 
         # 4) compile string to regex
         rx = re.compile(string, re.V1 | re.I)
-        try:
-            assert rx.match(orig_string)
-        except AssertionError:
-            raise ValueError(r'Regex {} failed to match original string "{}".'.format(rx, orig_string))
+        # try:
+        #     assert rx.match(orig_string)
+        # except AssertionError:
+        #     raise ValueError(r'Regex {} failed to match original string "{}".'.format(rx, orig_string))
         regexes.append((rx, id_))
 
     return regexes, updated_ids
