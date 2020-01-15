@@ -121,8 +121,8 @@ class CsvOutput(Output):
                               feat.is_hypothetical(),
                               feat.is_historical(),
                               feat.is_not_patient(),
-                              feat.begin(),
-                              feat.end(),
+                              feat.get_absolute_begin(),
+                              feat.get_absolute_end(),
                               self.hostname,
                               self.batch_number
                               ]
