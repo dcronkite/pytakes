@@ -14,6 +14,7 @@ Edits:
     2013-12-09  - added getNegex and getContext functions; I'm going to need these each
                 time I use negex, so might as well include them
 """
+import csv
 import sqlite3
 
 import pkg_resources
@@ -74,7 +75,8 @@ class StatusMiner(Miner):
             ]
     }
 
-    def __init__(self, rules=None, rx_var=0, maxscope=100, tablename='status1'):
+    def __init__(self, rules=None, rx_var=0, maxscope=100, tablename='status1',
+                 path=None):
         """
         Parameters:
             rules - list of negation trigger terms from the sortRules function
@@ -91,7 +93,12 @@ class StatusMiner(Miner):
         self._rules = []
         self._maxscope = maxscope
         if rules is None:
-            rules = self.load_negex_from_db(tablename)
+            if path:
+                rules = self.load_negex_from_csv(path)
+            elif tablename:
+                rules = self.load_negex_from_db(tablename)
+            else:  # tablename was explicitly negated
+                rules = []
         self.add_rules(rules, rx_var)
 
     @staticmethod
@@ -100,7 +107,14 @@ class StatusMiner(Miner):
         cur = conn.cursor()
         cur.execute(f'select negex, type, direction from {tablename}')
         for negex, _type, direction in cur:
-            yield negex, _type.strip('[]'), direction
+            yield negex, _type.strip('[]'), int(direction)
+
+    @staticmethod
+    def load_negex_from_csv(path):
+        with open(path, newline='') as fh:
+            reader = csv.DictReader(fh)
+            for row in reader:
+                yield row['negex'], row['type'].strip('[]'), int(row['direction'])
 
     def add_rules(self, rules, rx_var):
 
