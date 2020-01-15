@@ -47,16 +47,15 @@ class Output(metaclass=abc.ABCMeta):
         self.name = name
         self.context_width = context_width
 
-    @abc.abstractmethod
-    def create_output(self):
-        pass
+    def __enter__(self):
+        return self
 
     @abc.abstractmethod
     def writerow(self, feat, meta=None, text=None):
         pass
 
     @abc.abstractmethod
-    def close(self):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
     @staticmethod

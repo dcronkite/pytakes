@@ -3,7 +3,7 @@ import os
 from pytakes.simple_run import run
 
 
-def test_complete():
+def test_simple_run_csv():
     path = os.path.dirname(os.path.abspath(__file__))
     indir = os.path.join(path, r'data\files')
     outdir = os.path.join(path, r'data\testout')
@@ -12,5 +12,18 @@ def test_complete():
     with open(os.path.join(outdir, 'concepts.csv')) as fh:
         actual = fh.read()
     with open(os.path.join(outdir, 'expected.csv')) as fh:
+        expected = fh.read()
+    assert actual == expected
+
+
+def test_simple_run_jsonl():
+    path = os.path.dirname(os.path.abspath(__file__))
+    indir = os.path.join(path, r'data\files')
+    outdir = os.path.join(path, r'data\testout')
+    concepts = os.path.join(path, r'data\concepts.csv')
+    run(indir, outdir, concepts, outfile='concepts.jsonl')
+    with open(os.path.join(outdir, 'concepts.jsonl')) as fh:
+        actual = fh.read()
+    with open(os.path.join(outdir, 'expected.jsonl')) as fh:
         expected = fh.read()
     assert actual == expected

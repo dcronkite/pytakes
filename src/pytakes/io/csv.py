@@ -98,48 +98,43 @@ class CsvOutput(Output):
         self.hostname = hostname
         self.batch_number = batch_number
         self.fp = os.path.join(path, self.name)
-        self.fh = None
-
-    def create_output(self):
-        self.fh = csv.writer(open(self.fp, 'w', newline=''))
-        self.fh.writerow(self.labels)  # header
+        self.fh = open(self.fp, 'w', newline='')
+        self.writer = csv.writer(self.fh)
+        self.writer.writerow(self.labels)  # header
 
     def writerow(self, feat: Concept, meta=None, text=None):
         if not meta:
             meta = []
-        if not self.fh:
-            self.create_output()
         if text:
             length = len(text)
-            self.fh.writerow(meta +
-                             [feat.id(),
-                              feat.cat(),
-                              self._get_text(text, feat.begin(), feat.end()),
-                              self._get_text(text, self._get_index(length, feat.begin() - self.context_width),
-                                             self._get_index(length, feat.end() + self.context_width)),
-                              feat.get_certainty(),
-                              feat.is_hypothetical(),
-                              feat.is_historical(),
-                              feat.is_not_patient(),
-                              feat.get_absolute_begin(),
-                              feat.get_absolute_end(),
-                              self.hostname,
-                              self.batch_number
-                              ]
-                             )
-        else:
-            self.fh.writerow(meta +
-                             [text[feat.begin():feat.end()].strip(),
-                              None,
-                              None,
-                              None,
-                              None,
-                              None,
-                              self.hostname,
-                              self.batch_number
-                              ]
-                             )
+            self.writer.writerow(meta +
+                                 [feat.id(),
+                                  feat.cat(),
+                                  self._get_text(text, feat.begin(), feat.end()),
+                                  self._get_text(text, self._get_index(length, feat.begin() - self.context_width),
+                                                 self._get_index(length, feat.end() + self.context_width)),
+                                  feat.get_certainty(),
+                                  feat.is_hypothetical(),
+                                  feat.is_historical(),
+                                  feat.is_not_patient(),
+                                  feat.get_absolute_begin(),
+                                  feat.get_absolute_end(),
+                                  self.hostname,
+                                  self.batch_number
+                                  ]
+                                 )
+        else:  # no text
+            self.writer.writerow(meta +
+                                 [text[feat.begin():feat.end()].strip(),
+                                  None,
+                                  None,
+                                  None,
+                                  None,
+                                  None,
+                                  self.hostname,
+                                  self.batch_number
+                                  ]
+                                 )
 
-    def close(self):
-        if self.fh:
-            self.fh.close()
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.fh.close()
