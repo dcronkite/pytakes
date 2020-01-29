@@ -32,10 +32,10 @@ class MinerCollection(object):
             terms += miner.clean(miner.mine(sentence, offset=offset))
         if self.add_words:
             terms += add_words(terms, sentence, offset=offset)
-        terms.sort()
+        terms.sort()  # otherwise, list is grouped by type
         for miner in self.miners:
             terms = miner.postprocess(terms)
-        terms.sort()
+        terms.sort()  # probably not required
         res = []
         for miner in self.miners:
             res += miner.extract(terms)

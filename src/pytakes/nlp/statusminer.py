@@ -236,7 +236,7 @@ class StatusMiner(Miner):
                     elif term.type() in self.SUBJECT_TAGS:
                         found_term(subjtype, term.type())
 
-                elif term.type() == self.STOP_TAGS:
+                elif term.type() in self.STOP_TAGS:
                     for _type in types:
                         overlap_term(_type)
 
