@@ -30,9 +30,10 @@ def output_context_manager(outfile, **kwargs):
 
 
 def run(input_dir, output_dir, *keyword_files, outfile=None, negex_version=1,
-        negex_path=None):
+        negex_path=None, skip_negex=False):
     """
 
+    :param skip_negex: don't run negex
     :param input_dir:
     :param output_dir:
     :param keyword_files:
@@ -43,7 +44,8 @@ def run(input_dir, output_dir, *keyword_files, outfile=None, negex_version=1,
     """
     mc = MinerCollection(ssplit=SentenceBoundary().ssplit)
     mc.add(ConceptMiner([CsvDictionary(file) for file in keyword_files]))
-    mc.add(StatusMiner(tablename=f'status{negex_version}', path=negex_path))
+    if not skip_negex:
+        mc.add(StatusMiner(tablename=f'status{negex_version}', path=negex_path))
     if not outfile:
         outfile = 'extracted_concepts_{}.jsonl'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))
     with output_context_manager(outfile, path=output_dir, metalabels=['file']) as out:
@@ -63,8 +65,10 @@ if __name__ == '__main__':
     parser.add_argument('-k', '--keyword-files', nargs='+', dest='keyword_files', required=True)
     parser.add_argument('--outfile', dest='outfile', default=None)
     parser.add_argument('--negex-version', dest='negex_version', default=1, type=int)
+    parser.add_argument('--skip-negex', dest='skip_negex', action='store_true', default=False)
     parser.add_argument('--negex-path', dest='negex_path', default=None,
                         help='Specify csv file to use for negation rather than default.')
     args = parser.parse_args()
     run(args.input_dir, args.output_dir, *args.keyword_files,
-        outfile=args.outfile, negex_version=args.negex_version)
+        outfile=args.outfile, negex_version=args.negex_version,
+        skip_negex=args.skip_negex)
