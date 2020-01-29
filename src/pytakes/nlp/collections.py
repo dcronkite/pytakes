@@ -6,7 +6,7 @@ class MinerCollection(object):
 
     def __init__(self, ssplit=None, cleaner=None, add_intervening_words=True):
         self.miners = []
-        self.ssplit = ssplit
+        self._ssplit = ssplit
         self.cleaner = cleaner
         self.add_words = add_intervening_words
 
@@ -14,8 +14,8 @@ class MinerCollection(object):
         self.miners.append(miner)
 
     def ssplit(self, text):
-        if self.ssplit:
-            for sentence in self.ssplit(' '.join(text.split('\n'))):
+        if self._ssplit:
+            for sentence in self._ssplit(' '.join(text.split('\n'))):
                 yield sentence
         else:
             yield text
