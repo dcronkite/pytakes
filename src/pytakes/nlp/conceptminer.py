@@ -20,7 +20,7 @@ import copy
 import numbers
 from typing import List
 
-from ..io.base import Dictionary
+from ..iolib.base import Dictionary
 from . import convert
 from .miner import Miner
 from .terms import Term, Concept
