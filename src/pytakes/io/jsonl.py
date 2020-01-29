@@ -1,5 +1,6 @@
 import json
 import os
+import platform
 
 from pytakes.io.base import Output
 
@@ -11,7 +12,7 @@ class JsonlOutput(Output):
         super().__init__(name=name, **config)
         self.labels = (metalabels or []) + self.all_labels
         self.types = types
-        self.hostname = hostname
+        self.hostname = hostname or platform.node()
         self.batch_number = batch_number
         self.fp = os.path.join(path, self.name)
         self.fh = open(self.fp, 'w')

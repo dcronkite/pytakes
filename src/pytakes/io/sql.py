@@ -1,4 +1,5 @@
 import logging
+import platform
 
 import pyodbc
 from jinja2 import Template
@@ -101,7 +102,7 @@ class SqlOutput(Output):
         self.dbi = dbi
         self.labels = labels
         self.types = types
-        self.hostname = hostname
+        self.hostname = hostname or platform.node()
         self.batch_number = batch_number
         self.force = force
         self.fullname = self.name

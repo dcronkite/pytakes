@@ -30,9 +30,10 @@ def output_context_manager(outfile, **kwargs):
 
 
 def run(input_dir, output_dir, *keyword_files, outfile=None, negex_version=1,
-        negex_path=None, skip_negex=False):
+        negex_path=None, skip_negex=False, hostname=None):
     """
 
+    :param hostname: this is mostly for testing so that the output won't be machine-dependent
     :param skip_negex: don't run negex
     :param input_dir:
     :param output_dir:
@@ -48,7 +49,7 @@ def run(input_dir, output_dir, *keyword_files, outfile=None, negex_version=1,
         mc.add(StatusMiner(tablename=f'status{negex_version}', path=negex_path))
     if not outfile:
         outfile = 'extracted_concepts_{}.jsonl'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))
-    with output_context_manager(outfile, path=output_dir, metalabels=['file']) as out:
+    with output_context_manager(outfile, path=output_dir, metalabels=['file'], hostname=hostname) as out:
         for root, dirs, files in os.walk(input_dir):
             for file in files:
                 for results, sent in process(os.path.join(input_dir, file), mc):
