@@ -4,9 +4,9 @@ import platform
 import pyodbc
 from jinja2 import Template
 
-from pytakes.io import templates
-from pytakes.io.base import Dictionary, Output, Document
-from pytakes.dict.textitem import TextItem
+from . import templates
+from .base import Dictionary, Output, Document
+from ..dict.textitem import TextItem
 
 
 class SqlDictionary(Dictionary):

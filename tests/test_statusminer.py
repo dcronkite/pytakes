@@ -2,10 +2,10 @@ import os
 
 import pytest
 
-from pytakes.io.csv import CsvDictionary
-from pytakes.nlp.collections import MinerCollection
-from pytakes.nlp.conceptminer import ConceptMiner
-from pytakes.nlp.statusminer import StatusMiner
+from pytakes import CsvDictionary
+from pytakes import MinerCollection
+from pytakes import ConceptMiner
+from pytakes import StatusMiner
 
 
 @pytest.fixture

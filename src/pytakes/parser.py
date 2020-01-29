@@ -4,7 +4,7 @@
 import json
 
 from pytakes.io.config import get_data_item
-from pytakes.nlp.collections import MinerCollection
+from pytakes import MinerCollection
 from pytakes.util.db_reader import DbInterface
 
 DEFAULT_NEGATION_VARIATION = -1

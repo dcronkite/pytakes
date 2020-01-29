@@ -20,10 +20,10 @@ import copy
 import numbers
 from typing import List
 
-from pytakes.io.base import Dictionary
-from pytakes.nlp import convert
-from pytakes.nlp.miner import Miner
-from pytakes.nlp.terms import Term, Concept
+from ..io.base import Dictionary
+from . import convert
+from .miner import Miner
+from .terms import Term, Concept
 
 
 class ConceptMiner(Miner):

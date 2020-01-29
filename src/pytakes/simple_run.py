@@ -1,16 +1,8 @@
 import os
 from datetime import datetime
 
-from pytakes.io.csv import CsvDictionary, CsvOutput
-from pytakes.dict.textitem import TextItem
-from pytakes.io.jsonl import JsonlOutput
-
-from pytakes.nlp.conceptminer import ConceptMiner
-
-from pytakes.nlp.sentence_boundary import SentenceBoundary
-
-from pytakes.nlp.collections import MinerCollection
-from pytakes.nlp.statusminer import StatusMiner
+from pytakes import CsvDictionary, CsvOutput, TextItem, JsonlOutput
+from pytakes import ConceptMiner, SentenceBoundary, MinerCollection, StatusMiner
 
 
 def process(file, mc: MinerCollection):

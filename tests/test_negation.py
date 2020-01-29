@@ -1,4 +1,4 @@
-from pytakes.nlp.statusminer import StatusMiner, Word, Negation, Term
+from pytakes import StatusMiner, Word, Negation, Term
 
 
 def test_negation_bidirectional():

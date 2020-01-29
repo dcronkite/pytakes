@@ -1,6 +1,6 @@
-from pytakes.io.csv import CsvDictionary, CsvDocument, CsvOutput
-from pytakes.io.sas import SasDictionary, SasDocument
-from pytakes.io.sql import SqlDictionary, SqlDocument, SqlOutput
+from .csv import CsvDictionary, CsvDocument, CsvOutput
+from .sas import SasDictionary, SasDocument
+from .sql import SqlDictionary, SqlDocument, SqlOutput
 
 data_items = {
     'sql': {

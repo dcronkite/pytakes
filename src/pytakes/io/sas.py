@@ -7,8 +7,8 @@ except ImportError:
     logging.warning(f'Missing SAS7BDAT library: will not be able to read from SAS.')
     SAS7BDAT = None
 
-from pytakes.io.base import Dictionary, Document
-from pytakes.dict.textitem import TextItem
+from .base import Dictionary, Document
+from ..dict.textitem import TextItem
 
 
 class SasDictionary(Dictionary):

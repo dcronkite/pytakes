@@ -18,7 +18,6 @@ Modified so that it will:
 Edited: 2may13
 Editor: David Cronkite, GHRI
 """
-import logging
 import re
 import sqlite3
 import pkg_resources

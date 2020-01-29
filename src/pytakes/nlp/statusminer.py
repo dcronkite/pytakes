@@ -20,7 +20,7 @@ import sqlite3
 import pkg_resources
 import regex as re
 
-from pytakes.nlp.miner import Miner
+from .miner import Miner
 from .terms import *
 
 

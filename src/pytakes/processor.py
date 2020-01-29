@@ -11,12 +11,10 @@ import logging
 import logging.config
 from typing import List
 
-from pytakes.io.base import Document, Dictionary, Output
-from pytakes.nlp.collections import MinerCollection
-from pytakes.nlp.conceptminer import ConceptMiner
-from pytakes.nlp.statusminer import StatusMiner
+from pytakes import Document, Dictionary, Output
+from pytakes import MinerCollection, ConceptMiner, StatusMiner
 from pytakes.parser import parse_processor
-from .nlp.sentence_boundary import SentenceBoundary
+from pytakes import SentenceBoundary
 
 
 def prepare(documents: List[Document], dictionaries: List[Dictionary],

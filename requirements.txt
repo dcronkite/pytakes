@@ -1,1 +1,3 @@
 regex
+jinja2
+pyodbc

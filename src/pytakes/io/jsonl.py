@@ -2,7 +2,7 @@ import json
 import os
 import platform
 
-from pytakes.io.base import Output
+from .base import Output
 
 
 class JsonlOutput(Output):

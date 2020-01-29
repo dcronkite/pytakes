@@ -2,9 +2,9 @@ import os
 import csv
 import platform
 
-from pytakes.io.base import Dictionary, Output, Document
-from pytakes.dict.textitem import TextItem
-from pytakes.nlp.terms import Concept
+from .base import Dictionary, Output, Document
+from ..dict.textitem import TextItem
+from ..nlp.terms import Concept
 
 
 class CsvDictionary(Dictionary):
