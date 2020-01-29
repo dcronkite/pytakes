@@ -128,7 +128,7 @@ class StatusMiner(Miner):
         for negex, _type, direction in self.sort_rules_for_status(rules):
             negex_pat = r'\b({})\b{}'.format(r'\W+'.join(negex.split()),
                                              get_negation_string(self.NEGEX_LEVEL[rx_var], len(negex)))
-            self._rules.append((negex, re.compile(negex_pat), _type.strip('[]'), direction))
+            self._rules.append((negex, re.compile(negex_pat, re.I), _type.strip('[]'), direction))
 
     @staticmethod
     def sort_rules_for_status(rulelist, exclusions=None):
