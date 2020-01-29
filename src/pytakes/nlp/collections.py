@@ -15,7 +15,11 @@ class MinerCollection(object):
 
     def ssplit(self, text):
         if self._ssplit:
-            for sentence in self._ssplit(' '.join(text.split('\n'))):
+            # possible HACK? leaving original below, though perhaps
+            #  something like split/join should be part of the sentence
+            #  splitting algorithm itself
+            # for sentence in self._ssplit(' '.join(text.split('\n'))):
+            for sentence in self._ssplit(text):
                 yield sentence
         else:
             yield text

@@ -5,15 +5,18 @@ class TextItem(object):
     def __init__(self, text, meta_list=None):
         self.meta_ = tuple(meta_list) if meta_list else ()
         if isinstance(text, str):
-            text = [text]
+            self._orig_text = [text]
         else:
-            text = [t for t in text if t]
+            self._orig_text = [t for t in text if t]
         try:
             self.text_ = self.fix_text(text[0])
         except IndexError as e:
-            self.text_ = ""
+            self.text_ = ''
         for txt in text[1:]:
             self.add_text(txt)  # split added 20131224
+
+    def get_orig_text(self):
+        return self._orig_text[0]
 
     def add_text(self, text):
         self.text_ += '\n' + self.fix_text(text)

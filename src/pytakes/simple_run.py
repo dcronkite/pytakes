@@ -7,8 +7,7 @@ from pytakes import ConceptMiner, SentenceBoundary, MinerCollection, StatusMiner
 
 def process(file, mc: MinerCollection):
     with open(file, encoding='utf8') as fh:
-        # aid in sentence splitting, not sure if this is the best idea?
-        ti = TextItem(fh.read().replace('\n\n', '.\n\n'))
+        ti = TextItem(fh.read().split('\n\n'))
     for res, sent in mc.parse(ti):
         yield res, sent
 
