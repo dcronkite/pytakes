@@ -3,7 +3,7 @@
 """
 import json
 
-from pytakes.io.config import get_data_item
+from pytakes.iolib.config import get_data_item
 from pytakes import MinerCollection
 from pytakes.util.db_reader import DbInterface
 

@@ -1,4 +1,4 @@
-from .io import *
+from .iolib import *
 from .nlp import *
 from .dict import TextItem
 __all__ = [
