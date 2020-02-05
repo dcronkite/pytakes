@@ -1,15 +1,9 @@
-import os
 from datetime import datetime
 
-from pytakes import CsvDictionary, CsvOutput, TextItem, JsonlOutput
+from pytakes import CsvDictionary, CsvOutput, JsonlOutput
 from pytakes import ConceptMiner, SentenceBoundary, MinerCollection, StatusMiner
-
-
-def process(file, mc: MinerCollection):
-    with open(file, encoding='utf8') as fh:
-        ti = TextItem(fh.read().split('\n\n'))
-    for res, sent in mc.parse(ti):
-        yield res, sent
+from pytakes.corpus import get_next_from_corpus
+from pytakes.dict.textitem import process_textitem
 
 
 def output_context_manager(outfile, **kwargs):
@@ -19,6 +13,21 @@ def output_context_manager(outfile, **kwargs):
         return CsvOutput(outfile, **kwargs)
     else:
         raise ValueError(f'Unrecognized file type: {outfile}')
+
+
+def load_keywords(*paths):
+    return ConceptMiner([CsvDictionary(file) for file in paths])
+
+
+def load_negation(version=None, path=None, skip=False):
+    if skip:
+        return None
+    elif path:  # requirement: must precede version as sometimes 'path' is always specified
+        return StatusMiner(path=path)
+    elif version:
+        return StatusMiner(tablename=f'status{version}')
+    else:
+        raise ValueError('No negation cues provided!')
 
 
 def run(input_dir, output_dir, *keyword_files, outfile=None, negex_version=1,
@@ -36,17 +45,15 @@ def run(input_dir, output_dir, *keyword_files, outfile=None, negex_version=1,
     :return:
     """
     mc = MinerCollection(ssplit=SentenceBoundary().ssplit)
-    mc.add(ConceptMiner([CsvDictionary(file) for file in keyword_files]))
-    if not skip_negex:
-        mc.add(StatusMiner(tablename=f'status{negex_version}', path=negex_path))
+    mc.add(load_keywords(*keyword_files))
+    mc.add(load_negation(negex_version, negex_path, skip=skip_negex))
     if not outfile:
         outfile = 'extracted_concepts_{}.jsonl'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))
     with output_context_manager(outfile, path=output_dir, metalabels=['file'], hostname=hostname) as out:
-        for root, dirs, files in os.walk(input_dir):
-            for file in files:
-                for results, sent in process(os.path.join(input_dir, file), mc):
-                    for result in results:
-                        out.writerow(result, meta=[file], text=sent)
+        for ti in get_next_from_corpus(input_dir):
+            for results, sent in process_textitem(ti, mc):
+                for result in results:
+                    out.writerow(result, meta=list(ti.meta.values()), text=sent)
 
 
 if __name__ == '__main__':

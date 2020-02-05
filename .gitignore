@@ -311,3 +311,4 @@ dmypy.json
 
 # user-added
 tests/data/testout/concepts*
+/tests/data/testout/run.negex.jsonl

@@ -1,9 +1,12 @@
+from ..nlp.collections import MinerCollection
+
+
 class TextItem(object):
     """ Carries metainformation and text for a document
     """
 
-    def __init__(self, text, meta_list=None):
-        self.meta_ = tuple(meta_list) if meta_list else ()
+    def __init__(self, text, **meta):
+        self.meta = meta
         if isinstance(text, str):
             self._orig_text = [text]
         else:
@@ -25,9 +28,14 @@ class TextItem(object):
         return self.text_
 
     def get_metalist(self):
-        return self.meta_
+        return self.meta
 
     def fix_text(self, text):
         text = ' '.join(text.split('\n'))
         text.replace('don?t', "don't")  # otherwise the '?' will start a new sentence
         return text
+
+
+def process_textitem(ti: TextItem, mc: MinerCollection):
+    for res, sent in mc.parse(ti):
+        yield res, sent

@@ -11,7 +11,8 @@ class MinerCollection(object):
         self.add_words = add_intervening_words
 
     def add(self, miner: Miner):
-        self.miners.append(miner)
+        if miner is not None:
+            self.miners.append(miner)
 
     def ssplit(self, text):
         if self._ssplit:

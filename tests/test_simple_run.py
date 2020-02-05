@@ -1,6 +1,6 @@
 import os
 
-from pytakes.simple_run import run
+from pytakes.run.simple_run import run
 
 
 def do_simple_run_and_get_outdir(outfile, negation_file=None, **kwargs):
