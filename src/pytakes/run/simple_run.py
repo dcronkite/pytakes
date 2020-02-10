@@ -71,4 +71,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     run(args.input_dir, args.output_dir, *args.keyword_files,
         outfile=args.outfile, negex_version=args.negex_version,
-        skip_negex=args.skip_negex)
+        skip_negex=args.skip_negex, negex_path=args.negex_path)
