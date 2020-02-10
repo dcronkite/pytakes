@@ -1,39 +1,50 @@
+# pytakes
 Simple entity extraction module released under the MIT license.
 
+## Overview
+
+This module will look for a pre-defined set of terms in a corpus of text, and use a variation of the negex/context algorithm to determine whether these terms express negation, historical, or various other qualifiers. (The set of negation terms is also configurable.)
+
 ## Requirements ##
-* Python 3.3+
-* regex package
-* pyodbc package
+* Python 3.6+
+* See requirements.txt (`pip install -r requirements.txt`)
+    * Various requirements-_.txt files are provided depending on your needs:
+        * dev: for running tests, general development
+        * db: for connecting to database using pyodbc
+        * psql: connecting to postgres database
+        * sas: if data is stored in SAS
+      
 
 ## Prerequisites ##
-1. Generate a word list of terms to find using dictionary builder script.
-2. An input data table with the following columns (these can be altered on the automate_run script):
-    * doc_id - unique for each piece of text
-    + note_text - text of the notes themselves
+1. Generate a word list of terms/concepts ('concept dictionary')
+    * in pyTAKES, a 'concept' is a set of terms with more or less the same meaning (e.g., ckd, chronic kidney disease)
+    * the minimal should be a CSV file with three columns:
+        * id - unique int for each line
+        * cui - string label for a 'concept' ('concept unique identifier')
+        * text - text to look for
+    * dictionary builder script is also provided which help generate variations of terms(documented below)
+2. A corpus with an id (for tracking, this will be in output) and text field (for processing, extracting concepts)
 
 ## Doco ##
 
 ### Basics ###
-Until I add more doco, check out the pytakes-automate-run script (should be in your Scripts directory). Run it with the `--create-sample` option to autogenerate a sample configuration file.
 
-    pytakes-automate-run --create-sample >> config
-    # edit sample config file
-    pytakes-automate-run @config
-
-    # open the directory OUTPUT_DIRECTORY
-    # run each auto-generated batch file
-
-    # when all batch files have been run,
-    # open the "post" directory, and run the
-    # post process batch script
-
+* The entry point is `python example/run.py config.py`. 
+    * You can see an example `config.py` at `example/simple/example.config.py`
+    * `pytakes` module must be on your PYTHONPATH, so `set/export PYTHONPATH=src` prior to running
+        
 
 ### Install ###
-1. Clone from bitbucket repo.
-2. Run python setup.py install
+1. Clone from git repo: `git clone ...pytakes.git`
+2. `cd pytakes`
+3. (optional) build virtualenv
+    * `PYTHON_INSTALL/Scripts/virtualenv .venv`
+    * `pip install virtualenv` if not yet available
+4. Pip install prerequisites `pip install -r requirements.txt` 
+5. Run tests (`pytest tests`)
 
 ### Use ###
-You will need a few different input tables.
+You will need to have an input `concepts.csv` file with at least three columns (`id`, `cui`, `text`). There are several examples in the `pytakes/tests/data` directory.
 
 #### Negation Table ####
 This table implements a modified version of Chapman's ConText (see, e.g., http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.145.6566&rep=rep1&type=pdf, and https://code.google.com/archive/p/negex/).
@@ -65,21 +76,19 @@ Columns:
     * 3: term applies negation, etc. **forward and/or backward** in the sentence (e.g., 'likely')
 
 
-#### Term Table ####
+#### Concept/Term Table ####
 This is the table containing the terms you want to search for (i.e., the entities you want extracted). I have added a script to autogenerate these based on some basic configuration files.
 
     ​Column	​Type	​Description
     ​ID	​int	​identity column; unique integer for each row
-    ​CUI	​varchar(8)	​category identifier; can be used to "group" different     terms together
-    ​Fword	​varchar(80)	​first word of term
-    ​Text	​varchar(8000)	​term
-    ​Code	​varchar(45)	​unimportant value required by cTAKES (legacy)
-    ​SourceType	​varchar(45)	​unimportant value required by cTAKES (legacy)
-    ​TUI	​varchar(4)	​​unimportant value required by cTAKES (legacy)
-    ​TextLength	​int	​length of term (all characters including spaces)
-    ​RegexVariation	​int	​amount of variation: 0=none; 3=very; 1=default; see #Rules#parameters below; I suggest you just use "0"
+    ​CUI	 string	​category identifier; can be used to "group" different     terms together
+    ​Text	​string	​term
+    ​RegexVariation	​int	​amount of variation: 0=none; 3=very; 1=default; -1=don't even allow suffixes, exact matches only; see #Rules#parameters below; I suggest you just use "0" or "-1"
     ​WordOrder	​int	​how accurate must the given word order be; 2=exactly; 1=fword constraint; 0=no word order
-    Valence	​int	​this should just be "1"; pytakes is currently not implemented to work with this correctly
+    MaxIntervening	int	how many intervening words to allow when locating words; 'how many intervening words do I allow?'
+    MaxWords	int	how many words to look ahead to find the next word; is ‘how far do I look ahead after each term?’ 
+    
+MaxIntervening and MaxWords should not be used together.
     
 To autogenerate this table format, use the `pytakes-build-dictionary` script installed into the Python Scripts directory. For an example, run this with the `--create-sample` option (optionally specify the output with the `--path C:\somewhere` option. For additional specifications, see the "Dictionary Builder" section below.
 
@@ -93,47 +102,51 @@ The document table must also include a unique id for each note_text (just make a
 
 
 #### Example Config File ####
-To get started, create the following file and then run:
+I prefer to specify the configuration file as a Python file (`config.py`). Yaml and json are also accepted. See an example below (copied from `example.config.py`). Please note that the `print(config`) at the end is required.
 
-    pytakes-automate-run --create-sample >> config
-    # edit sample config file
-    pytakes-automate-run @config
-
-    # open the directory OUTPUT_DIRECTORY
-    # run each auto-generated batch file
-
-    # when all batch files have been run,
-    # open the "post" directory, and run the
-    # post process batch script
-
-
-Config.conf:
-
-    --server=MY_SERVER
-    --database=MY_DB
-    --dictionary-table=MY_DICTIONARY_TABLE
-    --negation-table=MY_NEGATION_TABLE
-    --negation-variation=0
-    --document-table=MY_DOCUMENT_TABLE
-    --meta-labels
-    doc_id   # the first one must be a unique id per document
-    date
-    --text-labels   # not yet implemented, where your text goes, defaults to "note_text"
-    note_text
-    --output-dir=OUTPUT_DIRECTORY
-    --destination-table=pytakes_out_20150217
-    --max-intervening-terms=2
-    --max-length-of-search=2
-    --regex-variation=-1
-    --mail-server-address=mail.my.org
-    --sender
-    Automated Notification,name.my@my.org
-    --recipients
-    My Name,name.my@my.org
+    config = {
+        'corpus': {  # how to get the text data
+            'directories': [  # specify path to .txt files
+                r'PATH'
+            ],
+            'connections': [  # specify other connection types
+                {
+                    'name': 'TABLENAME',
+                    'name_col': 'TEXT ID COLUMN',
+                    'text_col': 'TEXT COLUMN',
+                    # specify either driver/server/database OR connection_string
+                    # connection string examples here: https://docs.sqlalchemy.org/en/13/core/engines.html
+                    'connection_string': 'SQLALCHEMY-LIKE CONNECTION_STRING',
+                    # db args: driver/server/database
+                    'driver': 'DRIVER',  # available listed in pytakes/iolib/sqlai.py, or use connection string
+                    'server': 'SERVER',
+                    'database': 'DATABASE',
+                }
+            ]
+        },
+        'keywords': [  # path to keyword files, usually stored as CSV
+            {
+                'path': r'PATH',
+                'regex_variation': 0  # set to -1 if you don't want any expansion
+            }
+        ],
+        'negation': {  # select either version or path (not both)
+            'path': r'PATH TO NEGATION CSV FILE',
+            'version': 1,  # int (version number), built-in/default
+            'skip': False,  # bool: if skip is True: don't do negation
+        },
+        'output': {
+            'path': r'PATH TO OUTPUT DIRECTORY',
+            'outfile': 'NAME.out.jsonl',  # name of output file (or given default name)
+            'hostname': ''
+        },
+    }
+    
+    print(config)
 
     
 ## Dictionary Builder ###
-For a simple example, run:
+For a simple example, run (you will first need to install this package, run `python setup.py install` in the base directory): 
 
     pytakes-build-dictionary --create-sample --path OUTPUT_PATH
     
@@ -150,6 +163,7 @@ For a simple example, run:
    
 
 ###  OUTPUT COLUMNS ####
+Not all of these output columns are required (most don't do anything). This was originally designed for building a dictionary using cTAKES.
 
      Column	​Type	​Description
      ID	​int	​identity column; unique integer for each row
