@@ -16,16 +16,16 @@ def output_context_manager(outfile, **kwargs):
 
 
 def load_keywords(*paths):
-    return ConceptMiner([CsvDictionary(file) for file in paths])
+    return ConceptMiner([CsvDictionary(**file) for file in paths])
 
 
-def load_negation(version=None, path=None, skip=False):
+def load_negation(version=None, path=None, skip=False, variation=0):
     if skip:
         return None
     elif path:  # requirement: must precede version as sometimes 'path' is always specified
-        return StatusMiner(path=path)
+        return StatusMiner(path=path, rx_var=variation)
     elif version:
-        return StatusMiner(tablename=f'status{version}')
+        return StatusMiner(tablename=f'status{version}', rx_var=variation)
     else:
         raise ValueError('No negation cues provided!')
 
@@ -45,7 +45,7 @@ def run(input_dir, output_dir, *keyword_files, outfile=None, negex_version=1,
     :return:
     """
     mc = MinerCollection(ssplit=SentenceBoundary().ssplit)
-    mc.add(load_keywords(*keyword_files))
+    mc.add(load_keywords(*({'path': path} for path in keyword_files)))
     mc.add(load_negation(negex_version, negex_path, skip=skip_negex))
     if not outfile:
         outfile = 'extracted_concepts_{}.jsonl'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))

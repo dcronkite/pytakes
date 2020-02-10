@@ -8,7 +8,7 @@ from pytakes.run.schema import validate_config
 from pytakes.run.simple_run import load_keywords, load_negation, output_context_manager
 
 
-def run(corpus=None, output=None, keywords: List[str] = None, negation=None, logger=None):
+def run(corpus=None, output=None, keywords: List = None, negation=None, logger=None):
     """
 
     :return:

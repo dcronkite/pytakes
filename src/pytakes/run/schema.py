@@ -1,10 +1,7 @@
 import json
 
 import jsonschema
-try:
-    from ruamel import yaml
-except ModuleNotFoundError:
-    yaml = False
+
 
 JSON_SCHEMA = {
     'type': 'object',
@@ -32,16 +29,26 @@ JSON_SCHEMA = {
                 },
             }
         },
-        'keywords': {
+        'keywords': {  # paths to keyword files
             'type': 'array',
-            'items': {'type': 'string'}  # paths
+            'items': {
+                'type': 'object',
+                'properties': {
+                    'path': {'type': 'string'},
+                    'regex_variation': {'type': 'integer'},  # -1 to 3
+                    'word_order': {'type': 'integer'},
+                    'max_search': {'type': 'integer'},
+                    'max_intervening': {'type': 'integer'},
+                }
+            }
         },
         'negation': {
             'type': 'object',
             'properties': {
                 'version': {'type': 'integer'},  # built-in version
                 'path': {'type': 'string'},
-                'skip': {'type': 'boolean'}
+                'skip': {'type': 'boolean'},
+                'variation': {'type': 'integer'},
             }
         },
         'output': {
@@ -91,12 +98,23 @@ def myexec(code):
     return result
 
 
+def load_yaml(fh):
+    try:
+        import yaml  # pyyaml
+    except ModuleNotFoundError:
+        try:
+            from ruamel import yaml
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError('Missing module: `yaml`. Install pyyaml or ruamel.yaml from pip.')
+    return yaml.load(fh)
+
+
 def get_config(path):
     with open(path) as fh:
         if path.endswith('json'):
             return json.load(fh)
-        elif path.endswith('yaml') and yaml:
-            return yaml.load(fh)
+        elif path.endswith('yaml'):
+            return load_yaml(fh)
         elif path.endswith('py'):
             return eval(myexec(fh.read()))
         else:

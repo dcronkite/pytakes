@@ -19,9 +19,12 @@ config = {
         ]
     },
     'keywords': [  # path to keyword files, usually stored as CSV
-        r'PATH'
+        {
+            'path': r'PATH',
+            'regex_variation': 0  # set to -1 if you don't want any expansion
+        }
     ],
-    'negation': {
+    'negation': {  # select either version or path (not both)
         'path': r'PATH TO NEGATION CSV FILE',
         'version': 1,  # int (version number), built-in/default
         'skip': False,  # bool: if skip is True: don't do negation

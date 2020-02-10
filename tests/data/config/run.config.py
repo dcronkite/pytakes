@@ -9,7 +9,9 @@ config = {
         ],
     },
     'keywords': [  # path to keyword files, usually stored as CSV
-        os.path.join(base_path, 'data', 'concepts.csv')
+        {
+            'path': os.path.join(base_path, 'data', 'concepts.csv')
+        }
     ],
     'negation': {
         'path': os.path.join(base_path, 'data', 'negation.csv'),
