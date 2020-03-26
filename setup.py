@@ -2,13 +2,13 @@ from distutils.core import setup
 import setuptools
 
 setup(name='pytakes',
-      version='0.3',
+      version='1.0.0',
       description='Basic information extraction tool.',
       url='https://bitbucket.org/dcronkite/pytakes',
       author='dcronkite',
       license='MIT',
       classifiers=[  # from https://pypi.python.org/pypi?%3Aaction=list_classifiers
-          'Development Status :: 3 - Alpha',
+          'Development Status :: 5 - Production/Stable',
           'Intended Audience :: Science/Research',
           'Programming Language :: Python :: 3 :: Only',
           'Topic :: Text Processing :: Linguistic',
