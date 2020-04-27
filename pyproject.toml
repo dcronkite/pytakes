@@ -1,0 +1,28 @@
+[build-system]
+requires = ['flit_core >=2,<4']
+build-backend = 'flit_core.buildapi'
+
+[tool.flit.metadata]
+module = 'pytakes'
+author = 'dcronkite'
+author-email = 'dcronkite+pypi@gmail.com'
+home-page = 'https://github.com/dcronkite/pytakes'
+requires = ['regex']
+requires-python = '>=3.7'
+description-file = 'README.md'
+keywords = 'nlp information extraction'
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Science/Research',
+    'Programming Language :: Python :: 3 :: Only',
+    'Topic :: Text Processing :: Linguistic',
+    'License :: OSI Approved :: MIT License',
+]
+
+[tool.flit.scripts]
+pytakes-automate-run = "pytakes.automate_run:main"
+pytakes-negex-creator = "pytakes.negex_creator:main"
+pytakes-postprocessor = "pytakes.postprocessor:main"
+pytakes-processor = "pytakes.processor:main"
+pytakes-sendmail = "pytakes.sendmail:main"
+pytakes-build-dictionary = "pytakes.build_dictionary:main"

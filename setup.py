@@ -2,7 +2,7 @@ from distutils.core import setup
 import setuptools
 
 setup(name='pytakes',
-      version='1.0.0',
+      version='1.0.4',
       description='Basic information extraction tool.',
       url='https://bitbucket.org/dcronkite/pytakes',
       author='dcronkite',
@@ -12,6 +12,7 @@ setup(name='pytakes',
           'Intended Audience :: Science/Research',
           'Programming Language :: Python :: 3 :: Only',
           'Topic :: Text Processing :: Linguistic',
+          'License :: OSI Approved :: MIT License',
       ],
       keywords='nlp information extraction',
       entry_points={

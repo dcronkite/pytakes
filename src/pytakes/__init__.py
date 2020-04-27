@@ -1,6 +1,10 @@
+"""Basic information extraction tool."""
+__version__ = '1.0.4'
+
 from .iolib import *
 from .nlp import *
 from .dict import TextItem
+
 __all__ = [
     'CsvDictionary', 'CsvOutput', 'CsvDocument',
     'SqlDictionary', 'SqlOutput', 'SqlDocument',
