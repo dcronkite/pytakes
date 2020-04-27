@@ -4,7 +4,7 @@ import setuptools
 setup(name='pytakes',
       version='1.0.5',
       description='Basic information extraction tool.',
-      url='https://bitbucket.org/dcronkite/pytakes',
+      url='https://github.org/dcronkite/pytakes',
       author='dcronkite',
       license='MIT',
       classifiers=[  # from https://pypi.python.org/pypi?%3Aaction=list_classifiers
