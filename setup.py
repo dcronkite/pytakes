@@ -2,7 +2,7 @@ from distutils.core import setup
 import setuptools
 
 setup(name='pytakes',
-      version='1.0.4',
+      version='1.0.5',
       description='Basic information extraction tool.',
       url='https://bitbucket.org/dcronkite/pytakes',
       author='dcronkite',
