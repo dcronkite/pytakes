@@ -10,8 +10,13 @@ JSON_SCHEMA = {
             'type': 'object',
             'properties': {
                 'directories': {
-                    'type': 'array',
-                    'items': {'type': 'string'}
+                    'type': 'object',
+                    'properties': {
+                        'directory': {'type': 'string'},
+                        'encoding': {'type': 'string'},
+                        'include_extension': {'type': 'string'},
+                        'exclude_extension': {'type': 'string'},
+                    },
                 },
                 'connections': {
                     'type': 'array',
@@ -101,12 +106,13 @@ def myexec(code):
 def load_yaml(fh):
     try:
         import yaml  # pyyaml
+        return yaml.load(fh, Loader=yaml.Loader)
     except ModuleNotFoundError:
         try:
             from ruamel import yaml
+            return yaml.load(fh)
         except ModuleNotFoundError:
             raise ModuleNotFoundError('Missing module: `yaml`. Install pyyaml or ruamel.yaml from pip.')
-    return yaml.load(fh)
 
 
 def get_config(path):
