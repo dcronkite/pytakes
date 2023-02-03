@@ -17,6 +17,11 @@ Types of changes:
 
 ## [Unreleased]
 
+## 1.1.2
+
+### Fixed
+
+* `publish-to-pypi` workflow: need to quote around python version >= '3.10'
 
 ## 1.1.1
 
