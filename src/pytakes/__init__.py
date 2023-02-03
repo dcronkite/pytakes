@@ -1,5 +1,5 @@
 """Basic information extraction tool."""
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 
 from .iolib import *
 from .nlp import *

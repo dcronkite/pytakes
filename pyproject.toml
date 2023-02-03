@@ -4,7 +4,7 @@ build-backend = 'flit_core.buildapi'
 
 [project]
 module = 'pytakes'
-version = '1.1.0'
+version = '1.1.1'
 authors = [
     { name = 'dcronkite', email = 'dcronkite+pypi@gmail.com' },
 ]
