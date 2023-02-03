@@ -9,11 +9,11 @@ jobs:
     name: Publish Python distribution to TestPyPI
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - name: Setup Python 3.8
-        uses: actions/setup-python@v1
+      - uses: actions/checkout@v3
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.10
       - name: Install flit
         run: >-
           python -m
@@ -30,7 +30,7 @@ jobs:
           password: ${{ secrets.testpypi_token }}
           repository_url: https://test.pypi.org/legacy/
       - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.pypi_token }}
