@@ -17,6 +17,12 @@ Types of changes:
 
 ## [Unreleased]
 
+## 1.1.3
+
+### Fixed
+
+* `publish-to-pypi` workflow: `module` to `name`
+
 ## 1.1.2
 
 ### Fixed
