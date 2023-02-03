@@ -7,10 +7,10 @@ Purpose:
 
 import logging
 from logging.handlers import RotatingFileHandler
-import os
+from pathlib import Path
 
 
-def setup(name=__name__, logdir='log', console=True, text=True, loglevel='DEBUG', logfile=None):
+def setup(name=__name__, logdir=Path('log'), console=True, text=True, loglevel='DEBUG', logfile=None):
     """
     function:
         prepares a logger that can print to both the console and a logfile
@@ -30,8 +30,7 @@ def setup(name=__name__, logdir='log', console=True, text=True, loglevel='DEBUG'
         :param logdir:
         :param name:
     """
-    logdir = os.path.abspath(logdir)
-    os.makedirs(logdir, exist_ok=True)
+    logdir.mkdir(exist_ok=True)
     if not logfile:
         logfile = name + '.log'
 
@@ -53,7 +52,7 @@ def setup(name=__name__, logdir='log', console=True, text=True, loglevel='DEBUG'
                            'level': loglevel,
                            'class': 'logging.handlers.RotatingFileHandler',
                            'backupCount': 5,
-                           'filename': os.path.join(logdir, logfile),
+                           'filename': logdir / logfile,
                            'formatter': 'standard'
                        },
                        'console': {
@@ -78,7 +77,7 @@ def setup(name=__name__, logdir='log', console=True, text=True, loglevel='DEBUG'
     return config_dict
 
 
-def setup_local(name=__name__, logdir='log', console=True, text=True, loglevel=logging.DEBUG, logfile=None):
+def setup_local(name=__name__, logdir=Path('log'), console=True, text=True, loglevel=logging.DEBUG, logfile=None):
     """
         function:
                 prepares a logger that can print to both the console and a logfile
@@ -99,8 +98,7 @@ def setup_local(name=__name__, logdir='log', console=True, text=True, loglevel=l
                 :param loglevel:
                 :param logfile:
         """
-    logdir = os.path.abspath(logdir)
-    os.makedirs(logdir, exist_ok=True)
+    logdir.mkdir(exist_ok=True)
     logger = logging.getLogger(name)
     logger.setLevel(loglevel)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
@@ -109,7 +107,7 @@ def setup_local(name=__name__, logdir='log', console=True, text=True, loglevel=l
         logfile = name + '.log'
 
     if text:
-        txt_handler = RotatingFileHandler(os.path.join(logdir, logfile), backupCount=5)
+        txt_handler = RotatingFileHandler(logdir / logfile, backupCount=5)
         txt_handler.doRollover()
         txt_handler.setFormatter(formatter)
         logger.addHandler(txt_handler)

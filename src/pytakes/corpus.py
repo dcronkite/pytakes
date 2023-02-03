@@ -1,23 +1,36 @@
 import itertools
-import os
+from pathlib import Path
 from typing import Iterable
 
 from pytakes import TextItem
 from pytakes.iolib import sqlai
 
 
-def get_next_from_directory(directories=None, encoding='utf8'):
+def get_next_from_directories(directories, encoding='utf8'):
     for directory in directories or ():
-        for root, dirs, files in os.walk(directory):
-            for file in files:
-                fp = os.path.join(directory, file)
-                try:
-                    with open(fp, encoding=encoding) as fh:
-                        text = fh.read()
-                except FileNotFoundError:
-                    continue
-                else:
-                    yield '.'.join(file.split('.')[:-1]) or file, text
+        if isinstance(directory, dict):
+            directory['encoding'] = directory.get('encoding', encoding)
+        else:
+            directory = {
+                'directory': directory,
+                'encoding': encoding,
+            }
+        yield from get_next_from_directory(**directory)
+
+
+def get_next_from_directory(directory: Path, encoding='utf8', include_extension=None, exclude_extension=None):
+    for file in directory.iterdir():
+        if include_extension and file.suffix not in include_extension:
+            continue
+        elif exclude_extension and file.suffix in exclude_extension:
+            continue
+        try:
+            with open(file, encoding=encoding) as fh:
+                text = fh.read()
+        except FileNotFoundError:
+            continue
+        else:
+            yield file.stem, text
 
 
 def get_next_from_connections(*connections):
@@ -45,8 +58,8 @@ def get_next_from_sql(name=None, driver=None, server=None,
 
 def get_next_from_corpus(*dirs, directories=None, encoding='utf8', connections=None) -> Iterable[TextItem]:
     for doc_name, text in itertools.chain(
-            get_next_from_directory(dirs, encoding),
-            get_next_from_directory(directories, encoding),
+            get_next_from_directories(dirs, encoding),
+            get_next_from_directories(directories, encoding),
             get_next_from_connections(*connections or list())
     ):
         yield TextItem(text.split('\n\n'), file=doc_name)  # force new sentence with double-newline

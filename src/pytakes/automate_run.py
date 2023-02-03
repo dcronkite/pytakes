@@ -21,7 +21,7 @@ import argparse
 import logging
 import logging.config
 import math
-import os
+from pathlib import Path
 
 from jinja2 import Template
 from pytakes.util import mylogger
@@ -82,7 +82,7 @@ def create_batch_file(output_dir, batch_label, document_table, destination_table
                       batch_size, batch_start, batch_end, driver, server, database,
                       meta_labels, primary_key, text_labels,
                       options, python, pytakes_path, tracking_method, send_email):
-    with open(os.path.join(output_dir, 'pytakes-batch{}.bat'.format(batch_label)), 'w') as out:
+    with open(output_dir / f'pytakes-batch{batch_label}.bat', 'w') as out:
         if pytakes_path:
             out.write(Template(templates.RUN_BATCH_FILE).render(
                 batch_number=batch_label, python=python, pytakes_path=pytakes_path, send_email=send_email))
@@ -94,7 +94,7 @@ def create_batch_file(output_dir, batch_label, document_table, destination_table
     if primary_key in meta_labels:
         meta_labels.remove(primary_key)
 
-    with open(os.path.join(output_dir, 'pytakes-batch{}.conf'.format(batch_label)), 'w') as out:
+    with open(output_dir / 'pytakes-batch{batch_label}.conf', 'w') as out:
         out.write(
             Template(templates.RUN_CONF_FILE).render(
                 driver=driver, server=server, database=database, document_table=document_table,
@@ -108,14 +108,14 @@ def create_batch_file(output_dir, batch_label, document_table, destination_table
 
 def create_email_file(output_dir, filecount, destination_table,
                       recipients, sender, mail_server_address, python, pytakes_path):
-    with open(os.path.join(output_dir, 'email.conf'), 'w') as out:
+    with open(output_dir / 'email.conf', 'w') as out:
         out.write(
             Template(templates.EMAIL_CONF_FILE).render(
                 recipients=recipients, filecount=filecount, destination_table=destination_table,
                 sender=sender, mail_server_address=mail_server_address
             ))
 
-    with open(os.path.join(output_dir, 'bad_email.conf'), 'w') as out:
+    with open(output_dir / 'bad_email.conf', 'w') as out:
         out.write(
             Template(templates.BAD_EMAIL_CONF_FILE).render(
                 recipients=recipients, filecount=filecount, destination_table=destination_table,
@@ -126,14 +126,14 @@ def create_email_file(output_dir, filecount, destination_table,
 def create_post_process_batch(pp_dir, destination_table, negation_table, negation_variation, driver,
                               server, database, batch_count, python, pytakes_path,
                               tracking_method, send_email):
-    with open(os.path.join(pp_dir, 'postprocess.bat'), 'w') as out:
+    with open(pp_dir / 'postprocess.bat', 'w') as out:
         if pytakes_path:
             out.write(Template(templates.PP_BATCH_FILE).render(
                 pytakes_path=pytakes_path, python=python
             ))
         else:
             out.write(templates.PP_COMMAND_BATCH_FILE)
-    with open(os.path.join(pp_dir, 'postprocess.conf'), 'w') as out:
+    with open(pp_dir / 'postprocess.conf', 'w') as out:
         out.write(Template(templates.PP_CONF_FILE).render(
             driver=driver, server=server, database=database,
             destination_table=destination_table, negation_table=negation_table,
@@ -142,7 +142,7 @@ def create_post_process_batch(pp_dir, destination_table, negation_table, negatio
 
 
 def automate_run(dbi, cm_options, concept_miner, document_table,
-                 output_dir, destination_table,
+                 output_dir: Path, destination_table,
                  driver, server, database,
                  meta_labels, primary_key, text_labels,
                  recipients, sender, mail_server_address, negation_table, negation_variation,
@@ -165,7 +165,7 @@ def automate_run(dbi, cm_options, concept_miner, document_table,
         meta_labels.remove(primary_key)
 
     send_email = recipients and sender and mail_server_address
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir.mkdir(exist_ok=True)
     if send_email:
         create_email_file(output_dir, filecount, destination_table,
                           recipients, sender, mail_server_address, python, pytakes_path)
@@ -173,7 +173,7 @@ def automate_run(dbi, cm_options, concept_miner, document_table,
         logging.warning(
             'Skipping email: Failed to specify at least one of "recipients", "sender", and "mail server address".')
 
-    postprocess_dir = os.path.join(output_dir, 'post')
+    postprocess_dir = output_dir / 'post'
 
     batch_start = 1
     for batch_label in range(1, filecount + 1):
@@ -185,7 +185,7 @@ def automate_run(dbi, cm_options, concept_miner, document_table,
         batch_start = batch_end
 
     if concept_miner == 2:
-        os.makedirs(postprocess_dir, exist_ok=True)
+        postprocess_dir.mkdir(exist_ok=True)
         create_post_process_batch(postprocess_dir, destination_table, negation_table, negation_variation,
                                   driver, server, database, filecount + 1, python, pytakes_path,
                                   tracking_method, send_email)
@@ -198,7 +198,8 @@ def main():
     parser.add_argument('-s', '--server', required=True, help='Database server to use.')
     parser.add_argument('-d', '--database', required=True, help='Database to use.')
     parser.add_argument('--document-table', help='Table of input documents.')
-    parser.add_argument('--output-dir', help='Destination directory.')
+    parser.add_argument('--output-dir', type=Path,
+                        help='Destination directory.')
     parser.add_argument('--destination-table', help='Output table, to be created.')
 
     parser.add_argument('--concept-miner', default=2, type=int, required=False,
@@ -256,7 +257,7 @@ def main():
 
     args, _ = cparser.parse_known_args()
     if args.create_sample:
-        with open(args.create_sample, 'w') as out:
+        with open('sample_config.conf', 'w') as out:
             out.write(templates.SAMPLE_CONF_FILE)
         return
 

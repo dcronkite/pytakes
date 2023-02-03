@@ -1,5 +1,4 @@
 import json
-import os
 import platform
 
 from .base import Output
@@ -14,8 +13,7 @@ class JsonlOutput(Output):
         self.types = types
         self.hostname = hostname or platform.node()
         self.batch_number = batch_number
-        self.fp = os.path.join(path, self.name)
-        self.fh = open(self.fp, 'w')
+        self.fh = open(path / self.name, 'w')
 
     def writerow(self, feat, meta=None, text=None):
         length = len(text)

@@ -1,6 +1,6 @@
-import os
 import csv
 import platform
+from pathlib import Path
 
 from .base import Dictionary, Output, Document
 from ..dict.textitem import TextItem
@@ -18,12 +18,12 @@ class CsvDictionary(Dictionary):
         self.max_intervening = max_intervening
         self.max_search = max_search
         if name and path:
-            self.fp = os.path.join(path, self.name)
+            self.fp = path / self.name
         elif name:
-            self.fp = self.name
+            self.fp = Path(self.name)
         else:
             self.fp = path
-            self.name = os.path.basename(path)
+            self.name = path.stem
 
     def read(self):
         return self._get_terms()
@@ -71,7 +71,7 @@ class CsvDocument(Document):
         self.meta = meta
         self.order_by = order_by
         self.batch_size = batch_size
-        self.fp = os.path.join(path, self.name)
+        self.fp = path / self.name
 
     def read_next(self):
         """
@@ -98,8 +98,7 @@ class CsvOutput(Output):
         self.types = types
         self.hostname = hostname or platform.node()
         self.batch_number = batch_number
-        self.fp = os.path.join(path, self.name)
-        self.fh = open(self.fp, 'w', newline='')
+        self.fh = open(path / self.name, 'w', newline='')
         self.writer = csv.writer(self.fh)
         self.writer.writerow(self.labels)  # header
 

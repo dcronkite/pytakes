@@ -1,5 +1,5 @@
 import logging
-import os
+from pathlib import Path
 
 try:
     from sas7bdat import SAS7BDAT
@@ -13,14 +13,14 @@ from ..dict.textitem import TextItem
 
 class SasDictionary(Dictionary):
 
-    def __init__(self, path=None, valence=None,
+    def __init__(self, path: Path = None, valence=None,
                  regex_variation=None, word_order=None, **kwargs):
         super().__init__(**kwargs)
         self.path = path
         self.valence = valence
         self.regex_variation = regex_variation
         self.word_order = word_order
-        self.fp = os.path.join(path, self.name)
+        self.fp = path / self.name
 
     def read(self):
         logging.info('Getting Terms and Negation.')
@@ -41,14 +41,14 @@ class SasDictionary(Dictionary):
 
 class SasDocument(Document):
 
-    def __init__(self, path=None, order_by=None, batch_size=None, meta=None,
+    def __init__(self, path: Path = None, order_by=None, batch_size=None, meta=None,
                  text=None, **config):
         super().__init__(**config)
         self.text = text
         self.meta = meta
         self.order_by = order_by
         self.batch_size = batch_size
-        self.fp = os.path.join(path, self.name)
+        self.fp = path / self.name
 
     def read_next(self):
         with SAS7BDAT(self.fp) as fh:

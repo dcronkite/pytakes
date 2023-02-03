@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import pytest
 
@@ -10,12 +10,12 @@ from pytakes import StatusMiner
 
 @pytest.fixture
 def path():
-    return os.path.dirname(os.path.abspath(__file__))
+    return Path(__file__).absolute().parent
 
 
 @pytest.fixture
 def concept_file(path):
-    return os.path.join(path, r'data\concepts.csv')
+    return path / 'data' / 'concepts.csv'
 
 
 def test_statusminer_negated():

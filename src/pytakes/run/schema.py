@@ -1,7 +1,7 @@
 import json
+from pathlib import Path
 
 import jsonschema
-
 
 JSON_SCHEMA = {
     'type': 'object',
@@ -10,12 +10,15 @@ JSON_SCHEMA = {
             'type': 'object',
             'properties': {
                 'directories': {
-                    'type': 'object',
-                    'properties': {
-                        'directory': {'type': 'string'},
-                        'encoding': {'type': 'string'},
-                        'include_extension': {'type': 'string'},
-                        'exclude_extension': {'type': 'string'},
+                    'type': 'array',
+                    'items': {
+                        'type': 'object',
+                        'properties': {
+                            'directory': {'type': 'string'},
+                            'encoding': {'type': 'string'},
+                            'include_extension': {'type': 'string'},
+                            'exclude_extension': {'type': 'string'},
+                        },
                     },
                 },
                 'connections': {
@@ -127,7 +130,20 @@ def get_config(path):
             raise ValueError('Unrecognized configuration file type: {}'.format(path.split('.')[-1]))
 
 
+def typify_schema(conf):
+    if corpus := conf.get('corpus', None):
+        if directories := corpus.get('directories', None):
+            for directory in directories:
+                directory['directory'] = Path(directory['directory'])
+    if keywords := conf.get('keywords', None):
+        for keyword in keywords:
+            keyword['path'] = Path(keyword['path'])
+    if output := conf.get('output', None):
+        output['path'] = Path(output.get('path', '.'))
+
+
 def validate_config(path):
     conf = get_config(path)
     jsonschema.validate(conf, JSON_SCHEMA)
+    typify_schema(conf)  # make directories pathlib.Paths
     return conf

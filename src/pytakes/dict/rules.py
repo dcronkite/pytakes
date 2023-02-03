@@ -1,5 +1,4 @@
 import copy
-import os
 from itertools import product
 
 import regex as re
@@ -146,7 +145,7 @@ def read_files(catfiles, categories):
 
 def read_file(catfile, categories):
     with open(catfile) as f:
-        cat = os.path.splitext(os.path.split(catfile)[-1])[0]
+        cat = catfile.stem
         for line in f.readlines():
             line = line.strip()
             

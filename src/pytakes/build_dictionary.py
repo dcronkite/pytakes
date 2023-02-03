@@ -2,7 +2,7 @@ import argparse
 import csv
 import logging
 import logging.config
-import os
+from pathlib import Path
 
 from pytakes.dict.rules import read_file, read_rules, generate_combinations, build_rows
 from pytakes.dict.rules import read_files
@@ -13,20 +13,19 @@ from pytakes.util.utils import get_valid_args
 
 def check_if_table_exists(db, table_name):
     if db.is_sql_server_connection():
-        return db.execute_fetchone('''
+        return db.execute_fetchone(f'''
                     IF EXISTS (SELECT *
                                FROM INFORMATION_SCHEMA.TABLES
-                               WHERE TABLE_NAME = '%s')
+                               WHERE TABLE_NAME = '{table_name}')
                       SELECT COUNT(*)
-                        FROM %s
+                        FROM {table_name}
                     ELSE
                       SELECT -1
-                    ''' % (table_name, table_name)
-                                   )[0]
+                    ''')[0]
     else:  # unknown connection type: assume table doesn't exist
         logging.warning('Untested database connection: Connection is not SQL Server.')
-        logging.warning('Assuming table "{}" does not exist. If it does exist, '
-                        'delete it and restart the process.'.format(table_name))
+        logging.warning(f'Assuming table "{table_name}" does not exist. If it does exist, '
+                        'delete it and restart the process.')
         return -1
 
 
@@ -72,7 +71,8 @@ def add_rows_to_csv(rows, filename):
     with open(filename, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(
-            ['ID', 'CUI', 'Fword', 'Text', 'TextLength', 'Code', 'RegexVariation', 'WordOrder', 'Valence', 'SourceType',
+            ['ID', 'CUI', 'Fword', 'Text', 'TextLength', 'Code',
+             'RegexVariation', 'WordOrder', 'Valence', 'SourceType',
              'TUI'])
         for num, row in enumerate(rows):
             writer.writerow([num] + row + ['Custom', 'T033'])
@@ -119,54 +119,45 @@ class Generator(object):
                 return new_code
 
 
-def create_sample_directory(path=None):
+def create_sample_directory(path: Path = None):
     if not path:
-        path = ''
-    d = os.path.join(path, 'cat')
-    os.makedirs(d, exist_ok=True)
-    with open(os.path.join(d, 'categories.txt'), 'w') as out:
+        path = Path('.')
+    d = path / 'cat'
+    d.mkdir(exist_ok=True)
+    with open(d / 'categories.txt', 'w') as out:
         out.write('[good]\nSuperman\nBatman\n[evil]\n\nLoki\nTwo-Face||Two Face\n')
-    with open(os.path.join(path, 'rules.txt'), 'w') as out:
+    with open(path / 'rules.txt', 'w') as out:
         out.write('[good] vs [evil]\n[good] is a good guy\n[evil] is a villain\n')
     logging.info('Created sample directory structure.')
 
 
-def build(path=None, output=None, table=None, driver=None, server=None, database=None,
+def build(path: Path = None, output: Path = None, table=None, driver=None, server=None, database=None,
           ignore_categories=None):
-    cwd = path
-    while not path:
-        cwd = input('Parent directory of files: ')
-        try:
-            os.chdir(cwd)
-        except Exception as e:
-            logging.exception(e)
-            logging.error('Failed to find directory "{}".'.format(cwd))
+    while path is None:
+        path = Path(input('Parent directory of files: '))
+        if not path.exists():
+            logging.error(f'Failed to find directory "{path}".')
             path = None  # reset path so user gets prompt
-
-    logging.info('Current directory: {}.'.format(cwd))
+    logging.info(f'Current directory: {path}.')
     generator = Generator()
-
-    # try to find the rules and categories files
-    files = os.listdir(cwd)
 
     categories = {}
     if ignore_categories:
         logging.info('Ignoring category files.')
     else:
-        cat_dir = os.path.join(cwd, 'cat')
-        if 'cat' in files:
-            if os.path.isdir(cat_dir):
-                logging.info('Found \'cat\' directory.')
-                read_files([os.path.join(cat_dir, x) for x in os.listdir(cat_dir)], categories)
+        cat_dir = path / 'cat'
+        if cat_dir.exists():
+            if cat_dir.is_dir():
+                logging.info(f'Found directory with category files: {cat_dir}')
+                read_files((x for x in cat_dir.iterdir()), categories)
             else:
                 read_file(cat_dir, categories)
         else:
-            for file in files:
-                file = os.path.join(cwd, file)
-                if os.path.splitext(file)[1] == '.cat':
+            for file in path.iterdir():
+                if file.suffix == '.cat':
                     read_file(file, categories)
-                    logging.info('Found category file: %s.' % file)
-        logging.info('Found {} categories.'.format(len(categories)))
+                    logging.info(f'Found category file: {file}.')
+        logging.info(f'Found {len(categories)} categories.')
 
         if len(categories) == 0:
             ans = input('No categories were found, would you like\n' +
@@ -178,12 +169,11 @@ def build(path=None, output=None, table=None, driver=None, server=None, database
             return
 
     rules = []
-    for file in files:
-        file = os.path.join(cwd, file)
-        if os.path.splitext(os.path.split(file)[1])[0] == 'rules':
+    for file in path.iterdir():
+        if file.stem == 'rules':
             rules += read_rules(file, generator)
-            logging.info('Found rule file: %s.' % file)
-    logging.info('Found %d rules.' % len(rules))
+            logging.info(f'Found rule file: {file}.')
+    logging.info(f'Found {len(rules)} rules.')
 
     if len(rules) == 0:
         logging.info('Please create a rules files (e.g., "rules.txt").')
@@ -196,15 +186,15 @@ def build(path=None, output=None, table=None, driver=None, server=None, database
 
     # option to create csv_file
     if output:
-        csv_filename = output
+        csv_file = output
     else:
-        csv_filename = input('CSV filename (press enter to skip): ')
+        csv_file = input('CSV filename (press enter to skip): ')
+        if csv_file:
+            csv_file = path / csv_file.strip()
 
-    if csv_filename:
-        if csv_filename[-4:] != '.csv':
-            csv_filename += '.csv'
-        logging.info('Outputting rows to CSV: %s.' % csv_filename)
-        add_rows_to_csv(rows, os.path.join(cwd, csv_filename))
+    if csv_file:
+        logging.info(f'Outputting rows to CSV: {csv_file}.')
+        add_rows_to_csv(rows, csv_file)
 
     if table:
         newtable = table
@@ -224,15 +214,15 @@ def build(path=None, output=None, table=None, driver=None, server=None, database
         while True:
             cnt = check_if_table_exists(db, newtable)
             if cnt >= 0:
-                ans = input(('Table %s already exists with %d rows.\n' +
-                             'Are you sure you want to drop and recreate\n' +
-                             '%s? (Y/n) ') % (newtable, cnt, newtable))
-                if ans.lower() not in ['y', 'yes', 'ye']:
+                ans = input((f'Table {newtable} already exists with {cnt} rows.\n' +
+                             f'Are you sure you want to drop and recreate\n' +
+                             f'{newtable}? (Y/n) '))
+                if not ans.lower().startswith('y'):
                     # logic for 'no' answer
                     newtable = input('SQL Server table name (press enter to skip): ')
                     continue
                 else:
-                    logging.info('Dropping table %s.' % newtable)
+                    logging.info(f'Dropping table {newtable}.')
                     try:
                         drop_table(db, newtable)
                     except Exception as e:
@@ -246,11 +236,11 @@ def build(path=None, output=None, table=None, driver=None, server=None, database
             logging.exception('Exception while attempting to drop table.')
             logging.exception(e)
             raise e
-        logging.info('Adding rows to table %s.' % newtable)
+        logging.info(f'Adding rows to table {newtable}.')
         res = add_rows_to_db(rows, db, newtable)
         if res:
             row_elements = [str(x) for x in res]
-            exc_text = 'Exception while adding row: %s.' % ', '.join(row_elements)
+            exc_text = f'Exception while adding row: {", ".join(row_elements)}.'
             logging.exception(exc_text)
             raise Exception(exc_text)
     logging.info('Process completed successfully.')
@@ -258,13 +248,20 @@ def build(path=None, output=None, table=None, driver=None, server=None, database
 
 def main():
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
-    parser.add_argument('-p', '--path', default=None, help='Parent directory of folders.')
-    parser.add_argument('-o', '--output', default=None, help='Output csv file.')
-    parser.add_argument('-t', '--table', default=None, help='Output database table.')
-    parser.add_argument('--driver', default='SQL Server', help='Driver for database connection (if needed).')
-    parser.add_argument('--server', default=None, help='Server for database connection (if needed).')
-    parser.add_argument('--database', default=None, help='Database for database connection (if needed).')
-    parser.add_argument('--create-sample', default=None, action='store_true', help='Create sample directory.')
+    parser.add_argument('-p', '--path', default=None, type=Path,
+                        help='Parent directory of folders.')
+    parser.add_argument('-o', '--output', default=None, type=Path,
+                        help='Output csv file.')
+    parser.add_argument('-t', '--table', default=None,
+                        help='Output database table.')
+    parser.add_argument('--driver', default='SQL Server',
+                        help='Driver for database connection (if needed).')
+    parser.add_argument('--server', default=None,
+                        help='Server for database connection (if needed).')
+    parser.add_argument('--database', default=None,
+                        help='Database for database connection (if needed).')
+    parser.add_argument('--create-sample', default=None, action='store_true',
+                        help='Create sample directory.')
     parser.add_argument('--ignore-categories', action='store_true', default=False,
                         help='Do not look for cat files (categories).')
 

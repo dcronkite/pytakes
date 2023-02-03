@@ -1,11 +1,11 @@
-import os
+from pathlib import Path
 
 from pytakes.nlp.statusminer import StatusMiner
 
 
 def test_load_from_csv():
-    path = os.path.dirname(os.path.abspath(__file__))
-    csv_file = os.path.join(path, 'data', 'negation.csv')
+    path = Path(__file__).absolute().parent
+    csv_file = path / 'data' / 'negation.csv'
     rules = list(StatusMiner.load_negex_from_csv(csv_file))
     assert len(rules) == 12
     regex_loaded = False  # was regular expression correctly loaded
