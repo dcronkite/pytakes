@@ -18,6 +18,15 @@ Types of changes:
 ## [Unreleased]
 
 
+## 1.1.1
+
+### Fixed
+
+* `publish-to-pypi` workflow
+  * Python 3.10 as build target
+  * reference released versions
+* Fixed `pyproject.toml` to use `[project]`
+
 ## 1.1.0
 
 ### Added
