@@ -17,6 +17,16 @@ Types of changes:
 
 ## [Unreleased]
 
+## 1.2.0
+
+### Fixed
+
+* Updated homepage, version, description in `pyproject.toml`
+
+### Removed
+
+* `setup.py` in favor of `pyproject.toml`
+
 ## 1.1.3
 
 ### Fixed
