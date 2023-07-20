@@ -66,7 +66,20 @@ should be 'qualified' in different ways. Within the recommended `jsonl` output, 
 the `qualifiers` key. Consider the following example:
 
 ```json
-"qualifiers": {"certainty": 0, "hypothetical": true, "historical": false, "other_subject": false, "terms": ["not", "afraid"]}
+{
+  ...
+  "qualifiers": {
+    "certainty": 0,
+    "hypothetical": true,
+    "historical": false,
+    "other_subject": false,
+    "terms": [
+      "not",
+      "afraid"
+    ]
+  },
+  ...
+}
 ```
 
 All values begin as `False` except `certainty` which starts as 4, meaning `definite`/`affirmative`. Here, `certainty` is
