@@ -29,6 +29,7 @@ class JsonlOutput(Output):
                 'hypothetical': feat.is_hypothetical(),
                 'historical': feat.is_historical(),
                 'other_subject': feat.is_not_patient(),
+                'terms': feat.qualifiers,
             },
             'start_index': feat.get_absolute_begin(),
             'end_index': feat.get_absolute_end(),

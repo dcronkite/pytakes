@@ -154,7 +154,7 @@ class StatusMiner(Miner):
     def extract(self, terms):
         return []
 
-    def mine(self, text, offset):
+    def mine(self, text, offset=0):
         """
         Find negations in a piece of text. If called sentence by
         sentence, set 'offset' to the len() of all previous
@@ -192,16 +192,18 @@ class StatusMiner(Miner):
         STATUS = 1
         OVERLAP = 2
         COUNTER = 3
+        STRING = 4
 
-        def found_term(ind, _type):
+        def found_term(ind, term_):
             """ updates ind[icator] when a term is found
             :param ind:
             :param _type:
             """
-            ind[TYPE] = _type
+            ind[TYPE] = term_.type()
             ind[STATUS] = 1
             ind[OVERLAP] = 0
             ind[COUNTER] = 0
+            ind[STRING] = term_.word()
 
         def overlap_term(ind):
             """ updates ind[icator] when overlap found
@@ -219,22 +221,22 @@ class StatusMiner(Miner):
             :param sentence:
             :param directions:
             """
-            negtype = ['', 0, 0, 0]
-            hypotype = ['', 0, 0, 0]
-            temptype = ['', 0, 0, 0]
-            subjtype = ['', 0, 0, 0]
+            negtype = ['', 0, 0, 0, None]
+            hypotype = ['', 0, 0, 0, None]
+            temptype = ['', 0, 0, 0, None]
+            subjtype = ['', 0, 0, 0, None]
             types = [negtype, hypotype, temptype, subjtype]
             for idx, term in enumerate(sentence):
 
                 if term.direction() in directions:
                     if term.type() in self.NEGATION_TAGS:
-                        found_term(negtype, term.type())
+                        found_term(negtype, term)
                     elif term.type() in self.HYPOTHETICAL_TAGS:
-                        found_term(hypotype, term.type())
+                        found_term(hypotype, term)
                     elif term.type() in self.TEMPORAL_TAGS:
-                        found_term(temptype, term.type())
+                        found_term(temptype, term)
                     elif term.type() in self.SUBJECT_TAGS:
-                        found_term(subjtype, term.type())
+                        found_term(subjtype, term)
 
                 elif term.type() in self.STOP_TAGS:
                     for _type in types:
@@ -261,21 +263,21 @@ class StatusMiner(Miner):
                     if _type[STATUS] == 1 and _type[OVERLAP] == 0 and _type[COUNTER] <= self._maxscope:
                         # ignoring affirmation tag (affm)
                         if _type[TYPE] == 'negn':
-                            term.negate()
+                            term.negate(_type[STRING])
                         elif _type[TYPE] == 'impr':
-                            term.improbable()
+                            term.improbable(_type[STRING])
                         elif _type[TYPE] == 'poss':
-                            term.possible()
+                            term.possible(_type[STRING])
                         elif _type[TYPE] == 'prob':
-                            term.probable()
+                            term.probable(_type[STRING])
                         if _type[TYPE] == 'hypo':
-                            term.hypothetical()
+                            term.hypothetical(_type[STRING])
                         if _type[TYPE] == 'futp':
-                            term.hypothetical()
+                            term.hypothetical(_type[STRING])
                         if _type[TYPE] == 'hist':
-                            term.historical()
+                            term.historical(_type[STRING])
                         if _type[TYPE] == 'othr':
-                            term.other_subject()
+                            term.other_subject(_type[STRING])
 
             return sentence
             # end inner function

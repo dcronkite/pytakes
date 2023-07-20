@@ -221,7 +221,9 @@ class ConceptMiner(Miner):
                                                   cid,
                                                   max_search,
                                                   max_intervening,
-                                                  self.cid_word_order[cid])  # word order (added 2013-11-19)
+                                                  self.cid_word_order[cid],
+                                                  qualifiers=cword.qualifiers,
+                                                  )
                     else:  # one-term concept (remain_set is empty list/set)
                         concept = Concept(cword.word(),
                                           cword.begin(),
@@ -232,7 +234,9 @@ class ConceptMiner(Miner):
                                           cword.is_hypothetical(),
                                           cword.is_historical(),
                                           cword.is_not_patient(),
-                                          offset=cword.offset_)
+                                          offset=cword.offset_,
+                                          qualifiers=cword.qualifiers,
+                                          )
                     if concept:  # function might return "False"
                         concepts.append(concept)
             else:  # current word is not a Term
@@ -240,7 +244,7 @@ class ConceptMiner(Miner):
         return concepts
 
     def _aggregate(self, words, remain_set, certainty, hypothetical, historical,
-                   not_patient, start_idx, cid, words_to_look_at, max_intervening_words, word_order):
+                   not_patient, start_idx, cid, words_to_look_at, max_intervening_words, word_order, qualifiers=None):
         """
         Look through subsequent words for additional terms to determine if the concept is contained in the text.
 
@@ -257,6 +261,8 @@ class ConceptMiner(Miner):
         @param word_order: word ordering requirements for current concept
         @return: found Concept or False
         """
+        if qualifiers is None:
+            qualifiers = []
         words_to_look_at_incr = words_to_look_at
         orig_words = words
         words = words[1:]
@@ -278,6 +284,8 @@ class ConceptMiner(Miner):
                         hypothetical = max(hypothetical, nword.is_hypothetical())
                         historical = max(historical, nword.is_historical())
                         not_patient = max(not_patient, nword.is_not_patient())
+                        if nword.qualifiers:
+                            qualifiers += nword.qualifiers
                         if temp_remain_set:  # more terms to find
                             remain_set = temp_remain_set
                         else:  # empty list or set (cannot be None)
@@ -290,7 +298,9 @@ class ConceptMiner(Miner):
                                            hypothetical,
                                            historical,
                                            not_patient,
-                                           offset=nword.offset_)
+                                           offset=nword.offset_,
+                                           qualifiers=qualifiers,
+                                           )
 
             else:
                 break

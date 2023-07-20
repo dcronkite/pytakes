@@ -1,4 +1,6 @@
-from pytakes import StatusMiner, Word, Negation, Term
+from pytakes import StatusMiner, Word, Negation, Term, TextItem, MinerCollection, ConceptMiner
+from pytakes.dict.textitem import process_textitem
+from pytakes.iolib.txt import TxtDictionary
 
 
 def test_negation_bidirectional():
@@ -72,3 +74,15 @@ def test_negation_end_scope_conj():
     assert terms[0].is_negated()
     assert terms[-3].is_negated()  # negates 'beer'
     assert not terms[-1].is_negated()  # 'or' blocks 'wine' from being negated
+
+
+def test_default_negation():
+    ti = TextItem(['I am not happy.'])
+    mc = MinerCollection()
+    mc.add(ConceptMiner([TxtDictionary('happy', 'sad')]))
+    mc.add(StatusMiner())
+    concepts = [found for found, sentence in process_textitem(ti, mc)][0]
+    assert len(concepts) == 1  # 'happy'
+    assert concepts[0].type_ == 'concept'
+    assert concepts[0].get_certainty() == 0
+    assert concepts[0].qualifiers == ['not']

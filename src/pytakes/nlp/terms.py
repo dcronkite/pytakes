@@ -21,6 +21,7 @@ class Word(object):
         self.other_ = False  # for status only
         self.historical_ = False  # for status only
         self.direction_ = 0
+        self.qualifiers = []
 
     def get_absolute_begin(self):
         return self.begin() + self.offset_
@@ -61,29 +62,43 @@ class Word(object):
     def is_not_patient(self):
         return self.other_
 
-    def negate(self):
+    def negate(self, qualifier=None):
         self.certainty_ = 0
+        if qualifier:
+            self.qualifiers.append(qualifier)
 
-    def improbable(self):
+    def improbable(self, qualifier=None):
         if self.certainty_ > 1:  # added 20140109
             self.certainty_ = 1
+            if qualifier:
+                self.qualifiers.append(qualifier)
 
-    def possible(self):
+    def possible(self, qualifier=None):
         if self.certainty_ > 2:  # added 20140109
             self.certainty_ = 2
+            if qualifier:
+                self.qualifiers.append(qualifier)
 
-    def probable(self):
+    def probable(self, qualifier=None):
         if self.certainty_ > 3:  # added 20140109
             self.certainty_ = 3
+            if qualifier:
+                self.qualifiers.append(qualifier)
 
-    def hypothetical(self):
+    def hypothetical(self, qualifier=None):
         self.hypothetical_ = True
+        if qualifier:
+            self.qualifiers.append(qualifier)
 
-    def historical(self):
+    def historical(self, qualifier=None):
         self.historical_ = True
+        if qualifier:
+            self.qualifiers.append(qualifier)
 
-    def other_subject(self):
+    def other_subject(self, qualifier=None):
         self.other_ = True
+        if qualifier:
+            self.qualifiers.append(qualifier)
 
     def direction(self):
         return self.direction_
@@ -156,7 +171,8 @@ class Term(Word):
 
 class Concept(Term):
     def __init__(self, word, begin, end, id_, cat, certainty=4,
-                 hypothetical=0, historical=0, not_patient=0, offset=0):
+                 hypothetical=0, historical=0, not_patient=0, offset=0,
+                 qualifiers=None):
         """
         For backwards compatibility:
             certainty used to be neg(ated), boolean
@@ -181,6 +197,7 @@ class Concept(Term):
                 self.historical()
             if not_patient:
                 self.other_subject()
+        self.qualifiers = qualifiers or []
 
     def cat(self):
         return self.cat_
