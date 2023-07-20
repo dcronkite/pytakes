@@ -1,5 +1,5 @@
 """Simple entity extraction module from a lexicon."""
-__version__ = '1.2.0'
+__version__ = '1.2.1'
 
 from .iolib import *
 from .nlp import *

@@ -17,6 +17,13 @@ Types of changes:
 
 ## [Unreleased]
 
+## 1.2.1 - 2023-07-20
+
+### Added
+
+* Better documentation to negation
+* Specify which terms caused change in Concept status (`jsonl` output only)
+
 ## 1.2.0
 
 ### Fixed
