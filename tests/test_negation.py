@@ -12,8 +12,8 @@ def test_negation_bidirectional():
         Term('beer', 10, 14, 'C02', 2),
     ]
     miner.postprocess(terms)
-    assert terms[0].is_negated()
-    assert terms[-1].is_negated()
+    assert terms[0].negated
+    assert terms[-1].negated
 
 
 def test_negation_forward():
@@ -25,8 +25,8 @@ def test_negation_forward():
         Term('beer', 10, 14, 'C02', 2),
     ]
     miner.postprocess(terms)
-    assert not terms[0].is_negated()
-    assert terms[-1].is_negated()
+    assert not terms[0].negated
+    assert terms[-1].negated
 
 
 def test_negation_backward():
@@ -38,8 +38,8 @@ def test_negation_backward():
         Term('beer', 10, 14, 'C02', 2),
     ]
     miner.postprocess(terms)
-    assert terms[0].is_negated()
-    assert not terms[-1].is_negated()
+    assert terms[0].negated
+    assert not terms[-1].negated
 
 
 def test_negation_with_punct():
@@ -71,9 +71,9 @@ def test_negation_end_scope_conj():
         Term('wine', 18, 22, 'C02', 3),
     ]
     miner.postprocess(terms)
-    assert terms[0].is_negated()
-    assert terms[-3].is_negated()  # negates 'beer'
-    assert not terms[-1].is_negated()  # 'or' blocks 'wine' from being negated
+    assert terms[0].negated
+    assert terms[-3].negated  # negates 'beer'
+    assert not terms[-1].negated  # 'or' blocks 'wine' from being negated
 
 
 def test_default_negation():
@@ -83,6 +83,6 @@ def test_default_negation():
     mc.add(StatusMiner())
     concepts = [found for found, sentence in process_textitem(ti, mc)][0]
     assert len(concepts) == 1  # 'happy'
-    assert concepts[0].type_ == 'concept'
-    assert concepts[0].get_certainty() == 0
+    assert concepts[0].kind == 'concept'
+    assert concepts[0].certainty == 0
     assert concepts[0].qualifiers == ['not']

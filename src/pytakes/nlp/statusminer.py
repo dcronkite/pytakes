@@ -175,7 +175,7 @@ class StatusMiner(Miner):
         # rules already sorted by length of negation expression
         for negex, pattern, _type, direction in self._rules:
             for m in pattern.finditer(text):
-                n = Negation(negex, m.start(), m.end(), _type=_type, direction=direction, offset=offset)
+                n = Negation(negex, m.start(), m.end(), kind=_type, direction=direction, offset=offset)
                 # longer sequences will trump smaller ones
                 if n not in negations:
                     negations.append(n)
@@ -199,11 +199,11 @@ class StatusMiner(Miner):
             :param ind:
             :param _type:
             """
-            ind[TYPE] = term_.type()
+            ind[TYPE] = term_.kind
             ind[STATUS] = 1
             ind[OVERLAP] = 0
             ind[COUNTER] = 0
-            ind[STRING] = term_.word()
+            ind[STRING] = term_.word
 
         def overlap_term(ind):
             """ updates ind[icator] when overlap found
@@ -228,30 +228,30 @@ class StatusMiner(Miner):
             types = [negtype, hypotype, temptype, subjtype]
             for idx, term in enumerate(sentence):
 
-                if term.direction() in directions:
-                    if term.type() in self.NEGATION_TAGS:
+                if term.direction in directions:
+                    if term.kind in self.NEGATION_TAGS:
                         found_term(negtype, term)
-                    elif term.type() in self.HYPOTHETICAL_TAGS:
+                    elif term.kind in self.HYPOTHETICAL_TAGS:
                         found_term(hypotype, term)
-                    elif term.type() in self.TEMPORAL_TAGS:
+                    elif term.kind in self.TEMPORAL_TAGS:
                         found_term(temptype, term)
-                    elif term.type() in self.SUBJECT_TAGS:
+                    elif term.kind in self.SUBJECT_TAGS:
                         found_term(subjtype, term)
 
-                elif term.type() in self.STOP_TAGS:
+                elif term.kind in self.STOP_TAGS:
                     for _type in types:
                         overlap_term(_type)
 
-                elif term.type() in self.NEGATION_TAGS:
+                elif term.kind in self.NEGATION_TAGS:
                     overlap_term(negtype)
 
-                elif term.type() in self.TEMPORAL_TAGS:
+                elif term.kind in self.TEMPORAL_TAGS:
                     overlap_term(temptype)
 
-                elif term.type() in self.HYPOTHETICAL_TAGS:
+                elif term.kind in self.HYPOTHETICAL_TAGS:
                     overlap_term(hypotype)
 
-                elif term.type() in self.SUBJECT_TAGS:
+                elif term.kind in self.SUBJECT_TAGS:
                     overlap_term(subjtype)
 
                 else:
@@ -265,33 +265,27 @@ class StatusMiner(Miner):
                         if _type[TYPE] == 'negn':
                             term.negate(_type[STRING])
                         elif _type[TYPE] == 'impr':
-                            term.improbable(_type[STRING])
+                            term.set_improbable(_type[STRING])
                         elif _type[TYPE] == 'poss':
-                            term.possible(_type[STRING])
+                            term.set_possible(_type[STRING])
                         elif _type[TYPE] == 'prob':
-                            term.probable(_type[STRING])
+                            term.set_probable(_type[STRING])
                         if _type[TYPE] == 'hypo':
-                            term.hypothetical(_type[STRING])
+                            term.set_hypothetical(_type[STRING])
                         if _type[TYPE] == 'futp':
-                            term.hypothetical(_type[STRING])
+                            term.set_hypothetical(_type[STRING])
                         if _type[TYPE] == 'hist':
-                            term.historical(_type[STRING])
+                            term.set_historical(_type[STRING])
                         if _type[TYPE] == 'othr':
-                            term.other_subject(_type[STRING])
+                            term.set_other_subject(_type[STRING])
 
             return sentence
             # end inner function
 
-        # check all FORWARD (direction=2 or 3)
-        sentence = analyze_direction(terms, [2, 3])
-
-        # reverse and check all BACKWARD/BIDIRECTIONAL (1 or 3)      
-        sentence.reverse()  # reverse sentence
-        sentence = analyze_direction(terms, [1, 3])
-
-        # put sentence back in correct order
-        sentence.reverse()  # sentence correctly ordered
-
+        sentence = analyze_direction(terms, {2, 3})  # check Forward, bidirectional
+        sentence.reverse()  # reverse sentence to check BACKWARD
+        sentence = analyze_direction(sentence, {1, 3})  # check backward, bidirectional
+        sentence.reverse()  # sentence back into correct order
         return sentence
 
     def clean(self, text):

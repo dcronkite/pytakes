@@ -146,7 +146,7 @@ def postprocess(dbi,
             text = row[col_idx]
             orig_row = copy.copy(row)
             for negConcept in tagger.find_negation(text):
-                _type = negConcept.type().lower()
+                _type = negConcept.kind.lower()
                 if _type == header.NEGATION_TYPE:
                     row[out_columns.index(header.CERTAINTY)] = 0
                 elif _type == header.IMPROBABLE_TYPE:

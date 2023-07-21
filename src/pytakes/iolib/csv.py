@@ -108,24 +108,24 @@ class CsvOutput(Output):
         if text:
             length = len(text)
             self.writer.writerow(meta +
-                                 [feat.id(),
-                                  feat.cat(),
-                                  self._get_text(text, feat.begin(), feat.end()),
-                                  self._get_text(text, self._get_index(length, feat.begin() - self.context_width),
-                                                 self._get_index(length, feat.end() + self.context_width)),
-                                  feat.get_certainty(),
-                                  feat.is_hypothetical(),
-                                  feat.is_historical(),
-                                  feat.is_not_patient(),
-                                  feat.get_absolute_begin(),
-                                  feat.get_absolute_end(),
+                                 [feat.id,
+                                  feat.cat,
+                                  self._get_text(text, feat.begin, feat.end),
+                                  self._get_text(text, self._get_index(length, feat.begin - self.context_width),
+                                                 self._get_index(length, feat.end + self.context_width)),
+                                  feat.certainty,
+                                  feat.hypothetical,
+                                  feat.historical,
+                                  feat.other,
+                                  feat.absolute_begin,
+                                  feat.absolute_end,
                                   self.hostname,
                                   self.batch_number
                                   ]
                                  )
         else:  # no text
             self.writer.writerow(meta +
-                                 [text[feat.begin():feat.end()].strip(),
+                                 [text[feat.begin:feat.begin].strip(),
                                   None,
                                   None,
                                   None,

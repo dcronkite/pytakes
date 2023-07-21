@@ -10,166 +10,136 @@ from functools import total_ordering
 
 @total_ordering
 class Word(object):
-    def __init__(self, word, begin, end, _type='term', offset=0):
-        self.word_ = word
-        self.begin_ = begin
-        self.end_ = end
-        self.type_ = _type.lower()
-        self.offset_ = offset
-        self.certainty_ = 4  # 0-4 (neg to affm)
-        self.hypothetical_ = False  # for status only
-        self.other_ = False  # for status only
-        self.historical_ = False  # for status only
-        self.direction_ = 0
+    __slots__ = ['word', 'begin', 'end', 'kind', 'offset',
+                 'certainty', 'hypothetical', 'other', 'historical',
+                 'direction', 'qualifiers']
+
+    def __init__(self, word, begin, end, kind='term', offset=0):
+        self.word = str(word)
+        self.begin = begin
+        self.end = end
+        self.kind = kind.lower()
+        self.offset = offset
+        self.certainty = 4  # 0-4 (neg to affm)
+        self.hypothetical = False  # for status only
+        self.other = False  # for status only
+        self.historical = False  # for status only
+        self.direction = 0
         self.qualifiers = []
 
-    def get_absolute_begin(self):
-        return self.begin() + self.offset_
+    @property
+    def absolute_begin(self):
+        return self.begin + self.offset
 
-    def get_absolute_end(self):
-        return self.end() + self.offset_
+    @property
+    def absolute_end(self):
+        return self.end + self.offset
 
-    def is_negated(self, normal=True):
-        if normal:
-            return self.certainty_ == 0
-        else:
-            return not self.negated_
+    @property
+    def negated(self):
+        return self.certainty == 0
 
-    def is_improbable(self):
-        return self.certainty_ == 1
+    @property
+    def improbable(self):
+        return self.certainty == 1
 
-    def is_possible(self):
-        return self.certainty_ == 2
+    @property
+    def possible(self):
+        return self.certainty == 2
 
-    def is_probable(self):
-        return self.certainty_ == 3
+    @property
+    def probable(self):
+        return self.certainty == 3
 
-    def is_affirmed(self):
-        return self.certainty_ == 4
-
-    def get_certainty(self):
-        return self.certainty_
-
-    def set_certainty(self, level):
-        self.certainty_ = level
-
-    def is_hypothetical(self):
-        return self.hypothetical_
-
-    def is_historical(self):
-        return self.historical_
-
-    def is_not_patient(self):
-        return self.other_
+    @property
+    def affirmed(self):
+        return self.certainty == 4
 
     def negate(self, qualifier=None):
-        self.certainty_ = 0
+        self.certainty = 0
         if qualifier:
             self.qualifiers.append(qualifier)
 
-    def improbable(self, qualifier=None):
-        if self.certainty_ > 1:  # added 20140109
-            self.certainty_ = 1
+    def set_improbable(self, qualifier=None):
+        if self.certainty > 1:  # added 20140109
+            self.certainty = 1
             if qualifier:
                 self.qualifiers.append(qualifier)
 
-    def possible(self, qualifier=None):
-        if self.certainty_ > 2:  # added 20140109
-            self.certainty_ = 2
+    def set_possible(self, qualifier=None):
+        if self.certainty > 2:  # added 20140109
+            self.certainty = 2
             if qualifier:
                 self.qualifiers.append(qualifier)
 
-    def probable(self, qualifier=None):
-        if self.certainty_ > 3:  # added 20140109
-            self.certainty_ = 3
+    def set_probable(self, qualifier=None):
+        if self.certainty > 3:  # added 20140109
+            self.certainty = 3
             if qualifier:
                 self.qualifiers.append(qualifier)
 
-    def hypothetical(self, qualifier=None):
-        self.hypothetical_ = True
+    def set_hypothetical(self, qualifier=None):
+        self.hypothetical = True
         if qualifier:
             self.qualifiers.append(qualifier)
 
-    def historical(self, qualifier=None):
-        self.historical_ = True
+    def set_historical(self, qualifier=None):
+        self.historical = True
         if qualifier:
             self.qualifiers.append(qualifier)
 
-    def other_subject(self, qualifier=None):
-        self.other_ = True
+    def set_other_subject(self, qualifier=None):
+        self.other = True
         if qualifier:
             self.qualifiers.append(qualifier)
-
-    def direction(self):
-        return self.direction_
-
-    def begin(self):
-        return self.begin_
-
-    def set_begin(self, begin):
-        self.begin_ = begin
-
-    def end(self):
-        return self.end_
-
-    def set_end(self, end):
-        self.end_ = end
-
-    def word(self):
-        return str(self.word_)
-
-    def type(self):
-        return self.type_
 
     def __len__(self):
-        return self.end_ - self.begin_
+        return self.end - self.begin
 
     ''' Comparisons defined by relative location
         in the sentence. First term < last term. '''
 
     def __gt__(self, other):
-        return self.begin_ > other.begin_ and self.end_ > other.end_  # must account for eq implementation
+        return self.begin > other.begin and self.end > other.end  # must account for eq implementation
 
     def __eq__(self, other):
         """ equal if any overlap in indices """
-        return (self.begin_ == other.begin_ or
-                self.end_ == other.end_ or
-                (self.begin_ > other.begin_ and self.end_ < other.end_) or
-                (self.begin_ < other.begin_ and self.end_ > other.end_)
+        return (self.begin == other.begin or
+                self.end == other.end or
+                (self.begin > other.begin and self.end < other.end) or
+                (self.begin < other.begin and self.end > other.end)
                 )
 
     def __unicode__(self):
-        return str(self.word_)
+        return str(self.word)
 
     def __str__(self):
         return str(self).encode('utf-8')
 
     def __repr__(self):
-        return ('<' + str(self.word_) + ',' + str(self.begin_) + ':' +
-                str(self.end_) +
-                (',NEG' if self.is_negated() else ',POS' if self.is_possible else '') +
-                ', <' + self.type_ + '>>')
+        return ('<' + str(self.word) + ',' + str(self.begin) + ':' +
+                str(self.end) +
+                (',NEG' if self.negated else ',POS' if self.possible else '') +
+                ', <' + self.kind + '>>')
 
 
 class Term(Word):
-    def __init__(self, word, begin, end, _type, id_, offset=0):
-        super(Term, self).__init__(word, begin, end, _type, offset)
-        self.id_ = id_
+    __slots__ = ['id']
 
-    def id(self):
-        return self.id_
+    def __init__(self, word, begin, end, kind, id_, offset=0):
+        super(Term, self).__init__(word, begin, end, kind, offset)
+        self.id = id_
 
     def id_as_list(self):
-        if isinstance(self.id_, list):
-            return self.id_
-        else:
-            return [self.id_]
+        return self.id if isinstance(self.id, list) else [self.id]
 
     def add_term(self, other):
-        self.id_ = self.id_as_list() + other.id_as_list()
+        self.id = self.id_as_list() + other.id_as_list()
 
 
 class Concept(Term):
+    __slots__ = ['cat']
+
     def __init__(self, word, begin, end, id_, cat, certainty=4,
                  hypothetical=0, historical=0, not_patient=0, offset=0,
                  qualifiers=None):
@@ -178,41 +148,27 @@ class Concept(Term):
             certainty used to be neg(ated), boolean
             hypothetical used to be pos(sible), boolean
         """
-        super(Concept, self).__init__(word, begin, end, "concept", id_, offset=offset)
-        self.cat_ = cat
-
-        if isinstance(certainty, bool):  # old way
-            neg = certainty
-            pos = hypothetical
-            if neg:
-                self.negate()
-            if pos:
-                self.possible()
-
-        else:  # new way
-            self.set_certainty(certainty)
-            if hypothetical:
-                self.hypothetical()
-            if historical:
-                self.historical()
-            if not_patient:
-                self.other_subject()
+        super(Concept, self).__init__(word, begin, end, 'concept', id_, offset=offset)
+        self.cat = cat
+        self.certainty = certainty
+        self.hypothetical = hypothetical
+        self.historical = historical
+        self.other = not_patient
         self.qualifiers = qualifiers or []
-
-    def cat(self):
-        return self.cat_
 
 
 class Negation(Word):
-    def __init__(self, word, begin, end, _type='negn', direction=0, offset=0):
-        super(Negation, self).__init__(word, begin, end, _type, offset=offset)
-        self.direction_ = direction
+    __slots__ = ['direction']
+
+    def __init__(self, word, begin, end, kind='negn', direction=0, offset=0):
+        super(Negation, self).__init__(word, begin, end, kind, offset=offset)
+        self.direction = direction
         self.negate()
 
 
 def find_terms(terms, text, offset=0):
     """
-    Paramters:
+    Parameters:
         terms - list of (term,id) where unique id for each term
         :param terms:
         :param text:
@@ -242,7 +198,7 @@ def clean_terms(terms):
             elif len(terms[curr]) < len(terms[i]):
                 del terms[curr]
                 curr = i - 1
-            elif terms[curr].begin() == terms[i].begin() and terms[curr].end() == terms[i].end():
+            elif terms[curr].begin == terms[i].begin and terms[curr].begin == terms[i].begin:
                 terms[curr].add_term(terms[i])
                 del terms[i]
             else:  # keep both representations
@@ -270,10 +226,9 @@ def add_words(terms, text, offset=0):
     curr = 0
     words = []
     for term in sorted(terms):
-        if term.begin() > curr:
-            for word in text[curr:term.begin()].split():
+        if term.begin > curr:
+            for word in text[curr:term.begin].split():
                 words.append(Word(word, curr + 1, curr + 1 + len(word), offset=offset))
                 curr = curr + 1 + len(word)
-        curr = term.end()
-    # ignoring extraneous words at end of sentence
+        curr = term.end
     return words

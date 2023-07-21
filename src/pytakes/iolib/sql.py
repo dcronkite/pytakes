@@ -149,8 +149,8 @@ class SqlOutput(Output):
             Template(templates.PROC_INSERT_INTO2_QUERY).render(
                 labels=self.labels, metas=meta,
                 destination_table=self.fullname, feature=feat, text=text,
-                captured=text[feat.begin():feat.end()].strip(),
-                context=text[self._get_index(len(text), feat.begin() - 75):self._get_index(len(text), feat.end() + 75)],
+                captured=text[feat.begin:feat.begin].strip(),
+                context=text[self._get_index(len(text), feat.begin - 75):self._get_index(len(text), feat.begin + 75)],
                 hostname=self.hostname, batch_number=self.batch_number
             )
         )

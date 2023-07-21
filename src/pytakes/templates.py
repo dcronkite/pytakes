@@ -143,16 +143,16 @@ PROC_INSERT_INTO2_QUERY = r'''INSERT INTO {{ destination_table }} (
 {%- for meta in metas %}
 '{{ meta|replace("'", "''") }}',
 {%- endfor %}
-{{ feature.id() }},
+{{ feature.id }},
 '{{ captured|replace("'", "''") }}',
 '{{ context|replace("'", "''") }}',
 '{{ text|replace("'", "''") }}',
-{{ feature.get_certainty() }},
-{% if feature.is_hypothetical() %}1{% else %}0{% endif %},
-{% if feature.is_historical() %}1{% else %}0{% endif %},
-{% if feature.is_hypothetical() %}1{% else %}0{% endif %},
-{{ feature.begin() }},
-{{ feature.end() }},
+{{ feature.certainty }},
+{% if feature.hypothetical %}1{% else %}0{% endif %},
+{% if feature.historical %}1{% else %}0{% endif %},
+{% if feature.hypothetical %}1{% else %}0{% endif %},
+{{ feature.begin }},
+{{ feature.begin }},
 {{ feature.get_absolute_begin() }},
 {{ feature.get_absolute_end() }}
 {% if hostname %}, '{{ hostname|replace("'", "''") }}', {{ batch_number }}{% endif %}

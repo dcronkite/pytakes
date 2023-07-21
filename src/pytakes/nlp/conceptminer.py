@@ -200,7 +200,7 @@ class ConceptMiner(Miner):
         for i in range(len(terms)):
             cword = terms[i]
             if isinstance(cword, Term):
-                c_all_tids = set(self.get_original_term_id(cword.id()))
+                c_all_tids = set(self.get_original_term_id(cword.id))
                 for cid in self.cid_to_tids:  # look through concepts
                     max_intervening, max_search = self.cid_search_param[cid]
                     remain_set = self._get_remaining(c_all_tids, self.cid_to_tids[cid], self.cid_word_order[cid],
@@ -213,11 +213,11 @@ class ConceptMiner(Miner):
                     if remain_set:  # concept has additional terms (> 1 word)
                         concept = self._aggregate(terms[i:],
                                                   remain_set,
-                                                  cword.get_certainty(),
-                                                  cword.is_hypothetical(),
-                                                  cword.is_historical(),
-                                                  cword.is_not_patient(),
-                                                  cword.begin(),
+                                                  cword.certainty,
+                                                  cword.hypothetical,
+                                                  cword.historical,
+                                                  cword.other,
+                                                  cword.begin,
                                                   cid,
                                                   max_search,
                                                   max_intervening,
@@ -225,16 +225,16 @@ class ConceptMiner(Miner):
                                                   qualifiers=cword.qualifiers,
                                                   )
                     else:  # one-term concept (remain_set is empty list/set)
-                        concept = Concept(cword.word(),
-                                          cword.begin(),
-                                          cword.end(),
+                        concept = Concept(cword.word,
+                                          cword.begin,
+                                          cword.end,
                                           cid,
                                           self.cid_to_cat[cid],
-                                          self._check_valence(cid, cword.get_certainty()),
-                                          cword.is_hypothetical(),
-                                          cword.is_historical(),
-                                          cword.is_not_patient(),
-                                          offset=cword.offset_,
+                                          self._check_valence(cid, cword.certainty),
+                                          cword.hypothetical,
+                                          cword.historical,
+                                          cword.other,
+                                          offset=cword.offset,
                                           qualifiers=cword.qualifiers,
                                           )
                     if concept:  # function might return "False"
@@ -272,7 +272,7 @@ class ConceptMiner(Miner):
                 nword = words[j]
                 if isinstance(nword, Term):
                     # check if current term is present in current concept
-                    n_all_tids = set(self.get_original_term_id(nword.id()))
+                    n_all_tids = set(self.get_original_term_id(nword.id))
                     temp_remain_set = self._get_remaining(n_all_tids, remain_set, word_order, first_word=False)
 
                     if temp_remain_set is None:  # term not in concept
@@ -280,28 +280,27 @@ class ConceptMiner(Miner):
                     else:  # term in concept
                         words_to_look_at += words_to_look_at_incr
                         # update negex status with more egregious form
-                        certainty = min(certainty, nword.get_certainty())
-                        hypothetical = max(hypothetical, nword.is_hypothetical())
-                        historical = max(historical, nword.is_historical())
-                        not_patient = max(not_patient, nword.is_not_patient())
+                        certainty = min(certainty, nword.certainty)
+                        hypothetical = hypothetical or nword.hypothetical
+                        historical = historical or nword.historical
+                        not_patient = not_patient or nword.other
                         if nword.qualifiers:
                             qualifiers += nword.qualifiers
                         if temp_remain_set:  # more terms to find
                             remain_set = temp_remain_set
                         else:  # empty list or set (cannot be None)
-                            return Concept(' '.join([w.word() for w in orig_words[:j + 2]]),
+                            return Concept(' '.join(w.word for w in orig_words[:j + 2]),
                                            start_idx,
-                                           words[j].end(),
+                                           words[j].end,
                                            cid,
                                            self.cid_to_cat[cid],
                                            self._check_valence(cid, certainty),
                                            hypothetical,
                                            historical,
                                            not_patient,
-                                           offset=nword.offset_,
+                                           offset=nword.offset,
                                            qualifiers=qualifiers,
                                            )
-
             else:
                 break
         return False
@@ -339,7 +338,7 @@ class ConceptMiner(Miner):
                 elif len(terms[curr]) < len(terms[i]):
                     del terms[curr]
                     curr = i - 1
-                elif terms[curr].begin() == terms[i].begin() and terms[curr].end() == terms[i].end():
+                elif terms[curr].begin == terms[i].begin and terms[curr].begin == terms[i].begin:
                     terms[curr].add_term(terms[i])
                     del terms[i]
                 else:  # keep both representations
@@ -348,6 +347,5 @@ class ConceptMiner(Miner):
             else:
                 curr = i
                 i += 1
-
             if i >= len(terms):
                 return terms

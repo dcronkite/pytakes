@@ -36,7 +36,7 @@ def test_negated_sentence(concept_file):
     mc.add(StatusMiner())
     concepts, sentence = mc.parse_sentence('no bad weather', offset=0)
     for concept in concepts:
-        assert concept.is_negated()
+        assert concept.negated
 
 
 def test_improbable_sentence(concept_file):
@@ -45,7 +45,7 @@ def test_improbable_sentence(concept_file):
     mc.add(StatusMiner())
     concepts, sentence = mc.parse_sentence('no evidence of bad weather', offset=0)
     for concept in concepts:
-        assert concept.is_improbable()
+        assert concept.improbable
 
 
 def test_hypothetical_sentence(concept_file):
@@ -54,4 +54,4 @@ def test_hypothetical_sentence(concept_file):
     mc.add(StatusMiner())
     concepts, sentence = mc.parse_sentence('if there is bad weather', offset=0)
     for concept in concepts:
-        assert concept.is_hypothetical()
+        assert concept.hypothetical

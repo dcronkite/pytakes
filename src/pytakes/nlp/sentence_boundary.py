@@ -228,7 +228,7 @@ class SentenceBoundary(object):
         """
         i = 0
         for w in word:
-            if w == '.' or word[i] == '!' or word[i] == '?' or word[i] == ';':
+            if w == '.' or word[i] in '!?;':
                 i += 1
         return i
 
@@ -296,29 +296,22 @@ class SentenceBoundary(object):
         Identify all numbers
         :param word:
         """
-        if re.match(r'[+-]?\d*[.]?\d+$', word):  # all number
-            return True
-        return False
+        return re.match(r'[+-]?\d*[.]?\d+$', word)  # all number
 
     def is_num_list(self, word):
         """
         for list like:  1.   2.
         :param word:
         """
-        if re.match(r'\d+\.$', word):  # num list
-            return True
-        return False
+        return re.match(r'\d+\.$', word)  # num list
 
     def is_punct(self, w):
         """
         indentify the punctuation
         :param w:
+        NB:  '.' and '+' used in ABBR
         """
-        if w == ',' or w == '?' or w == '!' or w == '"' or w == ';' or w == ':':
-            # '.' and '+' used in ABBR
-            return True
-        else:
-            return False
+        return w in ',?!";:'
 
     def clean(self, sentence):
         """
@@ -347,7 +340,4 @@ class SentenceBoundary(object):
         These puncts are definitely a sentence boundary
         :param w:
         """
-        if w == '?' or w == '!' or w == '.' or w == ';':
-            return True
-        else:
-            return False
+        return w in '?!.;'
