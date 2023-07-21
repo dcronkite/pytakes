@@ -134,14 +134,15 @@ marked as `True` due to the term `afraid` (often in a context like 'afraid that 
 This is the table containing the terms you want to search for (i.e., the entities you want extracted). I have added a
 script to autogenerate these based on some basic configuration files.
 
-    ​Column	​Type	​Description
-    ​ID	​int	​identity column; unique integer for each row
-    ​CUI	 string	​category identifier; can be used to "group" different     terms together
-    ​Text	​string	​term
-    ​RegexVariation	​int	​amount of variation: 0=none; 3=very; 1=default; -1=don't even allow suffixes, exact matches only; see #Rules#parameters below; I suggest you just use "0" or "-1"
-    ​WordOrder	​int	​how accurate must the given word order be; 2=exactly; 1=fword constraint; 0=no word order
-    MaxIntervening	int	how many intervening words to allow when locating words; 'how many intervening words do I allow?'
-    MaxWords	int	how many words to look ahead to find the next word; is ‘how far do I look ahead after each term?’ 
+| Column	         | Type	                                                                    | Description                                                                                                                                                       |       
+|-----------------|--------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ID	             | int	                                                                     | identity column; unique integer for each row                                                                                                                      |
+| CUI	 string	    | category identifier; can be used to "group" different     terms together |
+| Text	           | string	                                                                  | term                                                                                                                                                              |
+| RegexVariation	 | int	                                                                     | amount of variation: 0=none; 3=very; 1=default; -1=don't even allow suffixes, exact matches only; see #Rules#parameters below; I suggest you just use "0" or "-1" |
+| WordOrder	      | int	                                                                     | how accurate must the given word order be; 2=exactly; 1=fword constraint; 0=no word order                                                                         |
+| MaxIntervening  | int                                                                      | how many intervening words to allow when locating words; 'how many intervening words do I allow?'                                                                 |
+| MaxWords	       | int                                                                      | how many words to look ahead to find the next word; is ‘how far do I look ahead after each term?’                                                                 | 
 
 MaxIntervening and MaxWords should not be used together.
 
@@ -213,32 +214,31 @@ directory):
 
 ### COMMAND LINE ARGUMENTS ###
 
-    Short​	​Long	​Description
-    ​-p	​--path	​Specifies parent directory of folders; program will prompt if unable to locate the directory
-    ​-o	​--output	​Specify output CSV file; if ".csv" is not included, it will be added
-    ​-t	​--table	​Specify output table in specified database (See below)
-    ​-v	​--verbosity	​Specify amount of log output to show: 3-most verbose; 0-least verbose
-    --driver	If -t is specified, driver where table should be created. Defaults to SQL Server
-    --server	If -t is specified, server where table should be created. 
-    --database	If -t is specified, database where table should be created. 
+| Short | Long        | Description                                                                                  |
+|-------|-------------|----------------------------------------------------------------------------------------------|
+| -p    | --path      | Specifies parent directory of folders; program will prompt if unable to locate the directory |
+| -o    | --output    | Specify output CSV file; if ".csv" is not included, it will be added                         |
+| -t    | --table     | Specify output table in specified database (See below)                                       |
+| -v    | --verbosity | Specify amount of log output to show: 3-most verbose; 0-least verbose                        |
+|       | --driver    | If -t is specified, driver where table should be created. Defaults to SQL Server             |
+|       | --server    | If -t is specified, server where table should be created.                                    |
+|       | --database  | If -t is specified, database where table should be created.                                  |
 
 ### OUTPUT COLUMNS ####
 
 Not all of these output columns are required (most don't do anything). This was originally designed for building a
 dictionary using cTAKES.
 
-     Column	​Type	​Description
-     ID	​int	​identity column; unique integer for each row
-     CUI	​varchar(8)	​category identifier; can be used to "group" different terms together
-     Fword	​varchar(80)	​first word of term
-     Text	​varchar(8000)	​term
-     Code	​varchar(45)	​unimportant value required by cTAKES (legacy)
-     SourceType	​varchar(45)	​unimportant value required by cTAKES (legacy)
-     TUI	​varchar(4)	​​unimportant value required by cTAKES (legacy)
-     TextLength	​int	​length of term (all characters including spaces)
-     RegexVariation	​int	​amount of variation: 0=none; 3=very; 1=default; see #Rules#parameters below
-     WordOrder	​int	​how accurate must the given word order be; 2=exactly; 1=fword constraint; 0=no word order
-     Valence	​int	​this should just be "1"; program is  not designed to work with this correctly
+| Column         | Type          | Description                                                                               |
+|----------------|---------------|-------------------------------------------------------------------------------------------|
+| ID             | int           | identity column; unique integer for each row                                              |
+| CUI            | varchar(8)    | category identifier; can be used to "group" different terms together                      |
+| Fword          | varchar(80)   | first word of term                                                                        |
+| Text           | varchar(8000) | term                                                                                      |
+| TextLength     | int           | length of term (all characters including spaces)                                          |
+| RegexVariation | int           | amount of variation: 0=none; 3=very; 1=default; see #Rules#parameters below               |
+| WordOrder      | int           | how accurate must the given word order be; 2=exactly; 1=fword constraint; 0=no word order |
+| Valence        | int           | this should just be "1"; program is not designed to work with this correctly              |
 
 ### RULES ###
 
@@ -267,22 +267,22 @@ The rule file must be named "rules" or "rules.some-extension" (e.g., "rules.txt"
 Rules may also maintain configuration parameters.The configurations are indexed in the following order (bold indicates
 the default parameter):
 
-RegexVariation (integers)
+| RegexVariation | Description                                               |
+|----------------|-----------------------------------------------------------|
+| 0              | **(Default)** no variation in regular expression coverage |
+| 1              | minimal variation in regular expression coverage          |
+| 2              | moderate variation in regular expression coverage         |
+| 3              | high flexibility in regular expression coverage           |
 
-    **0: no variation in regular expression coverage**
-    1: minimal variation in regular expression coverage
-    2: moderate variation in regular expression coverage
-    3: high flexibility in regular expression coverage
+| WordOrder | Description                           |
+|-----------|---------------------------------------|
+| 0         | free word order                       |
+| 1         | **(Default)** enforce first word rule |
+| 2         | require precise word order            |
 
-WordOrder
-
-    0: free word order
-    **1: enforce first word rule**
-    2: require precise word order
-
-Valence
-
-    **ALWAYS USE 1** or just ignore; NOT YET CORRECTLY IMPLEMENTED IN LCTAKES
+| Valence | Description                |
+|---------|----------------------------|
+| 1       | **(Default)** Always use 1 |
 
 These are designated by the double percent ('%%') and follow the rule.
 
