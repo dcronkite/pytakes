@@ -73,6 +73,14 @@ class SentenceBoundary(object):
         self.abbrevs -= self.knuthus  # remove duplicates
         self.ignorecase = ignorecase
         self.debug = debug
+        # compile regexes
+        self.double_start_pat = re.compile(r'\*\*NAME\[.{0,20}\]')
+        self.space_pat = re.compile(r'\s+')
+        self.amp_pat = re.compile(r'&amp;')
+        self.gt_pat = re.compile(r'&gt;|&gt ;|&lt;|&lt ;')
+        self.apostr_pat = re.compile(r'\'s|\'S')
+        self.numlist_pat = re.compile(r'\d+\.$')
+        self.is_digit_pat = re.compile(r'[+-]?\d*[.]?\d+$')
 
     def ssplit(self, text, debug=False):
         # debug outputs print statements
@@ -105,7 +113,7 @@ class SentenceBoundary(object):
                                     tmp += word[:-1] + ' .\n'
                             # afebrile .
                             elif (word[:-1].lower() not in self.abbrevs and
-                                    word.lower() not in self.abbrevs):
+                                  word.lower() not in self.abbrevs):
                                 tmp += (word[:-1] + ' .\n')
                             else:  # abbreviations
                                 if j + 1 < len(words):
@@ -115,14 +123,14 @@ class SentenceBoundary(object):
                                 # elevation MI. The patient was
                                 if (len(nword) > 0 and
                                         self.isupper(nword[0], True) and
-                                    # 1.0 MM. C) LEFT BREAST, ...
-                                    # added by djc 30jul13
+                                        # 1.0 MM. C) LEFT BREAST, ...
+                                        # added by djc 30jul13
                                         (nword.lower() in self.sentence_word or
-                                            (2 <= len(nword) <= 3 and
-                                             nword[0].isalpha() and
-                                             nword[-1] == ')'
-                                             )
-                                         )):
+                                         (2 <= len(nword) <= 3 and
+                                          nword[0].isalpha() and
+                                          nword[-1] == ')'
+                                         )
+                                        )):
                                     tmp += word + '\n'
                                 else:
                                     tmp += word + ' '
@@ -167,9 +175,9 @@ class SentenceBoundary(object):
                 eword = words[-1].lower()
                 # handle 'Page : '
                 if ((len(txt) > 6 and
-                        txt[:6].lower() == 'page :') or
+                     txt[:6].lower() == 'page :') or
                         (len(text[i + 1]) > 6 and
-                            text[i + 1].lower() == 'page :')):
+                         text[i + 1].lower() == 'page :')):
                     text[i] = (tmp.strip() + '\n')
                 elif tmp[-1] == '.':
                     if (len(tmp) >= 2 and
@@ -250,8 +258,7 @@ class SentenceBoundary(object):
         Some auto - inserted patterns in discharge summaries
         :param line:
         """
-        pattern1 = r'\*\*NAME\[.{0,20}\]'
-        return re.sub(pattern1, '**NAME**', line)
+        return self.double_start_pat.sub('**NAME**', line)
 
     def prepare_text(self, text):
         """
@@ -262,18 +269,10 @@ class SentenceBoundary(object):
             result - list of strings from text
             :param text:
         """
-        result = []
-        for line in text.split('\n'):
-            line = line.strip()
-            if len(line) > 0:
-                line = self.remove_double_star(line)
-                line = self.clean(line)
-                line = self.seperate_puncts(line)
-                line = re.sub(r'[ ]+', ' ', line)
-                line = line.strip()
-                if len(line) > 0:
-                    result.append(line)
-        return result
+        return [line for line in (
+            self.space_pat.sub(' ', self.seperate_puncts(self.clean(self.remove_double_star(line.strip()))))
+            for line in text.strip().split('\n')
+        ) if line]
 
     def seperate_puncts(self, line):
         """
@@ -284,11 +283,11 @@ class SentenceBoundary(object):
         for w in line:
             if self.is_punct(w):
                 if len(linee) > 0 and linee[-1] != ' ':
-                    linee = linee + ' ' + w + ' '
+                    linee = f'{linee} {w} '
                 else:
-                    linee = linee + w + ' '
+                    linee = f'{linee}{w} '
             else:
-                linee = linee + w
+                linee = f'{linee}{w}'
         return linee.strip()
 
     def is_digit(self, word):
@@ -296,14 +295,14 @@ class SentenceBoundary(object):
         Identify all numbers
         :param word:
         """
-        return re.match(r'[+-]?\d*[.]?\d+$', word)  # all number
+        return self.is_digit_pat.match(word)  # all number
 
     def is_num_list(self, word):
         """
         for list like:  1.   2.
         :param word:
         """
-        return re.match(r'\d+\.$', word)  # num list
+        return self.numlist_pat.match(word)  # num list
 
     def is_punct(self, w):
         """
@@ -318,10 +317,10 @@ class SentenceBoundary(object):
         Clean text: replace '[ ]+' into '[ ]'; remove '^[ ]+' and '[ ]+$'
         :param sentence:
         """
-        sentence = re.sub(r'&amp;', '&', sentence)
-        sentence = re.sub(r'&gt;|&gt[ ];|&lt;|&lt[ ];', ' ', sentence)
-        sentence = re.sub(r'\'s|\'S', ' \'s', sentence)
-        sentence = re.sub(r'[ ]+', ' ', sentence)
+        sentence = self.amp_pat.sub('&', sentence)
+        sentence = self.gt_pat.sub(' ', sentence)
+        sentence = self.apostr_pat.sub(' \'s', sentence)
+        sentence = self.space_pat.sub(' ', sentence)
         return sentence
 
     def get_ave_len(self, text):
