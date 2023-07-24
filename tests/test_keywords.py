@@ -12,6 +12,12 @@ from pytakes.iolib.txt import TxtDictionary
     ('Do you always write such charming long letters to her?', ['letters?'], {'regex_variation': 0}, ['letters']),
     ('charming long letters', ['letters?', r'charm\w+ letters?'], {'regex_variation': 0},
      ['charming long letters', 'letters']),
+    # show 1 deletion
+    ('Patient has anapylaxis', ['anaphylaxis'], {'regex_variation': 2}, ['anapylaxis']),
+    # fails since requires 2 deletions and 1 insertion
+    ('Patient has anafylaxis', ['anaphylaxis'], {'regex_variation': 2}, []),
+    # but this works with regex variation of 3
+    ('Patient has anafylaxis', ['anaphylaxis'], {'regex_variation': 3}, ['anafylaxis']),
 ])
 def test_concept_miner_keywords(text, rules, kwargs, expected):
     mc = MinerCollection()
