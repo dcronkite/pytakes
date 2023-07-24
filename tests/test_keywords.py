@@ -18,6 +18,7 @@ from pytakes.iolib.txt import TxtDictionary
     ('Patient has anafylaxis', ['anaphylaxis'], {'regex_variation': 2}, []),
     # but this works with regex variation of 3
     ('Patient has anafylaxis', ['anaphylaxis'], {'regex_variation': 3}, ['anafylaxis']),
+    ('Patient has anafylaxis', [r'ana(?:ph|f)ylaxis'], {'regex_variation': -1}, ['anafylaxis']),
 ])
 def test_concept_miner_keywords(text, rules, kwargs, expected):
     mc = MinerCollection()
