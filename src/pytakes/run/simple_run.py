@@ -15,8 +15,8 @@ def output_context_manager(outfile, **kwargs):
         raise ValueError(f'Unrecognized file type: {outfile}')
 
 
-def load_keywords(*paths):
-    return ConceptMiner([CsvDictionary(**file) for file in paths])
+def load_keywords(*paths, is_regex=True, convert_all=True):
+    return ConceptMiner([CsvDictionary(**file) for file in paths], is_regex=is_regex, convert_all=convert_all)
 
 
 def load_negation(version=None, path=None, skip=False, variation=0):

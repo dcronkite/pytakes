@@ -17,6 +17,10 @@ Types of changes:
 
 ## [Unreleased]
 
+### Added
+
+* Added option to specify when the included text is not a regex by setting `is_regex` to false in config
+
 ### Changed
 
 * For `regex_variation` = -1, no additions are made.

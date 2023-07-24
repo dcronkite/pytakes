@@ -47,6 +47,8 @@ JSON_SCHEMA = {
                     'word_order': {'type': 'integer'},
                     'max_search': {'type': 'integer'},
                     'max_intervening': {'type': 'integer'},
+                    'is_regex': {'type': 'boolean'},
+                    'convert_all': {'type': 'boolean'},
                 }
             }
         },
@@ -70,9 +72,9 @@ JSON_SCHEMA = {
         'logger': {
             'type': 'object',
             'properties': {
-                'verbose': {'type': 'boolean'}
+                'verbose': {'type': 'boolean'},
             }
-        }
+        },
     }
 }
 

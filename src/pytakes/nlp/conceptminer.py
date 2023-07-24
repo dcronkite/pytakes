@@ -30,7 +30,9 @@ class ConceptMiner(Miner):
 
     def __init__(self, dictionaries: List[Dictionary], *, is_regex=True, convert_all=True):
         super().__init__()
-        self.entries = [entry for d in dictionaries for entry in d.read()]
+        if len(dictionaries) == 0:
+            raise ValueError('No dictionaries supplied!')
+        self.entries = dictionaries
         self.cid_to_cat = {}  # ConceptID -> category
         self.cid_to_tids = {}  # ConceptID to TermIDs
         self.cid_search_param = {}
@@ -68,27 +70,32 @@ class ConceptMiner(Miner):
                             2: moderate variation
                             3: flexible
         """
-        for cid, term, cat, val, rxVar, wdOrder, max_intervening, max_search in self.entries:
-            # update references of ConceptID (think "CUI")
-            self.cid_to_cat[cid] = cat
-            self.cid_to_val[cid] = val
-            self.cid_word_order[cid] = wdOrder
-            self.cid_search_param[cid] = (max_intervening, max_search)
-            if wdOrder == 0:  # free word order
-                self.cid_to_tids[cid] = set()
-            elif wdOrder > 0:  # restricted word order
-                self.cid_to_tids[cid] = list()
+        for dictionary in self.entries:
+            for cid, term, cat, val, rxVar, wdOrder, max_intervening, max_search in dictionary.read():
+                # update references of ConceptID (think "CUI")
+                self.cid_to_cat[cid] = cat
+                self.cid_to_val[cid] = val
+                self.cid_word_order[cid] = wdOrder
+                self.cid_search_param[cid] = (max_intervening, max_search)
+                if wdOrder == 0:  # free word order
+                    self.cid_to_tids[cid] = set()
+                elif wdOrder > 0:  # restricted word order
+                    self.cid_to_tids[cid] = list()
 
-            for word in term.split():
-                # give each word a unique id, and treated uniquely
-                self.wordlist.append((word, self.wordID, rxVar))
-                if wdOrder == 0:
-                    self.cid_to_tids[cid].add(self.wordID)
-                if wdOrder > 0:
-                    self.cid_to_tids[cid].append(self.wordID)
-                self.wordID += 1
+                for word in term.split():
+                    # give each word a unique id, and treated uniquely
+                    self.wordlist.append((word, self.wordID, rxVar))
+                    if wdOrder == 0:
+                        self.cid_to_tids[cid].add(self.wordID)
+                    if wdOrder > 0:
+                        self.cid_to_tids[cid].append(self.wordID)
+                    self.wordID += 1
 
-        self.wordlist, upd_ids = convert.convert_to_regex(self.wordlist, is_regex=is_regex, convert_all=convert_all)
+            self.wordlist, upd_ids = convert.convert_to_regex(
+                self.wordlist,
+                is_regex=is_regex if dictionary.is_regex is None else dictionary.is_regex,
+                convert_all=convert_all if dictionary.convert_all is None else dictionary.convert_all,
+            )
 
     def add_conversion(self, newtid_to_oldtids):
         """

@@ -312,3 +312,4 @@ dmypy.json
 # user-added
 tests/data/testout/concepts*
 /tests/data/testout/run.negex.jsonl
+/tests/data/testout/run.is_regex_false.jsonl

@@ -7,6 +7,8 @@ import abc
 class Dictionary(metaclass=abc.ABCMeta):
     def __init__(self, name=None, **kwargs):
         self.name = name
+        self.is_regex = kwargs.get('is_regex', None)
+        self.convert_all = kwargs.get('convert_all', None)
 
     @abc.abstractmethod
     def read(self):
