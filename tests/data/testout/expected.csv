@@ -8,6 +8,7 @@ file1,0,WRITING,letters,""" How many letters you must have occasion to write in 
 file1,0,WRITING,Letters,Letters of business too !,4,False,False,False,77081,77088,Eumaeus,
 file1,1,WRITING,pen,""" I am afraid you do not like your pen .",0,True,False,False,77354,77357,Eumaeus,
 file1,1,WRITING,pens,I mend pens remarkably well .,4,False,False,False,77390,77394,Eumaeus,
+file1,0,WRITING,letters,"But do you always write such charming long letters to her , Mr. Darcy ?",4,False,False,False,77964,77971,Eumaeus,
 file1,0,WRITING,letter,""" It is a rule with me , that a person who can write a long letter , with ease , cannot write ill .",4,False,False,False,78144,78150,Eumaeus,
 file1,0,WRITING,letters,as flow so rapidly that I have not time to express them--by which means my letters sometimes convey no ideas at all to my correspondents .,4,False,False,False,78651,78658,Eumaeus,
 file1,0,WRITING,letter,and Mr. Darcy had much better finish his letter .,4,False,False,False,83983,83989,Eumaeus,

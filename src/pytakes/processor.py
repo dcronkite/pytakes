@@ -41,7 +41,7 @@ def prepare(documents: List[Document], dictionaries: List[Dictionary],
             for sent_no, (sentence, cleaned_text) in enumerate(mc.parse(doc)):
                 for feat, new in sentence:
                     for out in outputs:
-                        out.writerow(doc.get_metalist(), feat, text=doc.get_text())
+                        out.writerow(doc.meta, feat, text=doc.text)
     logging.info('Completed: 100%')
 
 

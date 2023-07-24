@@ -48,7 +48,7 @@ class MinerCollection(object):
 
     def parse(self, doc):
         offset = 0
-        for sentence in self.ssplit(doc.get_text()):
+        for sentence in self.ssplit(doc.text):
             sent = self.clean_sentence(sentence)
             yield self.parse_sentence(sent, offset)
             offset += len(sent)

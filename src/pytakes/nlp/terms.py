@@ -4,8 +4,10 @@
 Edit:
     2013-11-26    added direction, probability, hypothetical, etc. to Word and children
 """
-
+import re
 from functools import total_ordering
+
+from regex import Pattern
 
 
 @total_ordering
@@ -15,7 +17,10 @@ class Word(object):
                  'direction', 'qualifiers']
 
     def __init__(self, word, begin, end, kind='term', offset=0):
-        self.word = str(word)
+        if isinstance(word, Pattern):
+            self.word = word.pattern
+        else:
+            self.word = str(word)
         self.begin = begin
         self.end = end
         self.kind = kind.lower()

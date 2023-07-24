@@ -22,4 +22,5 @@ def test_run_config_jsonl():
         actual = fh.read()
     with open(path / 'data' / 'testout' / 'expected.negex.jsonl') as fh:
         expected = fh.read()
-    assert actual == expected
+    for i, (actual_line, exp_line) in enumerate(zip(actual.split('\n'), expected.split('\n'))):
+        assert actual_line == exp_line, i

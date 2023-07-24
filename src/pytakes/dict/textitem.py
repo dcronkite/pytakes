@@ -8,29 +8,12 @@ class TextItem(object):
     def __init__(self, text, **meta):
         self.meta = meta
         if isinstance(text, str):
-            self._orig_text = [text]
+            self.orig_text = [text]
         else:
-            self._orig_text = [t for t in text if t]
-        try:
-            self.text_ = self.fix_text(text[0])
-        except IndexError as e:
-            self.text_ = ''
-        for txt in text[1:]:
-            self.add_text(txt)  # split added 20131224
+            self.orig_text = [t.strip() for t in text if t.strip()]
+        self.text = '\n'.join(self.fix(t) for t in self.orig_text)
 
-    def get_orig_text(self):
-        return self._orig_text[0]
-
-    def add_text(self, text):
-        self.text_ += '\n' + self.fix_text(text)
-
-    def get_text(self):
-        return self.text_
-
-    def get_metalist(self):
-        return self.meta
-
-    def fix_text(self, text):
+    def fix(self, text):
         text = ' '.join(text.split('\n'))
         text.replace('don?t', "don't")  # otherwise the '?' will start a new sentence
         return text
@@ -38,4 +21,10 @@ class TextItem(object):
 
 def process_textitem(ti: TextItem, mc: MinerCollection):
     for res, sent in mc.parse(ti):
+        yield res, sent
+
+
+def process_text(text: str, mc: MinerCollection, **textmeta):
+    """Create a TextItem and process the text."""
+    for res, sent in mc.parse(TextItem(text, **textmeta)):
         yield res, sent

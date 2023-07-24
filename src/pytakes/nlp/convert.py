@@ -88,7 +88,7 @@ def convert_to_regex(strings_ids_rxvar, convert_all=True,
             any following strings which are matched
             by the previous regexes will not be included
         degree of regex variation-
-                    -1: no variation at all (no prefixes/suffixes)
+                    -1: no variation at all -- is already a Python-style regex
                     0: no variation; words must be exact
                     1: minimal variation
                     2: moderate variation
@@ -113,10 +113,8 @@ def convert_to_regex(strings_ids_rxvar, convert_all=True,
     regexes = []  # [(regex, id), ...]
     updated_ids = {}  # new_id -> old_id
     for string, id_, regex_variation in strings_ids_rxvar:
-        string = string.replace('(', '').replace(')', '')
-        string = string.replace('*', r'\w*')
         if regex_variation == -1:
-            regexes.append((re.compile(r'\b{}\b'.format(string), re.I), id_))
+            regexes.append((re.compile(string, re.I), id_))
             continue
 
         if not convert_all:
