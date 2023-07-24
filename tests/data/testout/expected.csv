@@ -15,5 +15,6 @@ file1,0,WRITING,letter,and Mr. Darcy had much better finish his letter .,4,False
 file1,0,WRITING,letter,"Mr. Darcy took her advice , and did finish his letter .",4,False,False,False,84040,84046,Eumaeus,
 file2,5,WEATHER,weather,"llers of the heavy lands adjacent to Paris , there were sheltered from the weather that very day , rude carts , bespattered with rustic mire , snuffed about ",3,False,False,False,2897,2904,Eumaeus,
 file2,5,WEATHER,weather,""" Yes , sir , if the weather holds and the wind sets tolerable fair .",4,True,False,False,27273,27280,Eumaeus,
+file2,0,WRITING,letter,""" I received a letter from the Bank , sir , yesterday , informing me that some intelligence--or ",4,False,False,False,36459,36465,Eumaeus,
 file3,0,WRITING,letter,"There is a letter , written in the name of the church over which he himself presided , to th",4,False,False,False,247,253,Eumaeus,
 file3,4,FATHER,his father,"And he was met by Herod , the captain of police , and by his father Nicetes , who took him into their carriage , and sitting beside him endeav",4,False,False,True,5576,5586,Eumaeus,

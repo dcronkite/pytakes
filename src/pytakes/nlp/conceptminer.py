@@ -28,7 +28,7 @@ from .terms import Term, Concept
 
 class ConceptMiner(Miner):
 
-    def __init__(self, dictionaries: List[Dictionary]):
+    def __init__(self, dictionaries: List[Dictionary], *, is_regex=True, convert_all=True):
         super().__init__()
         self.entries = [entry for d in dictionaries for entry in d.read()]
         self.cid_to_cat = {}  # ConceptID -> category
@@ -47,9 +47,9 @@ class ConceptMiner(Miner):
         self.cid_word_order = {}  # word order constraints
         self.wordlist = []
 
-        self._unpack_concepts()
+        self._unpack_concepts(is_regex=is_regex, convert_all=convert_all)
 
-    def _unpack_concepts(self):
+    def _unpack_concepts(self, *, is_regex=True, convert_all=True):
         """
         Organizes input from database
         Parameters:
@@ -88,7 +88,7 @@ class ConceptMiner(Miner):
                     self.cid_to_tids[cid].append(self.wordID)
                 self.wordID += 1
 
-        self.wordlist, upd_ids = convert.convert_to_regex(self.wordlist)
+        self.wordlist, upd_ids = convert.convert_to_regex(self.wordlist, is_regex=is_regex, convert_all=convert_all)
 
     def add_conversion(self, newtid_to_oldtids):
         """
@@ -329,23 +329,12 @@ class ConceptMiner(Miner):
         terms.sort(reverse=False)
         if len(terms) < 2:
             return terms
-        i = 1
-        curr = 0
-        while True:
-            if terms[curr] == terms[i]:
-                if len(terms[curr]) > len(terms[i]):
-                    del terms[i]
-                elif len(terms[curr]) < len(terms[i]):
-                    del terms[curr]
-                    curr = i - 1
-                elif terms[curr].begin == terms[i].begin and terms[curr].begin == terms[i].begin:
-                    terms[curr].add_term(terms[i])
-                    del terms[i]
-                else:  # keep both representations
-                    curr = i
-                    i += 1
+        curr_idx = 0
+        next_idx = 1
+        while next_idx < len(terms):
+            if terms[curr_idx] == terms[next_idx]:  # has same indices
+                terms[curr_idx].add_term(terms.pop(next_idx))
             else:
-                curr = i
-                i += 1
-            if i >= len(terms):
-                return terms
+                curr_idx += 1
+                next_idx += 1
+        return terms

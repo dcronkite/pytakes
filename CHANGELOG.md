@@ -22,6 +22,10 @@ Types of changes:
 * For `regex_variation` = -1, no additions are made.
 * Building concepts/keywords will no longer remove parentheses or expand an asterisk.
 
+### Fixed
+
+* Cases were cleaning was removing certain matches.
+
 
 ## 1.2.1 - 2023-07-20
 

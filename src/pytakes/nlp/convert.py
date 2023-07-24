@@ -69,7 +69,7 @@ def get_final_morphs():
             (re.compile(r'\b(\S+)(\W*)\b'), r'\g<1>\g<2>s?', 0)]  # pl='s'
 
 
-def convert_to_regex(strings_ids_rxvar, convert_all=True,
+def convert_to_regex(strings_ids_rxvar, convert_all=True, is_regex=True,
                      affixmorphs=None, suffixmorphs=None,
                      medialmorphs=None, finalmorphs=None):
     """
@@ -135,6 +135,8 @@ def convert_to_regex(strings_ids_rxvar, convert_all=True,
         length = len(string)
         start_idx = 0  # ensure first letter is unable to change
         orig_string = string
+        if not is_regex:
+            string = re.escape(string, literal_spaces=True)
 
         # 1) convert string to regex
         # a) convert any prefix
@@ -162,6 +164,8 @@ def convert_to_regex(strings_ids_rxvar, convert_all=True,
                 string += r'(es)?'
             elif orig_string[-1] == 'o':
                 string += r'(e?s)?'
+            elif orig_string[-2:] == 's?' or orig_string[-3:] in {r'\w+', r'\w*'}:
+                pass
             else:
                 string += r's?'
 

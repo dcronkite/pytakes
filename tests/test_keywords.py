@@ -6,10 +6,15 @@ from pytakes.iolib.txt import TxtDictionary
 
 
 @pytest.mark.parametrize('text, rules, kwargs, expected', [
-    ('Forest for the trees. A tree?', ['tree'], {'regex_variation': -1}, ['tree', 'tree']),
+    # concepts will be left alone and compiled without escaping
+    # ('Forest for the trees. A tree?', ['tree'], {'regex_variation': -1}, ['tree', 'tree']),
+    # ('Forest for the trees. A tree?', ['tree'], {'regex_variation': 0}, ['trees', 'tree']),
+    # ('Do you always write such charming long letters to her?', ['letters?'], {'regex_variation': 0}, ['letters']),
+    ('charming long letters', ['letters?', r'charm\w+ letters?'], {'regex_variation': 0},
+     ['charming long letters', 'letters']),
 ])
 def test_concept_miner_keywords(text, rules, kwargs, expected):
     mc = MinerCollection()
     mc.add(ConceptMiner([TxtDictionary(*rules, **kwargs)]))
     concepts = [found for found, sentence in process_text(text, mc)][0]
-    assert [concept.word for concept in concepts] == expected
+    assert [text[concept.begin:concept.end] for concept in concepts] == expected

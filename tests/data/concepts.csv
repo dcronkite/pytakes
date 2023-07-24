@@ -1,7 +1,7 @@
 ID,CUI,TEXT,MAXINTERVENING,MAXSEARCH,WORDORDER
-0,WRITING,letter*,,,
+0,WRITING,letters?,,,
 1,WRITING,pen(s|cil),,,
-2,GOOD,charm* letter,,,
-3,GOOD,letter charm*,,,
+2,GOOD,charm\w+ letters?,,,
+3,GOOD,letters? charm\w+,,,
 4,FATHER,his father,,,
 5,WEATHER,weather,,,
