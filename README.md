@@ -10,7 +10,7 @@ negation terms is also configurable.)
 
 ## Requirements ##
 
-* Python 3.6+
+* Python 3.8+
 * See requirements.txt (`pip install -r requirements.txt`)
     * Various requirements-_.txt files are provided depending on your needs:
         * dev: for running tests, general development
