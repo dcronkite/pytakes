@@ -17,6 +17,9 @@ Types of changes:
 
 ## [Unreleased]
 
+
+## 2.0.0 - 2023-07-24
+
 ### Added
 
 * Added option to specify when the included text is not a regex by setting `is_regex` to false in config
