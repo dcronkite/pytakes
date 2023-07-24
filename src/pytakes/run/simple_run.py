@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from loguru import logger
+
 from pytakes import CsvDictionary, CsvOutput, JsonlOutput
 from pytakes import ConceptMiner, SentenceBoundary, MinerCollection, StatusMiner
 from pytakes.corpus import get_next_from_corpus
@@ -50,10 +52,13 @@ def run(input_dir, output_dir, *keyword_files, outfile=None, negex_version=1,
     if not outfile:
         outfile = 'extracted_concepts_{}.jsonl'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))
     with output_context_manager(outfile, path=output_dir, metalabels=['file'], hostname=hostname) as out:
-        for ti in get_next_from_corpus(input_dir):
+        for i, ti in enumerate(get_next_from_corpus(input_dir), start=1):
             for results, sent in process_textitem(ti, mc):
                 for result in results:
                     out.writerow(result, meta=list(ti.meta.values()), text=sent)
+            if i % 10000 == 0:
+                logger.info(f'Completed processing of {i} records.')
+
 
 
 if __name__ == '__main__':

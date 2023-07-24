@@ -69,10 +69,11 @@ JSON_SCHEMA = {
                 'hostname': {'type': 'string'},
             }
         },
-        'logger': {
+        'log': {
             'type': 'object',
             'properties': {
-                'verbose': {'type': 'boolean'},
+                'level': {'type': 'string'},
+                'file': {'type': 'string'},  # 'INFO', 'DEBUG', 'WARN'
             }
         },
     }

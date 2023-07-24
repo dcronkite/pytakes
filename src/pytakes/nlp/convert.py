@@ -10,6 +10,7 @@ Purpose:
 # default regex behavior after this
 # transformation
 import regex as re
+from loguru import logger
 
 
 def get_affix_morphs():
@@ -209,5 +210,6 @@ def convert_to_regex(strings_ids_rxvar, convert_all=True, is_regex=True,
         # except AssertionError:
         #     raise ValueError(r'Regex {} failed to match original string "{}".'.format(rx, orig_string))
         regexes.append((rx, id_))
+        logger.debug(f'Converted "{orig_string}" to "{string}".')
 
     return regexes, updated_ids

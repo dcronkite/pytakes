@@ -20,11 +20,13 @@ Types of changes:
 ### Added
 
 * Added option to specify when the included text is not a regex by setting `is_regex` to false in config
+* Logging
 
 ### Changed
 
 * For `regex_variation` = -1, no additions are made.
 * Building concepts/keywords will no longer remove parentheses or expand an asterisk.
+* Renamed `logger` in schema to `log` to prevent clash with loguru's logger. 
 
 ### Fixed
 
