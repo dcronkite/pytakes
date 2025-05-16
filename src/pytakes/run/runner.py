@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 from typing import List
 
@@ -35,3 +36,7 @@ def run(corpus=None, output=None, keywords: List = None, negation=None, log=None
 
 def run_config(config_file):
     run(**validate_config(config_file))
+
+
+if __name__ == '__main__':
+    run_config(sys.argv[1])
