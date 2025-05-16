@@ -17,6 +17,9 @@ Types of changes:
 
 ## [Unreleased]
 
+### Added
+
+* Read in jsonlines/newline-delimited corpus using jsonlines in schema.
 
 ## 2.0.0 - 2023-07-24
 

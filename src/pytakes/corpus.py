@@ -1,4 +1,5 @@
 import itertools
+import json
 from pathlib import Path
 from typing import Iterable
 
@@ -33,6 +34,19 @@ def get_next_from_directory(directory: Path, encoding='utf8', include_extension=
             yield file.stem, text
 
 
+def get_next_from_jsonlines(*jsonlines):
+    for jsonline_file in jsonlines:
+        for doc_name, text in get_next_from_jsonline_file(**jsonline_file):
+            yield doc_name, text
+
+
+def get_next_from_jsonline_file(path, encoding, name_col, text_col):
+    with open(path, encoding=encoding) as fh:
+        for line in fh:
+            data = json.loads(line)
+            yield data[name_col], data[text_col]
+
+
 def get_next_from_connections(*connections):
     for connection in connections:
         for doc_name, text in get_next_from_sql(**connection):
@@ -56,10 +70,12 @@ def get_next_from_sql(name=None, driver=None, server=None,
             yield doc_name, text
 
 
-def get_next_from_corpus(*dirs, directories=None, encoding='utf8', connections=None) -> Iterable[TextItem]:
+def get_next_from_corpus(*dirs, directories=None, encoding='utf8', connections=None, jsonlines=None) -> Iterable[
+    TextItem]:
     for doc_name, text in itertools.chain(
             get_next_from_directories(dirs, encoding),
             get_next_from_directories(directories, encoding),
-            get_next_from_connections(*connections or list())
+            get_next_from_connections(*connections or list()),
+            get_next_from_jsonlines(*jsonlines or list()),
     ):
         yield TextItem(text.split('\n\n'), file=doc_name)  # force new sentence with double-newline

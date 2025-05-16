@@ -183,7 +183,15 @@ example below (copied from `example.config.py`). Please note that the `print(con
                     'server': 'SERVER',
                     'database': 'DATABASE',
                 }
-            ]
+            ],
+            'jsonlines': [
+               {
+                  'path': 'PATH',
+                  'encoding': 'utf8',
+                  'name_col': 'nlpid',
+                  'text_col': 'text',
+               }
+            ],
         },
         'keywords': [  # path to keyword files, usually stored as CSV
             {

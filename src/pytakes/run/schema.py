@@ -35,6 +35,18 @@ JSON_SCHEMA = {
                         }
                     }
                 },
+                'jsonlines': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'object',
+                        'properties': {
+                            'path': {'type': 'string'},
+                            'encoding': {'type': 'string'},
+                            'name_col': {'type': 'string'},
+                            'text_col': {'type': 'string'}
+                        }
+                    }
+                }
             }
         },
         'keywords': {  # paths to keyword files
