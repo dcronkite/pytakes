@@ -1,4 +1,5 @@
 import csv
+import os
 import platform
 from pathlib import Path
 
@@ -98,6 +99,7 @@ class CsvOutput(Output):
         self.types = types
         self.hostname = hostname or platform.node()
         self.batch_number = batch_number
+        os.makedirs(path, exist_ok=True)
         self.fh = open(path / self.name, 'w', newline='')
         self.writer = csv.writer(self.fh)
         self.writer.writerow(self.labels)  # header
